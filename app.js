@@ -1,7 +1,7 @@
 import * as webllm from "@mlc-ai/web-llm";
 
 // 軽量モデル - HFから取得される。スマホ向け最軽量
-const MODEL_ID = "Qwen2.5-3B-Instruct-q4f16_1-MLC";
+const MODEL_ID = "Qwen2.5-7B-Instruct-q4f16_1-MLC";
 
 // Message形式の会話履歴
 let messages = [

@@ -12,7 +12,7 @@ let engine = null;
 let currentKey = null;
 let isGenerating = false;
 let hasChatted = false; // 一度でもユーザーが喋ったらtrue。画像表示を止めるフラグ
-let messages = [{ role: "system", content: "あなたはCronyGOです。日本語で答えてください。" }];
+let messages = [{ role: "system", content: "あなたはCronyGOです。日本語で簡素に答えてください。" }];
 
 const chatEl = document.getElementById("chat");
 const inputEl = document.getElementById("input");

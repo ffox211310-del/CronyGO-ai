@@ -35,19 +35,24 @@
   </script>
 </head>
 <body>
-  <header>
-    
+  
+<header>
+  <div class="header-left">
     <h1>CronyGO / Qwen2.5</h1>
-<select id="model-select">
-  <option value="0.5B">0.5B 軽量</option>
-  <option value="1.5B">1.5B 標準</option>
-  <option value="3B">3B 高性能</option>
-  <option value="7B" selected>7B 高性能スマホ＆PC</option>
-  <option value="14B">14B PC最大</option>
-</select>
-<div id="status">初期化中...</div>
-    
-  </header>
+    <select id="model-select">
+      <option value="0.5B">0.5B 軽量</option>
+      <option value="1.5B">1.5B 標準</option>
+      <option value="3B">3B 時間OK</option>
+      <option value="7B" selected>7B 高性能</option>
+      <option value="14B">14B PC最大</option>
+    </select>
+  </div>
+  <div class="header-right">
+    <button id="download-btn">ダウンロード</button>
+    <div id="status">未DL</div>
+  </div>
+</header>
+  
   <div id="progress-wrap"><div id="progress-bar"></div></div>
 
   <div id="chat">

@@ -28,6 +28,8 @@ GithubPagesで動作確認
 
 STATUS
 
+CodeName
+<br>v.0.1〜:Legendary Monkey
 2026年8月23日v.0.2完成
 <br>2026年8月24日v.0.3完成
 <br>(ここらへんから更新スピード遅くなるかも)

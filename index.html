@@ -21,21 +21,24 @@
 :where(code, pre, kbd, samp) {
   font-family: "Optimistic Mono", ui-monospace, monospace;
 }
+</style><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
 </style>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CronyGO</title>
   <link rel="stylesheet" href="./style.css" />
   <script type="importmap">
-  {
-    "imports": {
-      "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm@0.2.79"
-    }
-  }
+  { "imports": { "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm@0.2.79" } }
   </script>
 </head>
 <body>
-  
 <header>
   <div class="header-left">
     <h1>CronyGO / Qwen2.5</h1>
@@ -57,13 +60,20 @@
 
   <div id="chat">
     <div class="msg assistant">こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。</div>
+    
+    <!-- 初回ロード時のみ中央表示。会話開始後はJSが使わない -->
+    <div id="loading-view">
+      <img id="loading-icon" src="./assets/CronyGOicon.jpg" alt="CronyGO icon" />
+      <div id="loading-text">準備中...</div>
+    </div>
+
   </div>
 
-  <div class="hint">エンジン: WebLLM CreateMLCEngine / モデル: HFから取得 / Message形式 {role, content} / 2回目以降オフライン</div>
+  <div class="hint">エンジン: WebLLM CreateMLCEngine / 個別DL方式 / Poco F7で7B動作確認</div>
 
   <div id="composer">
-    <input id="input" type="text" placeholder="モデル読み込み中..." autocomplete="off" />
-    <button id="send">↑</button>
+    <input id="input" type="text" placeholder="モデルをダウンロードしてください" autocomplete="off" disabled />
+    <button id="send" disabled>↑</button>
   </div>
 
   <script type="module" src="./app.js"></script>

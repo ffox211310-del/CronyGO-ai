@@ -9,7 +9,7 @@ body {
   height: 100dvh;
 }
 header {
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid #1e1e1e;
   background: #000000;
   display: flex;
@@ -18,27 +18,61 @@ header {
   position: sticky;
   top: 0;
   z-index: 10;
+  gap: 8px;
 }
-header h1 { font-size: 14px; margin: 0; font-weight: 600; color: #fff; }
+/* ★追加: 左と右に分ける */
+.header-left{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.header-right{ display:flex; align-items:center; gap:8px; }
+header h1 { font-size: 13px; margin: 0; font-weight: 700; color: #fff; white-space: nowrap; }
+
+/* セレクト */
+#model-select {
+  background: #171717;
+  color: #fff;
+  border: 1px solid #2a2a2a;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 11px;
+  outline: none;
+}
+#model-select:focus { border-color: #4FD1C5; }
+
+/* ★追加: ダウンロードボタン - 差し色 #4FD1C5 */
+#download-btn {
+  background: #4FD1C5;
+  color: #000;
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all.15s;
+}
+#download-btn:active { transform: scale(0.96); }
+#download-btn:disabled { opacity:.35; cursor: not-allowed; }
+#download-btn.ready {
+  background: #1a1a1a;
+  color: #4FD1C5;
+  border: 1px solid #4FD1C5;
+}
+
+/* ★修正: ステータスは背景なしテキストのみ */
 #status {
   font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: #1a1a1a;
   color: #888;
-  border: 1px solid #2a2a2a;
+  background: none!important; /* 丸い背景を強制削除 */
+  border: none!important;
+  padding: 0 2px;
+  white-space: nowrap;
 }
-#status.ready { background: #4FD1C5; color: #000; border-color: #4FD1C5; font-weight: 600; }
-#progress-wrap {
-  height: 3px;
-  background: #1a1a1a;
-}
-#progress-bar {
-  height: 100%;
-  width: 0%;
-  background: #4FD1C5;
-  transition: width .2s;
-}
+#status.ready { color: #4FD1C5; font-weight: 600; background: none!important; }
+#status.loading { color: #4FD1C5; }
+
+#progress-wrap { height: 3px; background: #1a1a1a; }
+#progress-bar { height: 100%; width: 0%; background: #4FD1C5; transition: width.2s; }
+
 #chat {
   flex: 1;
   overflow-y: auto;
@@ -98,20 +132,6 @@ header h1 { font-size: 14px; margin: 0; font-weight: 600; color: #fff; }
   color: #000;
   font-weight: bold;
   cursor: pointer;
-  transition: opacity .15s, transform .1s;
 }
-#send:active { transform: scale(0.96); }
-#send:disabled { opacity: .4; cursor: not-allowed; }
+#send:disabled { opacity:.4; }
 .hint { font-size: 11px; color: #666; text-align: center; padding: 4px 12px 12px; background: #0a0a0a; }
-
-/* スクロールバーもダークに */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0a0a0a; }
-::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
-
-#model-select{
-  background:#171717; color:#fff;
-  border:1px solid #2a2a2a; border-radius:999px;
-  padding:5px 10px; font-size:11px; outline:none;
-}
-#model-select:focus{ border-color:#4FD1C5; }

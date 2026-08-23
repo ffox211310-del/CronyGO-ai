@@ -2,7 +2,7 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #0e0e0e;
+  background: #0a0a0a;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -10,8 +10,8 @@ body {
 }
 header {
   padding: 12px 16px;
-  border-bottom: 1px solid #222;
-  background: #000;
+  border-bottom: 1px solid #1e1e1e;
+  background: #000000;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -19,15 +19,16 @@ header {
   top: 0;
   z-index: 10;
 }
-header h1 { font-size: 14px; margin: 0; font-weight: 600; }
+header h1 { font-size: 14px; margin: 0; font-weight: 600; color: #fff; }
 #status {
   font-size: 11px;
   padding: 4px 10px;
   border-radius: 999px;
   background: #1a1a1a;
   color: #888;
+  border: 1px solid #2a2a2a;
 }
-#status.ready { background: #4FD1C5; color: #000; }
+#status.ready { background: #4FD1C5; color: #000; border-color: #4FD1C5; font-weight: 600; }
 #progress-wrap {
   height: 3px;
   background: #1a1a1a;
@@ -45,6 +46,7 @@ header h1 { font-size: 14px; margin: 0; font-weight: 600; }
   display: flex;
   flex-direction: column;
   gap: 14px;
+  background: #0a0a0a;
 }
 .msg {
   max-width: 85%;
@@ -59,38 +61,50 @@ header h1 { font-size: 14px; margin: 0; font-weight: 600; }
   align-self: flex-end;
   background: #4FD1C5;
   color: #000;
+  font-weight: 600;
   border-bottom-right-radius: 6px;
 }
 .msg.assistant {
   align-self: flex-start;
-  background: #1e1e1e;
-  border: 1px solid #2a2a2a;
+  background: #171717;
+  border: 1px solid #262626;
+  color: #ffffff;
   border-bottom-left-radius: 6px;
-  color:#fff;
 }
 #composer {
   padding: 12px;
-  background: #fafaf8;
-  border-top: 1px solid #eee;
+  background: #0a0a0a;
+  border-top: 1px solid #1e1e1e;
   display: flex;
   gap: 8px;
 }
 #input {
   flex: 1;
-  border: 1px solid #e8e3dc;
+  border: 1px solid #2a2a2a;
   border-radius: 999px;
   padding: 10px 16px;
   font-size: 15px;
   outline: none;
+  background: #171717;
+  color: #ffffff;
 }
-#input:focus { border-color: #111; }
+#input::placeholder { color: #666; }
+#input:focus { border-color: #4FD1C5; }
 #send {
   width: 40px; height: 40px;
   border-radius: 50%;
   border: 0;
-  background: #111;
-  color: #fff;
+  background: #4FD1C5;
+  color: #000;
+  font-weight: bold;
   cursor: pointer;
+  transition: opacity .15s, transform .1s;
 }
-#send:disabled { opacity: .4; }
-.hint { font-size: 11px; color: #9a9894; text-align: center; padding: 4px 12px 12px; }
+#send:active { transform: scale(0.96); }
+#send:disabled { opacity: .4; cursor: not-allowed; }
+.hint { font-size: 11px; color: #666; text-align: center; padding: 4px 12px 12px; background: #0a0a0a; }
+
+/* スクロールバーもダークに */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }

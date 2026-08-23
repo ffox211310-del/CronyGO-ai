@@ -21,6 +21,11 @@ HTML､CSS､JSのみを使用しているので、Web上で完結します。�
 •推論エンジン:WebLLM.MLC-AI
 <br>•MLCに対応したエンジン各種。(基本的にはQwenなどの日本語につよいモデルを選定。)
 
+制作概要
+
+GithubPagesで動作確認
+<br>Vercelでデプロイ＆正式なURLを発行
+
 STATUS
 
 2026年8月23日v.0.2完成

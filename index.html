@@ -1,96 +1,214 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CronyGO ローカルAIチャット</title>
-  <link rel="stylesheet" href="style.css">
+  <!-- 外部CSS -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div id="root"></div>
 
-  <div class="topbar">
-    <div class="brand disp"><span class="brand-dot"></span>CronyGO v0.1</div>
-    <div class="netstat off" id="netstat"><span class="pip"></span><span id="netstat-text">待機中</span></div>
-  </div>
+  <!-- アプリ本体（ESモジュール） -->
+  <script type="module" src="app.js"></script>
 
-  <div class="hero">
-    <div class="eyebrow mono">● Start your AI</div>
-    <h1>推論は、<br><span>この端末の中だけ</span>で完結する。</h1>
-    <p class="sub">モデルを一度ダウンロードすれば、あとは通信ゼロ。生成の一語一語は、あなたのスマホやPCのCPU/GPUが計算しています。プロンプトはどこにも送信されません。</p>
+  <!-- 既存の補助スクリプト（リンク制御・iframe連携） -->
+  <script>
+    (function() {
+      function m(a) {
+        var h = a.getAttribute("href");
+        if (!h) return;
+        try {
+          var u = new URL(h, document.baseURI);
+          if ((u.protocol === "http:" || u.protocol === "https:") && u.host !== location.host) {
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+          }
+        } catch (e) {}
+      }
+      function s() { document.querySelectorAll("a[href]").forEach(m); }
+      if (document.readyState !== "loading") { s(); } else { document.addEventListener("DOMContentLoaded", s); }
+      document.addEventListener("click", function(e) {
+        var a = e.target && e.target.closest && e.target.closest("a[href]");
+        if (a) { m(a); }
+      }, true);
+    })();
+  </script>
 
-    <div class="traffic">
-      <div class="traffic-head">
-        <div class="traffic-title mono">Network Activity</div>
-        <div class="traffic-val mono" id="traffic-val">0.0 KB/s</div>
-      </div>
-      <div class="traffic-graph" id="traffic-graph"></div>
-    </div>
-  </div>
+  <script>
+    (function() {
+      var loc = location.href.replace(/#.*$/, "");
+      var ATTR_NAMES = [
+        "data-product-id", "data-productid", "data-product_id",
+        "product-id", "productid", "product_id",
+        "data-source-entity-id", "source-entity-id", "source_entity_id",
+        "data-product", "data-metadata", "data-meta"
+      ];
+      var DATASET_KEYS = [
+        "productId", "productid", "product_id",
+        "sourceEntityId", "sourceentityid", "source_entity_id",
+        "product", "metadata", "meta"
+      ];
 
-  <div class="card">
-    <div class="box">
-      <div class="box-row">
-        <div class="row-label">推論エンジン</div>
-        <div class="model-name mono"><b>transformers.js</b> (ONNX Runtime Web)</div>
-        <div class="model-meta">WebGPU 対応時は自動で使用 / 非対応時は WASM にフォールバック</div>
-      </div>
-      <div class="box-row">
-       <div class="row-label">モデル選択</div>
-        
-        <select id="model-select">
-  <option value="onnx-community/Qwen2.5-0.5B-Instruct">
-    Qwen2.5-0.5B-Instruct — 0.5B（軽量）
-  </option>
+      function readProductId(value) {
+        if (typeof value !== "string" || value.length === 0) return null;
+        if (/^[0-9]{6,}$/.test(value)) return value;
+        var match = value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);
+        return match ? match[1] : null;
+      }
 
-  <option value="onnx-community/Qwen2.5-1.5B-Instruct">
-    Qwen2.5-1.5B-Instruct — 1.5B（バランス）
-  </option>
+      function extractProductId(start) {
+        for (var node = start; node && node !== document.body; node = node.parentElement) {
+          for (var i = 0; i < ATTR_NAMES.length; i++) {
+            var attrValue = node.getAttribute && node.getAttribute(ATTR_NAMES[i]);
+            var attrProductId = readProductId(attrValue);
+            if (attrProductId) return attrProductId;
+          }
+          var dataset = node.dataset || null;
+          if (dataset) {
+            for (var j = 0; j < DATASET_KEYS.length; j++) {
+              var dataValue = dataset[DATASET_KEYS[j]];
+              var dataProductId = readProductId(dataValue);
+              if (dataProductId) return dataProductId;
+            }
+          }
+        }
+        return null;
+      }
 
-  <option value="onnx-community/LFM2-1.2B-ONNX">
-    LFM2-1.2B — 1.2B（軽量・別系統）
-  </option>
+      function isInlineMediaSlotElement(node) {
+        return !!(node && node.getAttribute && node.getAttribute("data-clippy-inline-media-slot") !== null);
+      }
 
-  <option value="onnx-community/Qwen2.5-3B-Instruct">
-    Qwen2.5-3B-Instruct — 3B（性能優先）
-  </option>
-</select>
-        
-        <div class="model-meta" id="engine-status">未ロード。「モデルをダウンロード」を押すと開始します。</div>
-        <div class="progress-wrap" id="progress-wrap" style="display:none;">
-          <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-          <div class="progress-text mono"><span id="progress-file"></span><span id="progress-pct">0%</span></div>
-        </div>
-      </div>
-      <div class="box-row" style="border-bottom:none;">
-        <button class="btn" id="load-btn">モデルをダウンロード</button>
-      </div>
-    </div>
-  </div>
+      function findInlineMediaSlot(start) {
+        for (var node = start; node && node !== document.body; node = node.parentElement) {
+          if (isInlineMediaSlotElement(node)) return node;
+        }
+        return null;
+      }
 
-  <div class="chat-wrap">
-    <div class="thread" id="thread">
-      <div class="empty-hint">モデルをロードすると、ここでチャットができます。<br>初回のみHugging Faceからモデルをダウンロードし、以降はブラウザにキャッシュされます。</div>
-    </div>
-    <div class="stats-bar" id="stats-bar" style="display:none;">
-      <div>デバイス: <b id="stat-device">-</b></div>
-      <div>生成速度: <b id="stat-speed">-</b></div>
-      <div>通信: <b id="stat-net">0回</b></div>
-    </div>
-  </div>
+      function readInlineMediaUrl(node) {
+        if (!node) return null;
+        return node.getAttribute && (
+          node.getAttribute("data-clippy-inline-media-url") ||
+          node.getAttribute("data-url") ||
+          node.getAttribute("data_url")
+        ) || node.href || null;
+      }
 
-  <div class="composer">
-    <div class="composer-inner">
-      <textarea id="input" placeholder="モデルロード後にメッセージを入力…" rows="1" disabled></textarea>
-      <button class="send" id="send-btn" disabled>
-        <svg viewBox="0 0 24 24" fill="none" stroke="#08110F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
-      </button>
-    </div>
-  </div>
+      function stripHash(url) {
+        return String(url).replace(/#.*$/, "");
+      }
 
-  <div class="footnote" style="padding-top:20px;">
-    モデル配信元: <a href="https://huggingface.co/Xenova" target="_blank">Hugging Face (Xenova ONNX変換版)</a> ・ 推論ライブラリ: <a href="https://github.com/huggingface/transformers.js" target="_blank">Hugging Face transformers.js</a>。すべての生成処理はこの端末のブラウザ内(WebGPU/WASM)で実行され、ダウンロード完了後はサーバー通信を行いません。
-  </div>
+      function urlsMatch(a, b) {
+        if (!a || !b) return false;
+        try {
+          return stripHash(new URL(a, loc).href) === stripHash(new URL(b, loc).href);
+        } catch (_) {
+          return stripHash(a) === stripHash(b);
+        }
+      }
 
-  <script type="module" src="script.js"></script>
+      function isFirstPartyReelUrl(value) {
+        try {
+          var url = new URL(value, loc);
+          if (url.protocol !== "https:") return false;
+          var host = url.hostname.toLowerCase();
+          var supported = host === "instagram.com" || host.endsWith(".instagram.com") ||
+                          host === "facebook.com" || host.endsWith(".facebook.com");
+          return supported && /\/reels?\//i.test(url.pathname);
+        } catch (_) { return false; }
+      }
+
+      function isInlineMediaUrlClick(node, href) {
+        var slot = findInlineMediaSlot(node);
+        if (!slot) return false;
+        var slotUrl = readInlineMediaUrl(slot);
+        if (slotUrl) return urlsMatch(href, slotUrl);
+        return isFirstPartyReelUrl(href);
+      }
+
+      function findDataHref(start) {
+        for (var node = start; node && node !== document.body; node = node.parentElement) {
+          if (node.getAttribute) {
+            var href = node.getAttribute("data-href") || node.getAttribute("data-url");
+            if (href) return { href: href, node: node };
+          }
+        }
+        return null;
+      }
+
+      var nativeOpen = window.open;
+      window.open = function(url) {
+        if (parent !== window && typeof url === "string" && /^https?:\/\//.test(url)) {
+          parent.postMessage({ type: "ecto:usercontent-link-click", href: url }, "*");
+          return null;
+        }
+        return nativeOpen ? nativeOpen.apply(window, arguments) : null;
+      };
+
+      document.addEventListener("click", function(e) {
+        var target = e.target instanceof Element ? e.target : null;
+        if (!target) return;
+        if (parent === window) return;
+        var a = target.closest ? target.closest("a[href]") : null;
+        if (a && a.href && /^https?:\/\//.test(a.href) && a.href.replace(/#.*$/, "") !== loc) {
+          if (isInlineMediaUrlClick(a, a.href)) return;
+          var productId = extractProductId(target) || extractProductId(a);
+          if (productId) {
+            e.preventDefault();
+            parent.postMessage({ type: "ecto-artifact-link-click", productId: productId }, "*");
+            return;
+          }
+          e.preventDefault();
+          parent.postMessage({ type: "ecto:usercontent-link-click", href: a.href }, "*");
+          return;
+        }
+        var dataHref = findDataHref(target);
+        if (dataHref && /^https?:\/\//.test(dataHref.href) && dataHref.href.replace(/#.*$/, "") !== loc) {
+          if (isInlineMediaUrlClick(dataHref.node, dataHref.href)) return;
+          e.preventDefault();
+          parent.postMessage({ type: "ecto:usercontent-link-click", href: dataHref.href }, "*");
+        }
+      }, true);
+    })();
+  </script>
+
+  <script>
+    (function() {
+      var FOCUS_TYPE = "ecto:artifact-focus-request";
+      var CLOSE_TYPE = "ecto:artifact-close-request";
+
+      function focusArtifactDocument() {
+        var body = document.body;
+        if (!body) return;
+        try { window.focus(); } catch (e) {}
+        if (!body.hasAttribute("tabindex")) body.setAttribute("tabindex", "-1");
+        try { body.focus({ preventScroll: true }); } catch (e) {
+          try { body.focus(); } catch (e2) {}
+        }
+      }
+
+      window.addEventListener("message", function(event) {
+        if (event.source !== window.parent) return;
+        var data = event.data;
+        if (!data || typeof data !== "object" || data.type !== FOCUS_TYPE) return;
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", focusArtifactDocument, { once: true });
+          return;
+        }
+        focusArtifactDocument();
+      });
+
+      window.addEventListener("keydown", function(event) {
+        if (event.key !== "Escape") return;
+        window.setTimeout(function() {
+          if (event.defaultPrevented) return;
+          window.parent.postMessage({ type: CLOSE_TYPE }, "*");
+        }, 0);
+      });
+    })();
+  </script>
 </body>
 </html>

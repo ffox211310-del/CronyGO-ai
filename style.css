@@ -48,8 +48,18 @@ header {
   z-index: 10;
   gap: 8px;
 }
-.header-left{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.header-right{ display:flex; align-items:center; gap:8px; }
+
+.header-left {
+  min-width: 0; /* 左も一応 */
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0; /* ←これ追加。「縮んでいいよ」って許可 */
+  flex-shrink: 1; /* 縮むことを許可 */
+}
+
 header h1 { font-size: 13px; margin: 0; font-weight: 700; color: var(--text); white-space: nowrap; }
 
 #model-select {

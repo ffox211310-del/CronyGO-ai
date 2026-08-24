@@ -149,7 +149,7 @@ async function loadModel(key) {
     sendEl.disabled = false;
     inputEl.placeholder = `${key}で入力...`;
     if (isFirstPhase) hideFirstLoadingUI();
-    addMessage("assistant", `${key} 起動完了！システムプロンプト: ${messages[0].content.slice(0,40)}...`);
+    addMessage("assistant", `${key} 起動完了！`);
   } catch (e) {
     console.error(e);
     statusEl.textContent = "エラー";

@@ -25,6 +25,7 @@ HTML､CSS､JSのみを使用しているので、Web上で完結します。�
 
 GithubPagesで動作確認
 <br>Vercelでデプロイ＆正式なURLを発行
+<br>※mainブランチは試験型です。動作確認済み安定版URLを、ProductionブランチからVercelにデプロイしています。
 
 STATUS
 

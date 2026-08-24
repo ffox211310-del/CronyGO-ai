@@ -21,14 +21,6 @@
 :where(code, pre, kbd, samp) {
   font-family: "Optimistic Mono", ui-monospace, monospace;
 }
-</style><style>
-@font-face {
-  font-family: "Optimistic";
-  font-style: normal;
-  font-weight: 400 600;
-  font-display: swap;
-  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
-}
 </style>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -41,11 +33,11 @@
 <body>
 <header>
   <div class="header-left">
-    <h1>CronyGO / Qwen2.5</h1>
+    <h1>CronyGO/v.0.4</h1>
     <select id="model-select">
       <option value="0.5B">0.5B 軽量</option>
       <option value="1.5B">1.5B 標準</option>
-      <option value="3B">3B 時間OK</option>
+      <option value="3B">3B 少し重い</option>
       <option value="7B" selected>7B 高性能</option>
       <option value="14B">14B PC最大</option>
     </select>
@@ -60,20 +52,57 @@
 
   <div id="chat">
     <div class="msg assistant">こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。</div>
-    
-    <!-- 初回ロード時のみ中央表示。会話開始後はJSが使わない。確認 -->
+
     <div id="loading-view">
-      <img id="loading-icon" src="./assets/CronyGOicon.jpg" alt="CronyGO icon" />
+      <img id="loading-icon-dark" class="loading-icon" src="./assets/CronyGOicon.jpg" alt="CronyGO dark" />
+      <img id="loading-icon-light" class="loading-icon" src="./assets/CronyGOicon_Light.jpg" alt="CronyGO light" />
       <div id="loading-text">準備中...</div>
     </div>
-
   </div>
 
-  <div class="hint">エンジン: WebLLM CreateMLCEngine / 個別DL方式 / Poco F7で7B動作確認</div>
+  <div class="hint">エンジン: WebLLM CreateMLCEngine / 個別DL方式 / iPhoneはメモリ制限注意</div>
 
   <div id="composer">
+    <button id="settings-btn" aria-label="設定">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
     <input id="input" type="text" placeholder="モデルをダウンロードしてください" autocomplete="off" disabled />
-    <button id="send" disabled>↑</button>
+    <button id="send" disabled aria-label="送信">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m22 2-7 20-4-9-9-4Z"></path>
+        <path d="M22 2 11 13"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div id="settings-overlay"></div>
+  <div id="settings-panel">
+    <div class="settings-header">
+      <h2>設定</h2>
+      <button id="settings-close" aria-label="閉じる">×</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-section">
+        <label class="settings-label">システムプロンプト</label>
+        <textarea id="system-prompt-input" placeholder="あなたはCronyGOです。日本語で簡素に答えてください。"></textarea>
+        <div class="settings-row">
+          <button id="save-prompt-btn" class="primary-btn">保存</button>
+          <button id="reset-prompt-btn" class="secondary-btn">デフォルトに戻す</button>
+        </div>
+        <div id="prompt-status" class="settings-desc"></div>
+      </div>
+      <div class="settings-section">
+        <label class="settings-label">テーマ</label>
+        <div class="theme-options">
+          <button class="theme-opt" data-theme="dark">ダーク (黒)</button>
+          <button class="theme-opt" data-theme="light">ライト (e5e5e5)</button>
+        </div>
+        <div class="settings-desc">差し色 #4FD1C5 は共通。アイコンも自動切替</div>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="./app.js"></script>

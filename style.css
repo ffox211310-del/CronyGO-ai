@@ -12,7 +12,6 @@
   --accent: #4FD1C5;
 }
 
-/* ライトモード用 (将来切り替え用に定義だけ。body.light が付いたら有効) */
 body.light {
   --bg: #e5e5e5;
   --bg-header: #dcdcdc;
@@ -92,7 +91,7 @@ header h1 { font-size: 13px; margin: 0; font-weight: 700; color: var(--text); wh
   padding: 0 2px;
   white-space: nowrap;
 }
-#status.ready { color: var(--accent); font-weight: 600; background: none!important; }
+#status.ready { color: var(--accent); font-weight: 600; }
 #status.loading { color: var(--accent); }
 
 #progress-wrap { height: 3px; background: var(--border); }
@@ -161,7 +160,6 @@ header h1 { font-size: 13px; margin: 0; font-weight: 700; color: var(--text); wh
   background: transparent;
   box-shadow: none;
 }
-/* ダーク用とライト用切り替え */
 #loading-icon-dark { display: block; }
 #loading-icon-light { display: none; }
 body.light #loading-icon-dark { display: none; }
@@ -210,7 +208,6 @@ body.light #loading-icon-light { display: block; }
 #send {
   background: var(--accent);
   color: #000;
-  font-weight: bold;
 }
 #send:disabled { opacity:.4; }
 #send:active:not(:disabled) { transform: scale(0.96); }
@@ -221,7 +218,7 @@ body.light #loading-icon-light { display: block; }
   color: var(--text-sub);
   border: 1px solid var(--border-light);
 }
-#settings-btn:hover { color: var(--text); border-color: var(--text-sub); }
+#settings-btn:hover { color: var(--text); }
 #settings-btn:active { transform: scale(0.96); }
 
 .hint { font-size: 10px; color: var(--text-hint); text-align: center; padding: 4px 12px 8px; background: var(--bg); }
@@ -236,10 +233,7 @@ body.light #loading-icon-light { display: block; }
   transition: opacity .2s;
   z-index: 20;
 }
-#settings-overlay.show {
-  opacity: 1;
-  pointer-events: auto;
-}
+#settings-overlay.show { opacity: 1; pointer-events: auto; }
 body.light #settings-overlay { background: rgba(0,0,0,.25); }
 
 #settings-panel {
@@ -248,7 +242,7 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   background: var(--bg-header);
   border-top: 1px solid var(--border);
   border-radius: 18px 18px 0 0;
-  max-height: 78vh;
+  max-height: 82vh;
   overflow-y: auto;
   transform: translateY(100%);
   transition: transform .28s cubic-bezier(.32,.72,0,1);
@@ -277,14 +271,14 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   cursor: pointer;
 }
 
-.settings-body { padding: 14px 18px 24px; display: flex; flex-direction: column; gap: 20px; }
+.settings-body { padding: 14px 18px 24px; display: flex; flex-direction: column; gap: 22px; }
 .settings-section { display: flex; flex-direction: column; gap: 8px; }
 .settings-label { font-size: 12px; font-weight: 600; color: var(--text); }
 .settings-desc { font-size: 11px; color: var(--text-sub); }
 
 #system-prompt-input {
   width: 100%;
-  min-height: 84px;
+  min-height: 96px;
   resize: vertical;
   background: var(--bg-input);
   color: var(--text);
@@ -292,9 +286,32 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   border-radius: 12px;
   padding: 10px 12px;
   font-size: 13px;
+  line-height: 1.5;
   outline: none;
 }
 #system-prompt-input:focus { border-color: var(--accent); }
+
+.settings-row { display: flex; gap: 8px; }
+.primary-btn {
+  background: var(--accent);
+  color: #000;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primary-btn:active { transform: scale(0.97); }
+.secondary-btn {
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 12px;
+  cursor: pointer;
+}
 
 .theme-options { display: flex; gap: 8px; }
 .theme-opt {
@@ -306,9 +323,9 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   color: var(--text);
   font-size: 12px;
   cursor: pointer;
+  transition: all .15s;
 }
 .theme-opt.active {
-  background: var(--bg-input);
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 600;

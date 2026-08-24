@@ -33,7 +33,7 @@
 <body>
 <header>
   <div class="header-left">
-    <h1>CronyGO / v.0.4XR</h1>
+    <h1>CronyGO / v.0.5</h1>
     <select id="model-select">
       <option value="0.5B">0.5B 軽量</option>
       <option value="1.5B">1.5B 標準</option>
@@ -53,7 +53,6 @@
   <div id="chat">
     <div class="msg assistant">こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。</div>
     <div id="loading-view">
-      <!-- ダーク用とライト用2つ用意。CSSで切り替え -->
       <img id="loading-icon-dark" class="loading-icon" src="./assets/CronyGOicon.jpg" alt="CronyGO dark" />
       <img id="loading-icon-light" class="loading-icon" src="./assets/CronyGOicon_Light.png" alt="CronyGO light" />
       <div id="loading-text">準備中...</div>
@@ -78,7 +77,6 @@
     </button>
   </div>
 
-  <!-- 設定UI (機能なし、見た目だけ) -->
   <div id="settings-overlay"></div>
   <div id="settings-panel">
     <div class="settings-header">
@@ -89,19 +87,19 @@
       <div class="settings-section">
         <label class="settings-label">システムプロンプト</label>
         <textarea id="system-prompt-input" placeholder="あなたはCronyGOです。日本語で簡素に答えてください。"></textarea>
-        <div class="settings-desc">※まだ保存機能は未実装 (見た目だけ)</div>
+        <div class="settings-row">
+          <button id="save-prompt-btn" class="primary-btn">保存</button>
+          <button id="reset-prompt-btn" class="secondary-btn">デフォルトに戻す</button>
+        </div>
+        <div id="prompt-status" class="settings-desc"></div>
       </div>
       <div class="settings-section">
         <label class="settings-label">テーマ</label>
         <div class="theme-options">
-          <button class="theme-opt active" data-theme="dark">ダーク</button>
+          <button class="theme-opt" data-theme="dark">ダーク (黒)</button>
           <button class="theme-opt" data-theme="light">ライト (e5e5e5)</button>
         </div>
-        <div class="settings-desc">差し色 #4FD1C5 は共通</div>
-      </div>
-      <div class="settings-section">
-        <label class="settings-label">その他</label>
-        <div class="settings-desc">ここに今後、温度や会話クリアなどを追加予定</div>
+        <div class="settings-desc">差し色 #4FD1C5 は共通。アイコンも自動切替</div>
       </div>
     </div>
   </div>

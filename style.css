@@ -89,8 +89,13 @@ header h1 { font-size: 13px; margin: 0; font-weight: 700; color: var(--text); wh
   background: none!important;
   border: none!important;
   padding: 0 2px;
-  white-space: nowrap;
+  white-space: normal;      /* nowrap → normal */
+  word-break: break-word;   /* 長い英単語でも折り返す */
+  max-width: 42vw;          /* ヘッダーの半分以上は使わない */
+  line-height: 1.3;
+  text-align: right;
 }
+
 #status.ready { color: var(--accent); font-weight: 600; }
 #status.loading { color: var(--accent); }
 

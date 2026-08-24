@@ -131,7 +131,7 @@ async function loadModel(key) {
     if (isFirstPhase) {
       hideFirstLoadingUI();
     }
-    addMessage("assistant", "エラー: " + e.message + "\nメモリ不足かも。より小さいモデルを試してください。");
+    addMessage("assistant", "エラー: " + e.message + "\nWebGPU対応のブラウザを使用してください。それでも直らない場合はメモリ不足の可能性があります。より小さいモデルをお試しください。");
   }
 }
 

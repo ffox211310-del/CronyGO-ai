@@ -36,35 +36,54 @@ body {
   height: 100dvh;
   transition: background .2s, color .2s;
 }
+
+/* ===== ヘッダー 完全固定版 ===== */
 header {
-  padding: 10px 14px;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  padding: 0 12px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-header);
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   position: sticky;
   top: 0;
   z-index: 10;
-  gap: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
+
 .header-left {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
   min-width: 0;
-  flex-shrink: 1;
+  flex: 0 0 auto;
+  overflow: hidden;
 }
+
 .header-right {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
-  flex: 1; /* 残りの幅全部使う */
-  justify-content: center; /* その中で中央に置く */
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  overflow: hidden;
 }
-header h1 { font-size: 13px; margin: 0; font-weight: 700; color: var(--text); white-space: nowrap; }
+
+header h1 {
+  font-size: 13px;
+  margin: 0;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
 #model-select {
   background: var(--bg-input);
@@ -74,6 +93,7 @@ header h1 { font-size: 13px; margin: 0; font-weight: 700; color: var(--text); wh
   padding: 6px 12px;
   font-size: 11px;
   outline: none;
+  flex-shrink: 0;
 }
 #model-select:focus { border-color: var(--accent); }
 
@@ -87,6 +107,7 @@ header h1 { font-size: 13px; margin: 0; font-weight: 700; color: var(--text); wh
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all .15s;
 }
 #download-btn:active { transform: scale(0.96); }
@@ -97,25 +118,28 @@ header h1 { font-size: 13px; margin: 0; font-weight: 700; color: var(--text); wh
   border: 1px solid var(--accent);
 }
 
+/* ステータスは ... で切る */
 #status {
   font-size: 11px;
   color: var(--text-sub);
   background: none!important;
   border: none!important;
   padding: 0 2px;
-  white-space: normal;      /* nowrap → normal */
-  word-break: break-word;   /* 長い英単語でも折り返す */
-  max-width: 42vw;          /* ヘッダーの半分以上は使わない */
-  line-height: 1.3;
-  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 38vw;
+  flex: 0 1 auto;
+  line-height: 1;
 }
-
 #status.ready { color: var(--accent); font-weight: 600; }
 #status.loading { color: var(--accent); }
 
-#progress-wrap { height: 3px; background: var(--border); }
+#progress-wrap { height: 3px; background: var(--border); flex-shrink: 0; }
 #progress-bar { height: 100%; width: 0%; background: var(--accent); transition: width .2s; }
 
+/* ===== 以下は変更なし ===== */
 #chat {
   flex: 1;
   overflow-y: auto;
@@ -224,10 +248,7 @@ body.light #loading-icon-light { display: block; }
   transition: transform .12s, opacity .12s;
   flex-shrink: 0;
 }
-#send {
-  background: var(--accent);
-  color: #000;
-}
+#send { background: var(--accent); color: #000; }
 #send:disabled { opacity:.4; }
 #send:active:not(:disabled) { transform: scale(0.96); }
 #send svg { transform: translateX(1px); }

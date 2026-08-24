@@ -8,11 +8,28 @@ const MODELS = {
   "14B": "Qwen2.5-14B-Instruct-q4f16_1-MLC",
 };
 
+const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";
+const LS_PROMPT_KEY = "cronygo_system_prompt";
+const LS_THEME_KEY = "cronygo_theme";
+
 let engine = null;
 let currentKey = null;
 let isGenerating = false;
 let hasChatted = false;
-let messages = [{ role: "system", content: "あなたはCronyGOです。日本語で簡素に答えてください。" }];
+
+// ローカルストレージから復元
+function loadStoredPrompt() {
+  try {
+    return localStorage.getItem(LS_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT;
+  } catch { return DEFAULT_SYSTEM_PROMPT; }
+}
+function loadStoredTheme() {
+  try {
+    return localStorage.getItem(LS_THEME_KEY) || "dark";
+  } catch { return "dark"; }
+}
+
+let messages = [{ role: "system", content: loadStoredPrompt() }];
 
 const chatEl = document.getElementById("chat");
 const inputEl = document.getElementById("input");
@@ -29,6 +46,15 @@ const settingsBtn = document.getElementById("settings-btn");
 const settingsPanel = document.getElementById("settings-panel");
 const settingsOverlay = document.getElementById("settings-overlay");
 const settingsClose = document.getElementById("settings-close");
+const systemPromptInput = document.getElementById("system-prompt-input");
+const savePromptBtn = document.getElementById("save-prompt-btn");
+const resetPromptBtn = document.getElementById("reset-prompt-btn");
+const promptStatus = document.getElementById("prompt-status");
+const themeOpts = document.querySelectorAll(".theme-opt");
+
+// 初期値反映
+systemPromptInput.value = loadStoredPrompt();
+applyTheme(loadStoredTheme(), false);
 
 function addMessage(role, content) {
   const div = document.createElement("div");
@@ -38,7 +64,6 @@ function addMessage(role, content) {
   chatEl.scrollTop = chatEl.scrollHeight;
   return div;
 }
-
 function showFirstLoadingUI(initialText) {
   if (hasChatted) return false;
   loadingText.textContent = initialText || "準備中...";
@@ -52,9 +77,35 @@ function hideFirstLoadingUI() {
 }
 function updateLoadingText(text) {
   statusEl.textContent = text;
-  if (loadingView.classList.contains("show")) {
-    loadingText.textContent = text;
+  if (loadingView.classList.contains("show")) loadingText.textContent = text;
+}
+
+function applyTheme(theme, save = true) {
+  if (theme === "light") document.body.classList.add("light");
+  else document.body.classList.remove("light");
+  
+  themeOpts.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.theme === theme);
+  });
+
+  if (save) {
+    try { localStorage.setItem(LS_THEME_KEY, theme); } catch {}
   }
+}
+
+function saveSystemPrompt() {
+  const newPrompt = systemPromptInput.value.trim() || DEFAULT_SYSTEM_PROMPT;
+  try { localStorage.setItem(LS_PROMPT_KEY, newPrompt); } catch {}
+  messages[0].content = newPrompt;
+  promptStatus.textContent = "保存しました。次の会話から反映されます。";
+  promptStatus.style.color = "#4FD1C5";
+  setTimeout(() => { promptStatus.textContent = ""; }, 2500);
+}
+
+function resetSystemPrompt() {
+  systemPromptInput.value = DEFAULT_SYSTEM_PROMPT;
+  saveSystemPrompt();
+  promptStatus.textContent = "デフォルトに戻しました。";
 }
 
 async function loadModel(key) {
@@ -98,7 +149,7 @@ async function loadModel(key) {
     sendEl.disabled = false;
     inputEl.placeholder = `${key}で入力...`;
     if (isFirstPhase) hideFirstLoadingUI();
-    addMessage("assistant", `${key} 起動完了！`);
+    addMessage("assistant", `${key} 起動完了！システムプロンプト: ${messages[0].content.slice(0,40)}...`);
   } catch (e) {
     console.error(e);
     statusEl.textContent = "エラー";
@@ -114,10 +165,7 @@ async function loadModel(key) {
 async function sendMessage() {
   const text = inputEl.value.trim();
   if (!text || isGenerating || !engine) return;
-  if (!hasChatted) {
-    hasChatted = true;
-    hideFirstLoadingUI();
-  }
+  if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
   addMessage("user", text);
   messages.push({ role: "user", content: text });
   inputEl.value = "";
@@ -164,7 +212,7 @@ dlBtn.addEventListener("click", () => {
 });
 statusEl.textContent = "未DL";
 
-// 設定パネル開閉 (機能なし、見た目だけ)
+// 設定パネル
 function openSettings() {
   settingsPanel.classList.add("show");
   settingsOverlay.classList.add("show");
@@ -176,3 +224,12 @@ function closeSettings() {
 settingsBtn.addEventListener("click", openSettings);
 settingsClose.addEventListener("click", closeSettings);
 settingsOverlay.addEventListener("click", closeSettings);
+
+savePromptBtn.addEventListener("click", saveSystemPrompt);
+resetPromptBtn.addEventListener("click", resetSystemPrompt);
+
+themeOpts.forEach(btn => {
+  btn.addEventListener("click", () => {
+    applyTheme(btn.dataset.theme, true);
+  });
+});

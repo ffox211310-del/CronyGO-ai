@@ -32,7 +32,7 @@
 </style>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CronyGO X-Ray</title>
+  <title>CronyGO</title>
   <link rel="stylesheet" href="./style.css" />
   <script type="importmap">
   { "imports": { "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm@0.2.79" } }
@@ -41,11 +41,11 @@
 <body>
 <header>
   <div class="header-left">
-    <h1>CronyGO / X-Ray</h1>
+    <h1>CronyGO / LocalAI</h1>
     <select id="model-select">
       <option value="0.5B">0.5B 軽量</option>
       <option value="1.5B">1.5B 標準</option>
-      <option value="3B">3B 時間OK</option>
+      <option value="3B">3B 少し重い</option>
       <option value="7B" selected>7B 高性能</option>
       <option value="14B">14B PC最大</option>
     </select>
@@ -68,7 +68,7 @@
 
   </div>
 
-  <div class="hint">エンジン: WebLLM CreateMLCEngine / 個別DL方式 / Poco F7で7B動作確認</div>
+  <div class="hint">エンジン: WebLLM CreateMLCEngine / 個別DL方式 / iPhoneはメモリ制限注意</div>
 
   <div id="composer">
     <input id="input" type="text" placeholder="モデルをダウンロードしてください" autocomplete="off" disabled />

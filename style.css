@@ -41,7 +41,7 @@ header {
   border-bottom: 1px solid var(--border);
   background: var(--bg-header);
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   position: sticky;
   top: 0;
@@ -60,10 +60,10 @@ header {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 0; /* ←これ追加。「縮んでいいよ」って許可 */
-  flex-shrink: 1; /* 縮むことを許可 */
+  min-width: 0;
+  flex: 1; /* 残りの幅全部使う */
+  justify-content: center; /* その中で中央に置く */
 }
-
 header h1 { font-size: 13px; margin: 0; font-weight: 700; color: var(--text); white-space: nowrap; }
 
 #model-select {

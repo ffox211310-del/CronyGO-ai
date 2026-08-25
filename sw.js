@@ -1,16 +1,27 @@
-// CronyGO v0.5 minimal SW - shell only
-const CACHE = "cronygo-shell-v05";
-const SHELL = ["./", "./index.html", "./style.css", "./app.js"];
+const CACHE = "cronygo-shell-v08";
+const SHELL = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json", "./assets/CronyGOicon.jpg"];
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  console.log("[SW] install v08");
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, {cache: "reload"})))).then(() => self.skipWaiting())
+  );
 });
 self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  console.log("[SW] activate v08");
+  e.waitUntil(
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())
+  );
 });
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
-  // モデルは触らない
-  if (e.request.url.includes("huggingface") || e.request.url.includes("mlc-ai")) return;
-  e.respondWith(caches.match(e.request).then(cached => cached || fetch(e.request)));
+  const url = e.request.url;
+  if (url.includes("huggingface.co") || url.includes("mlc-ai") || url.includes("esm.run")) return;
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      return cached || fetch(e.request).then(res => {
+        return res;
+      }).catch(() => caches.match("./index.html"));
+    })
+  );
 });

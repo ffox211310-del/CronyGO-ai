@@ -1,27 +1,63 @@
-const CACHE = "cronygo-shell-v10";
-const SHELL = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json", "./assets/CronyGOicon.png"];
+const CACHE_NAME = "cronygo-v20";
 
+const urlsToCache = [
+  "./",
+  "./index.html",
+  "./style.css",
+  "./app.js",
+  "./manifest.json",
+  "./CronyGOicon_192.png",
+  "./CronyGOicon_512.png"
+];
+
+/* インストール - Solpon方式 */
 self.addEventListener("install", e => {
-  console.log("[SW] install v08");
+  self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, {cache: "reload"})))).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(urlsToCache);
+    })
   );
 });
+
+/* 有効化 - 古いキャッシュ削除 */
 self.addEventListener("activate", e => {
-  console.log("[SW] activate v08");
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.map(key => {
+          if(key !== CACHE_NAME){
+            return caches.delete(key);
+          }
+        })
+      );
+    })
   );
+  self.clients.claim();
 });
+
+/* 通信 - ネットワーク優先、失敗時キャッシュ */
 self.addEventListener("fetch", e => {
-  if (e.request.method !== "GET") return;
-  const url = e.request.url;
-  if (url.includes("huggingface.co") || url.includes("mlc-ai") || url.includes("esm.run")) return;
+  // AIモデルはキャッシュしない
+  if(
+    e.request.url.includes("huggingface") ||
+    e.request.url.includes("mlc-ai") ||
+    e.request.url.includes("esm.run")
+  ){
+    return;
+  }
+
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      return cached || fetch(e.request).then(res => {
-        return res;
-      }).catch(() => caches.match("./index.html"));
+    fetch(e.request)
+    .then(response => {
+      const responseClone = response.clone();
+      caches.open(CACHE_NAME).then(cache => {
+        cache.put(e.request, responseClone);
+      });
+      return response;
+    })
+    .catch(() => {
+      return caches.match(e.request);
     })
   );
 });

@@ -1,5 +1,5 @@
-const CACHE = "cronygo-shell-v08";
-const SHELL = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json", "./assets/CronyGOicon.jpg"];
+const CACHE = "cronygo-shell-v10";
+const SHELL = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json", "./assets/CronyGOicon.png"];
 
 self.addEventListener("install", e => {
   console.log("[SW] install v08");

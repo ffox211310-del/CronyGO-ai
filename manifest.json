@@ -1,0 +1,13 @@
+{
+  "name": "CronyGO",
+  "short_name": "CronyGO",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "CronyGOicon_192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "CronyGOicon_512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

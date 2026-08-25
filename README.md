@@ -26,6 +26,7 @@ HTML､CSS､JSのみを使用しているので、Web上で完結します。�
 GithubPagesで動作確認
 <br>Vercelでデプロイ＆正式なURLを発行
 <br>※mainブランチは試験型です。動作確認済み安定版URLを、ProductionブランチからVercelにデプロイしています。
+<br><sub>制作にはAIを使用しています。</sub>
 
 ### STATUS
 
@@ -34,4 +35,5 @@ CodeName
 <br>2026年8月23日v.0.2完成
 <br>2026年8月24日v.0.3完成
 <br>次の日v.0.4完成
+<br>v.0.5 ライセンス
 <br>(ここらへんから更新スピード遅くなるかも)

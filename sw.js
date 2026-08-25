@@ -6,8 +6,8 @@ const urlsToCache = [
   "./style.css",
   "./app.js",
   "./manifest.json",
-  "./assets/CronyGOicon_192.png",
-  "./assets/CronyGOicon_512.png"
+  "./CronyGOicon_192.png",
+  "./CronyGOicon_512.png"
 ];
 
 /* インストール - Solpon方式 */

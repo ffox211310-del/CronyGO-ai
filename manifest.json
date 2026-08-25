@@ -1,7 +1,9 @@
 {
+  "id": "./",
   "name": "CronyGO",
   "short_name": "CronyGO",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
@@ -9,12 +11,14 @@
     {
       "src": "./assets/CronyGOicon.jpg",
       "sizes": "192x192",
-      "type": "image/jpeg"
+      "type": "image/jpeg",
+      "purpose": "any"
     },
     {
       "src": "./assets/CronyGOicon.jpg",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/jpeg",
+      "purpose": "any"
     }
   ]
 }

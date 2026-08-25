@@ -233,3 +233,8 @@ themeOpts.forEach(btn => {
     applyTheme(btn.dataset.theme, true);
   });
 });
+
+// PWA minimal
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}

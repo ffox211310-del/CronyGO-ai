@@ -9,13 +9,13 @@
   "theme_color": "#0a0a0a",
   "icons": [
     {
-      "src": "./assets/CronyGOicon.jpg",
+      "src": "./assets/CronyGOicon.png",
       "sizes": "192x192",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "./assets/CronyGOicon.jpg",
+      "src": "./assets/CronyGOicon.png",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any"

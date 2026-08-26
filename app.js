@@ -1,5 +1,7 @@
 import * as webllm from "@mlc-ai/web-llm";
 
+import { VoiceManager } from "./voice.js"; // ★追加
+
 const MODELS = {
   "0.5B": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
   "1.5B": "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
@@ -12,6 +14,7 @@ const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
 
+let voice = null;
 let engine = null;
 let currentKey = null;
 let isGenerating = false;
@@ -32,6 +35,10 @@ function loadStoredTheme() {
 let messages = [{ role: "system", content: loadStoredPrompt() }];
 
 const chatEl = document.getElementById("chat");
+
+const micBtn = document.getElementById("mic-btn");
+const voicePreview = document.getElementById("voice-preview");
+
 const inputEl = document.getElementById("input");
 const sendEl = document.getElementById("send");
 const statusEl = document.getElementById("status");
@@ -182,10 +189,47 @@ async function sendMessage() {
       chatEl.scrollTop = chatEl.scrollHeight;
     }
     messages.push({ role: "assistant", content: full });
+
+    if (voice && full) {
+      voice.clearBuffer(); // 次の発話のためにバッファをクリア
+      voice.speak(full); // 自動でマイクOFF→喋る→マイクON復帰してくれる
+    }
+
+  
   } catch (e) { assistantDiv.textContent = "生成エラー: " + e.message; }
   finally { isGenerating = false; sendEl.disabled = false; inputEl.focus(); }
 }
 
+// ===== VOICE INIT BLOCK =====
+voice = new VoiceManager({
+  lang: 'ja-JP',
+  onFinal: (text) => {
+    // テキストボックスに自動で乗せて自動送信 (君の仕様そのまま)
+    inputEl.value = text;
+    voicePreview.textContent = '';
+    voice.clearBuffer(); // ★追加
+    sendMessage();
+  },
+  onInterim: (full, interim, finalPart) => {
+    voicePreview.textContent = interim? `聞き取り: ${interim}` : finalPart;
+  },
+  onStatus: (msg, state) => {
+    // statusEl とは別に表示したいなら voicePreview に出す
+    console.log('[Voice]', msg, state);
+  }
+});
+
+micBtn.addEventListener('click', () => {
+  if (voice.isListening) {
+    voice.stop();
+    micBtn.classList.remove('on', 'muted');
+  } else {
+    voice.start().then(ok => {
+      if(ok) micBtn.classList.add('on');
+    });
+  }
+});
+// ===== END VOICE INIT =====
 // 既存イベント
 sendEl.addEventListener("click", sendMessage);
 inputEl.addEventListener("keydown", (e) => {

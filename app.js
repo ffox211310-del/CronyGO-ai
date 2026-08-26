@@ -169,7 +169,7 @@ async function sendMessage() {
   isGenerating = true; sendEl.disabled = true;
   try {
     const chunks = await engine.chat.completions.create({
-      messages, stream: true, temperature: 0.7, max_tokens: 1024
+      messages, stream: true, temperature: 0.7, max_tokens: 5000
     });
     let full = "";
     for await (const chunk of chunks) {

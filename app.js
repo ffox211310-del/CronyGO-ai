@@ -101,37 +101,51 @@ function resetSystemPrompt() {
   promptStatus.textContent = "デフォルトに戻しました。";
 }
 
-async function loadModel(key) {
+async function loadModel(key, isReload = false) {
   const MODEL_ID = MODELS[key];
   if (!MODEL_ID) return;
-  const isFirstPhase =!hasChatted;
+  const isFirstPhase =!hasChatted &&!isReload;
+
   if (engine) {
     if (!isFirstPhase) addMessage("system", `${currentKey} を解放中...`);
     try { await engine.unload(); } catch {}
     engine = null;
   }
+
   dlBtn.disabled = true;
-  dlBtn.textContent = "読込中...";
+  dlBtn.textContent = isReload? "再読込中..." : "読込中...";
   statusEl.className = "loading";
   progressBar.style.opacity = "1";
   progressBar.style.width = "0%";
   progressBar.style.background = "#4FD1C5";
   inputEl.disabled = true;
   sendEl.disabled = true;
-  if (isFirstPhase) showFirstLoadingUI(`${key} 準備中...`);
-  else updateLoadingText("準備中...");
-  if (!isFirstPhase) addMessage("system", `${key} を読み込み開始。`);
+
+  // ★再読込時もローディング画面を強制表示
+  if (isFirstPhase) {
+    showFirstLoadingUI(`${key} 準備中...`);
+  } else if (isReload) {
+    loadingText.textContent = `🔄 ${key} 積み直し中...`;
+    loadingView.classList.add("show");
+    chatEl.classList.add("is-first-loading");
+    updateLoadingText(`🔄 ${key} 積み直し中...`);
+  } else {
+    updateLoadingText("準備中...");
+  }
+
+  if (!isFirstPhase) addMessage("system", isReload? `🔄 ${key} 再読込開始` : `${key} を読み込み開始。`);
+
   try {
     engine = await webllm.CreateMLCEngine(MODEL_ID, {
       initProgressCallback: (p) => {
         const pct = Math.round(p.progress * 100);
-        const txt = `${pct}% ${p.text}`;
+        const txt = isReload? `🔄 積み直し ${pct}% ${p.text}` : `${pct}% ${p.text}`;
         updateLoadingText(txt);
         progressBar.style.width = `${pct}%`;
       }
     });
     currentKey = key;
-    statusEl.textContent = `Ready ${key}`;
+    statusEl.textContent = isReload? `🔄 再起動完了 ${key}` : `Ready ${key}`;
     statusEl.className = "ready";
     progressBar.style.width = "100%";
     setTimeout(() => progressBar.style.opacity = "0", 800);
@@ -141,8 +155,8 @@ async function loadModel(key) {
     inputEl.disabled = false;
     sendEl.disabled = false;
     inputEl.placeholder = `${key}で入力...`;
-    if (isFirstPhase) hideFirstLoadingUI();
-    addMessage("assistant", `${key} 起動完了！`);
+    hideFirstLoadingUI();
+    addMessage("assistant", isReload? `✅ ${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
   } catch (e) {
     console.error(e);
     statusEl.textContent = "エラー";
@@ -150,7 +164,7 @@ async function loadModel(key) {
     progressBar.style.background = "#ff4444";
     dlBtn.textContent = "再試行";
     dlBtn.disabled = false;
-    if (isFirstPhase) hideFirstLoadingUI();
+    hideFirstLoadingUI();
     addMessage("assistant", "エラー: " + e.message);
   }
 }
@@ -177,27 +191,22 @@ async function sendMessage() {
   let abortFlag = false;
   let isKilled = false;
 
-  // ★停止 → 再読込
   killBtn.onclick = async () => {
     if (abortFlag) return;
     abortFlag = true;
     isKilled = true;
-    killBtn.textContent = "■ 停止→再読込中...";
+    killBtn.textContent = "停止→再読込中...";
     killBtn.disabled = true;
 
     try { await engine.interruptGenerate(); } catch {}
-
-    assistantDiv.textContent += "\n\n[停止しました。モデルを再読込します...]";
+    assistantDiv.textContent += "\n\n[停止→モデル積み直し開始]";
 
     const keyToReload = currentKey;
-    try { await engine.unload(); } catch {}
-    engine = null;
-    messages = [{ role: "system", content: loadStoredPrompt() }]; // 会話もリセット
-
+    messages = [{ role: "system", content: loadStoredPrompt() }];
     try { killBtn.remove(); } catch {}
 
-    // ★ここで再読込（キャッシュからなので2-3秒）
-    await loadModel(keyToReload);
+    // ★積み直しが分かるように isReload=true で呼ぶ
+    await loadModel(keyToReload, true);
   };
 
   isGenerating = true; sendEl.disabled = true;
@@ -209,24 +218,18 @@ async function sendMessage() {
     for await (const chunk of chunks) {
       if (abortFlag) break;
       full += chunk.choices[0]?.delta?.content || "";
-
       if (full.length >= MAX_CHARS) {
-        full = full.slice(0, MAX_CHARS) + "\n\n[2000文字制限で停止 → 再読込]";
+        full = full.slice(0, MAX_CHARS) + "\n\n[2000文字制限→自動で積み直し]";
         assistantDiv.textContent = full;
         try { await engine.interruptGenerate(); } catch {}
-        // 2000文字超えでも再読込して次を安定させる
         const keyToReload = currentKey;
-        try { await engine.unload(); } catch {}
-        engine = null;
         messages = [{ role: "system", content: loadStoredPrompt() }];
-        await loadModel(keyToReload);
+        await loadModel(keyToReload, true);
         break;
       }
-
       assistantDiv.textContent = full;
       chatEl.scrollTop = chatEl.scrollHeight;
     }
-
     if (!isKilled) {
       messages.push({ role: "assistant", content: full });
       if (voice && full && isVoiceMode) {
@@ -236,8 +239,7 @@ async function sendMessage() {
     }
   } catch (e) {
     if (!abortFlag) assistantDiv.textContent = "生成エラー: " + e.message;
-  }
-  finally {
+  } finally {
     isGenerating = false;
     sendEl.disabled = false;
     inputEl.readOnly = false;
@@ -245,7 +247,6 @@ async function sendMessage() {
     try { killBtn.remove(); } catch {}
   }
 }
-
 // ===== VOICE INIT BLOCK =====
 voice = new VoiceManager({
   lang: 'ja-JP',

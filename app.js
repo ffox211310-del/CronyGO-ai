@@ -167,7 +167,6 @@ async function sendMessage() {
   inputEl.value = "";
   voicePreview.textContent = '';
 
-  // ★Kill Switch: 回答メッセージの真下に生成
   const assistantDiv = addMessage("assistant", "");
   const killBtn = document.createElement("button");
   killBtn.textContent = "■ 生成を停止";
@@ -176,11 +175,20 @@ async function sendMessage() {
   assistantDiv.after(killBtn);
 
   let abortFlag = false;
-  // ★ここではフラグだけ立てる、エンジンは止めない
-  killBtn.onclick = () => {
+  let isKilled = false;
+
+  killBtn.onclick = async () => {
+    if(abortFlag) return;
     abortFlag = true;
+    isKilled = true;
     killBtn.textContent = "停止中...";
     killBtn.disabled = true;
+    try { await engine.interruptGenerate(); } catch {}
+    try { await engine.resetChat(); } catch {}
+    // ★会話履歴をリセット（システムプロンプトだけ残す）
+    messages = [{ role: "system", content: loadStoredPrompt() }];
+    assistantDiv.textContent += "\n\n[会話をリセットしました]";
+    try { killBtn.remove(); } catch {}
   };
 
   isGenerating = true; sendEl.disabled = true;
@@ -190,19 +198,12 @@ async function sendMessage() {
     });
     let full = "";
     for await (const chunk of chunks) {
-      // ★停止フラグが立ったらここで初めて1回だけエンジンを止める
-      if (abortFlag) {
-        try { await engine.interruptGenerate(); } catch {}
-        full += "\n\n[中断しました]";
-        assistantDiv.textContent = full;
-        break;
-      }
+      if (abortFlag) break;
 
       full += chunk.choices[0]?.delta?.content || "";
 
-      // ★MAX 2000文字制限
-      if (full.length >= 2000) {
-        full = full.slice(0, 2000) + "\n\n[2000文字制限で停止]";
+      if (full.length >= MAX_CHARS) {
+        full = full.slice(0, MAX_CHARS) + "\n\n[2000文字制限で停止]";
         assistantDiv.textContent = full;
         try { await engine.interruptGenerate(); } catch {}
         break;
@@ -211,14 +212,17 @@ async function sendMessage() {
       assistantDiv.textContent = full;
       chatEl.scrollTop = chatEl.scrollHeight;
     }
-    messages.push({ role: "assistant", content: full });
 
-    if (voice && full && isVoiceMode &&!abortFlag) {
-      voice.clearBuffer();
-      voice.speak(full);
+    // killされてなければ履歴に追加、killされてたら追加しない（リセット済みなので）
+    if (!isKilled) {
+      messages.push({ role: "assistant", content: full });
+      if (voice && full && isVoiceMode) {
+        voice.clearBuffer();
+        voice.speak(full);
+      }
     }
+
   } catch (e) {
-    // 中断によるエラーは無視
     if (!abortFlag) assistantDiv.textContent = "生成エラー: " + e.message;
   }
   finally {
@@ -226,8 +230,12 @@ async function sendMessage() {
     sendEl.disabled = false;
     inputEl.readOnly = false;
     inputEl.focus();
-    // ★回答終了時もボタン押した時もここで1回だけ消す
     try { killBtn.remove(); } catch {}
+
+    // ★MAX文字で止まった時もリセットしておくと次が安定する
+    if (!isKilled && assistantDiv.textContent.includes("[2000文字制限で停止]")) {
+      try { await engine.resetChat(); } catch {}
+    }
   }
 }
 

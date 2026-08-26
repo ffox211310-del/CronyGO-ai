@@ -208,9 +208,21 @@ micBtn.addEventListener('click', () => {
   if (voice.isListening) {
     voice.stop();
     micBtn.classList.remove('on', 'muted');
+    inputEl.readOnly = false;
+    inputEl.placeholder = `${currentKey || 'モデル'}で入力...`;
   } else {
+    // キーボードを引っ込める
+    inputEl.blur();
+    inputEl.readOnly = true;
+    inputEl.placeholder = "🎤 聞き取り中...";
+
     voice.start().then(ok => {
       if(ok) micBtn.classList.add('on');
+      else {
+        // 失敗したら元に戻す
+        inputEl.readOnly = false;
+        inputEl.placeholder = `${currentKey || 'モデル'}で入力...`;
+      }
     });
   }
 });

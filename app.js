@@ -234,7 +234,7 @@ micBtn.addEventListener('click', () => {
   } else {
     inputEl.blur();
     inputEl.readOnly = true;
-    inputEl.placeholder = "🎤 聞き取り中...";
+    inputEl.placeholder = "聞き取り中...";
 
     voice.start().then(ok => {
       if(ok) micBtn.classList.add('on');

@@ -13,7 +13,7 @@ const MODELS = {
 const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
-const MAX_CHARS = 2000;
+const MAX_CHARS = 1500;
 
 let voice = null;
 let engine = null;

@@ -19,7 +19,7 @@ let engine = null;
 let currentKey = null;
 let isGenerating = false;
 let hasChatted = false;
-let lastInputWasVoice = false; // ★追加: 声入力かどうか
+let lastInputWasVoice = false;
 
 function loadStoredPrompt() {
   try { return localStorage.getItem(LS_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT; }
@@ -31,6 +31,18 @@ function loadStoredTheme() {
 }
 
 let messages = [{ role: "system", content: loadStoredPrompt() }];
+
+// ★ループ検知追加: 同じ単語の繰り返しだけ見る
+function isSameWordLoop(text, repeat = 4) {
+  // 直近200文字だけ見て軽量化
+  const tail = text.slice(-200);
+  // 1〜10文字の単語が repeat回連続したらループ
+  // 日本語の分かち書き無しでも「おはようおはようおはよう」や「ああああ」も検知できる
+  const regex = new RegExp(`(.{1,10})\\1{${repeat - 1},}`);
+  // ただし1文字の場合は10回以上に厳しくする
+  const singleCharRegex = /(.)\1{9,}/;
+  return regex.test(tail) || singleCharRegex.test(tail);
+}
 
 const chatEl = document.getElementById("chat");
 const micBtn = document.getElementById("mic-btn");
@@ -176,6 +188,14 @@ async function sendMessage() {
       full += chunk.choices[0]?.delta?.content || "";
       assistantDiv.textContent = full;
       chatEl.scrollTop = chatEl.scrollHeight;
+
+      // ★ここで同じ単語ループだけ検知して停止
+      if (isSameWordLoop(full, 4)) {
+        full += "\n\n[同じ単語の繰り返しを検知したため停止しました]";
+        assistantDiv.textContent = full;
+        try { await engine.interruptGenerate(); } catch {}
+        break;
+      }
     }
     messages.push({ role: "assistant", content: full });
 
@@ -212,7 +232,6 @@ micBtn.addEventListener('click', () => {
     inputEl.readOnly = false;
     inputEl.placeholder = `${currentKey || 'モデル'}で入力...`;
   } else {
-    // キーボードを引っ込める
     inputEl.blur();
     inputEl.readOnly = true;
     inputEl.placeholder = "🎤 聞き取り中...";
@@ -220,7 +239,6 @@ micBtn.addEventListener('click', () => {
     voice.start().then(ok => {
       if(ok) micBtn.classList.add('on');
       else {
-        // 失敗したら元に戻す
         inputEl.readOnly = false;
         inputEl.placeholder = `${currentKey || 'モデル'}で入力...`;
       }

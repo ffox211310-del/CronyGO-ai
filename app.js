@@ -183,7 +183,7 @@ async function sendMessage() {
       voice.speak(full);
     }
   } catch (e) { assistantDiv.textContent = "生成エラー: " + e.message; }
-  finally { isGenerating = false; sendEl.disabled = false; inputEl.focus(); }
+  finally { isGenerating = false; sendEl.disabled = false; inputEl.readOnly = false; inputEl.focus(); }
 }
 
 // ===== VOICE INIT BLOCK =====

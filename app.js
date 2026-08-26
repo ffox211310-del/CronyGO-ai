@@ -1,6 +1,5 @@
 import * as webllm from "@mlc-ai/web-llm";
-
-import { VoiceManager } from "./voice.js"; // ★追加
+import { VoiceManager } from "./voice.js";
 
 const MODELS = {
   "0.5B": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
@@ -19,26 +18,22 @@ let engine = null;
 let currentKey = null;
 let isGenerating = false;
 let hasChatted = false;
+let lastInputWasVoice = false; // ★追加: 声入力かどうか
 
-// ローカルストレージから復元
 function loadStoredPrompt() {
-  try {
-    return localStorage.getItem(LS_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT;
-  } catch { return DEFAULT_SYSTEM_PROMPT; }
+  try { return localStorage.getItem(LS_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT; }
+  catch { return DEFAULT_SYSTEM_PROMPT; }
 }
 function loadStoredTheme() {
-  try {
-    return localStorage.getItem(LS_THEME_KEY) || "dark";
-  } catch { return "dark"; }
+  try { return localStorage.getItem(LS_THEME_KEY) || "dark"; }
+  catch { return "dark"; }
 }
 
 let messages = [{ role: "system", content: loadStoredPrompt() }];
 
 const chatEl = document.getElementById("chat");
-
 const micBtn = document.getElementById("mic-btn");
 const voicePreview = document.getElementById("voice-preview");
-
 const inputEl = document.getElementById("input");
 const sendEl = document.getElementById("send");
 const statusEl = document.getElementById("status");
@@ -48,7 +43,6 @@ const dlBtn = document.getElementById("download-btn");
 const loadingView = document.getElementById("loading-view");
 const loadingText = document.getElementById("loading-text");
 
-// 設定UI
 const settingsBtn = document.getElementById("settings-btn");
 const settingsPanel = document.getElementById("settings-panel");
 const settingsOverlay = document.getElementById("settings-overlay");
@@ -59,7 +53,6 @@ const resetPromptBtn = document.getElementById("reset-prompt-btn");
 const promptStatus = document.getElementById("prompt-status");
 const themeOpts = document.querySelectorAll(".theme-opt");
 
-// 初期値反映
 systemPromptInput.value = loadStoredPrompt();
 applyTheme(loadStoredTheme(), false);
 
@@ -86,20 +79,12 @@ function updateLoadingText(text) {
   statusEl.textContent = text;
   if (loadingView.classList.contains("show")) loadingText.textContent = text;
 }
-
 function applyTheme(theme, save = true) {
   if (theme === "light") document.body.classList.add("light");
   else document.body.classList.remove("light");
-  
-  themeOpts.forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.theme === theme);
-  });
-
-  if (save) {
-    try { localStorage.setItem(LS_THEME_KEY, theme); } catch {}
-  }
+  themeOpts.forEach(btn => { btn.classList.toggle("active", btn.dataset.theme === theme); });
+  if (save) { try { localStorage.setItem(LS_THEME_KEY, theme); } catch {} }
 }
-
 function saveSystemPrompt() {
   const newPrompt = systemPromptInput.value.trim() || DEFAULT_SYSTEM_PROMPT;
   try { localStorage.setItem(LS_PROMPT_KEY, newPrompt); } catch {}
@@ -108,7 +93,6 @@ function saveSystemPrompt() {
   promptStatus.style.color = "#4FD1C5";
   setTimeout(() => { promptStatus.textContent = ""; }, 2500);
 }
-
 function resetSystemPrompt() {
   systemPromptInput.value = DEFAULT_SYSTEM_PROMPT;
   saveSystemPrompt();
@@ -118,7 +102,7 @@ function resetSystemPrompt() {
 async function loadModel(key) {
   const MODEL_ID = MODELS[key];
   if (!MODEL_ID) return;
-  const isFirstPhase = !hasChatted;
+  const isFirstPhase =!hasChatted;
   if (engine) {
     if (!isFirstPhase) addMessage("system", `${currentKey} を解放中...`);
     try { await engine.unload(); } catch {}
@@ -171,11 +155,15 @@ async function loadModel(key) {
 
 async function sendMessage() {
   const text = inputEl.value.trim();
-  if (!text || isGenerating || !engine) return;
+  if (!text || isGenerating ||!engine) return;
+  const isVoiceMode = lastInputWasVoice;
+  lastInputWasVoice = false;
+
   if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
   addMessage("user", text);
   messages.push({ role: "user", content: text });
   inputEl.value = "";
+  voicePreview.textContent = '';
   const assistantDiv = addMessage("assistant", "");
   isGenerating = true; sendEl.disabled = true;
   try {
@@ -190,12 +178,10 @@ async function sendMessage() {
     }
     messages.push({ role: "assistant", content: full });
 
-    if (voice && full) {
-      voice.clearBuffer(); // 次の発話のためにバッファをクリア
-      voice.speak(full); // 自動でマイクOFF→喋る→マイクON復帰してくれる
+    if (voice && full && isVoiceMode) {
+      voice.clearBuffer();
+      voice.speak(full);
     }
-
-  
   } catch (e) { assistantDiv.textContent = "生成エラー: " + e.message; }
   finally { isGenerating = false; sendEl.disabled = false; inputEl.focus(); }
 }
@@ -204,17 +190,16 @@ async function sendMessage() {
 voice = new VoiceManager({
   lang: 'ja-JP',
   onFinal: (text) => {
-    // テキストボックスに自動で乗せて自動送信 (君の仕様そのまま)
     inputEl.value = text;
     voicePreview.textContent = '';
-    voice.clearBuffer(); // ★追加
+    voice.clearBuffer();
+    lastInputWasVoice = true;
     sendMessage();
   },
   onInterim: (full, interim, finalPart) => {
     voicePreview.textContent = interim? `聞き取り: ${interim}` : finalPart;
   },
   onStatus: (msg, state) => {
-    // statusEl とは別に表示したいなら voicePreview に出す
     console.log('[Voice]', msg, state);
   }
 });
@@ -230,10 +215,17 @@ micBtn.addEventListener('click', () => {
   }
 });
 // ===== END VOICE INIT =====
-// 既存イベント
-sendEl.addEventListener("click", sendMessage);
+
+sendEl.addEventListener("click", () => {
+  lastInputWasVoice = false;
+  sendMessage();
+});
 inputEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  if (e.key === "Enter" &&!e.shiftKey) {
+    e.preventDefault();
+    lastInputWasVoice = false;
+    sendMessage();
+  }
 });
 selectEl.addEventListener("change", () => {
   const key = selectEl.value;
@@ -256,7 +248,6 @@ dlBtn.addEventListener("click", () => {
 });
 statusEl.textContent = "未DL";
 
-// 設定パネル
 function openSettings() {
   settingsPanel.classList.add("show");
   settingsOverlay.classList.add("show");
@@ -268,17 +259,12 @@ function closeSettings() {
 settingsBtn.addEventListener("click", openSettings);
 settingsClose.addEventListener("click", closeSettings);
 settingsOverlay.addEventListener("click", closeSettings);
-
 savePromptBtn.addEventListener("click", saveSystemPrompt);
 resetPromptBtn.addEventListener("click", resetSystemPrompt);
-
 themeOpts.forEach(btn => {
-  btn.addEventListener("click", () => {
-    applyTheme(btn.dataset.theme, true);
-  });
+  btn.addEventListener("click", () => { applyTheme(btn.dataset.theme, true); });
 });
 
-//PWA用
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
     console.log('[PWA] SW registered', reg.scope);

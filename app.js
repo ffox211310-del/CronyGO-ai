@@ -13,6 +13,7 @@ const MODELS = {
 const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
+const MAX_CHARS = 2000; // ★MAX文字制限
 
 let voice = null;
 let engine = null;
@@ -31,18 +32,6 @@ function loadStoredTheme() {
 }
 
 let messages = [{ role: "system", content: loadStoredPrompt() }];
-
-// ★ループ検知追加: 同じ単語の繰り返しだけ見る
-function isSameWordLoop(text, repeat = 4) {
-  // 直近200文字だけ見て軽量化
-  const tail = text.slice(-200);
-  // 1〜10文字の単語が repeat回連続したらループ
-  // 日本語の分かち書き無しでも「おはようおはようおはよう」や「ああああ」も検知できる
-  const regex = new RegExp(`(.{1,10})\\1{${repeat - 1},}`);
-  // ただし1文字の場合は10回以上に厳しくする
-  const singleCharRegex = /(.)\1{9,}/;
-  return regex.test(tail) || singleCharRegex.test(tail);
-}
 
 const chatEl = document.getElementById("chat");
 const micBtn = document.getElementById("mic-btn");
@@ -177,7 +166,24 @@ async function sendMessage() {
   messages.push({ role: "user", content: text });
   inputEl.value = "";
   voicePreview.textContent = '';
+
+  // ★Kill Switch用意: 回答メッセージの真下に
   const assistantDiv = addMessage("assistant", "");
+  const killBtn = document.createElement("button");
+  killBtn.textContent = "■ 生成を停止";
+  killBtn.className = "kill-switch";
+  killBtn.style.cssText = "margin:6px 0 10px 0;background:#ff3b3b;color:#fff;border:0;border-radius:18px;padding:6px 14px;font-size:12px;cursor:pointer;align-self:flex-start;";
+  assistantDiv.after(killBtn);
+  chatEl.scrollTop = chatEl.scrollHeight;
+
+  let abortFlag = false;
+  killBtn.onclick = async () => {
+    abortFlag = true;
+    killBtn.textContent = "停止中...";
+    try { await engine.interruptGenerate(); } catch {}
+    killBtn.remove();
+  };
+
   isGenerating = true; sendEl.disabled = true;
   try {
     const chunks = await engine.chat.completions.create({
@@ -185,26 +191,37 @@ async function sendMessage() {
     });
     let full = "";
     for await (const chunk of chunks) {
+      if (abortFlag) break;
       full += chunk.choices[0]?.delta?.content || "";
-      assistantDiv.textContent = full;
-      chatEl.scrollTop = chatEl.scrollHeight;
 
-      // ★ここで同じ単語ループだけ検知して停止
-      if (isSameWordLoop(full, 4)) {
-        full += "\n\n[同じ単語の繰り返しを検知したため停止しました]";
+      // ★MAX文字制限 2000
+      if (full.length >= MAX_CHARS) {
+        full = full.slice(0, MAX_CHARS) + "\n\n[2000文字制限で停止]";
         assistantDiv.textContent = full;
         try { await engine.interruptGenerate(); } catch {}
         break;
       }
+
+      assistantDiv.textContent = full;
+      chatEl.scrollTop = chatEl.scrollHeight;
     }
     messages.push({ role: "assistant", content: full });
 
-    if (voice && full && isVoiceMode) {
+    if (voice && full && isVoiceMode &&!abortFlag) {
       voice.clearBuffer();
       voice.speak(full);
     }
-  } catch (e) { assistantDiv.textContent = "生成エラー: " + e.message; }
-  finally { isGenerating = false; sendEl.disabled = false; inputEl.readOnly = false; inputEl.focus(); }
+  } catch (e) {
+    if(!abortFlag) assistantDiv.textContent = "生成エラー: " + e.message;
+  }
+  finally {
+    isGenerating = false;
+    sendEl.disabled = false;
+    inputEl.readOnly = false;
+    inputEl.focus();
+    // ★回答終了時もボタンを消す
+    try { killBtn.remove(); } catch {}
+  }
 }
 
 // ===== VOICE INIT BLOCK =====
@@ -234,7 +251,7 @@ micBtn.addEventListener('click', () => {
   } else {
     inputEl.blur();
     inputEl.readOnly = true;
-    inputEl.placeholder = "聞き取り中...";
+    inputEl.placeholder = "🎤 聞き取り中...";
 
     voice.start().then(ok => {
       if(ok) micBtn.classList.add('on');

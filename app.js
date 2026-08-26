@@ -125,27 +125,27 @@ async function loadModel(key, isReload = false) {
   if (isFirstPhase) {
     showFirstLoadingUI(`${key} 準備中...`);
   } else if (isReload) {
-    loadingText.textContent = `🔄 ${key} 積み直し中...`;
+    loadingText.textContent = `↪ ${key} 積み直し中...`;
     loadingView.classList.add("show");
     chatEl.classList.add("is-first-loading");
-    updateLoadingText(`🔄 ${key} 積み直し中...`);
+    updateLoadingText(`↪ ${key} 積み直し中...`);
   } else {
     updateLoadingText("準備中...");
   }
 
-  if (!isFirstPhase) addMessage("system", isReload? `🔄 ${key} 再読込開始` : `${key} を読み込み開始。`);
+  if (!isFirstPhase) addMessage("system", isReload? `↪ ${key} 再読込開始` : `${key} を読み込み開始。`);
 
   try {
     engine = await webllm.CreateMLCEngine(MODEL_ID, {
       initProgressCallback: (p) => {
         const pct = Math.round(p.progress * 100);
-        const txt = isReload? `🔄 積み直し ${pct}% ${p.text}` : `${pct}% ${p.text}`;
+        const txt = isReload? `↪ 積み直し ${pct}% ${p.text}` : `${pct}% ${p.text}`;
         updateLoadingText(txt);
         progressBar.style.width = `${pct}%`;
       }
     });
     currentKey = key;
-    statusEl.textContent = isReload? `🔄 再起動完了 ${key}` : `Ready ${key}`;
+    statusEl.textContent = isReload? ` 再起動完了 ${key}` : `Ready ${key}`;
     statusEl.className = "ready";
     progressBar.style.width = "100%";
     setTimeout(() => progressBar.style.opacity = "0", 800);
@@ -156,7 +156,7 @@ async function loadModel(key, isReload = false) {
     sendEl.disabled = false;
     inputEl.placeholder = `${key}で入力...`;
     hideFirstLoadingUI();
-    addMessage("assistant", isReload? `✅ ${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
+    addMessage("assistant", isReload? `〇 ${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
   } catch (e) {
     console.error(e);
     statusEl.textContent = "エラー";

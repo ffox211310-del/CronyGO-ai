@@ -108,7 +108,7 @@ header h1 {
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: all .15s;
+  transition: all 0.15s;
 }
 #download-btn:active { transform: scale(0.96); }
 #download-btn:disabled { opacity:.35; cursor: not-allowed; }
@@ -118,7 +118,6 @@ header h1 {
   border: 1px solid var(--accent);
 }
 
-/* ステータスは ... で切る */
 #status {
   font-size: 11px;
   color: var(--text-sub);
@@ -139,7 +138,6 @@ header h1 {
 #progress-wrap { height: 3px; background: var(--border); flex-shrink: 0; }
 #progress-bar { height: 100%; width: 0%; background: var(--accent); transition: width .2s; }
 
-/* ===== 以下は変更なし ===== */
 #chat {
   flex: 1;
   overflow-y: auto;
@@ -218,15 +216,21 @@ body.light #loading-icon-light { display: block; }
 #chat.is-first-loading .msg { display: none; }
 
 #composer {
-  padding: 12px;
+  padding: 10px 12px;
   background: var(--bg);
   border-top: 1px solid var(--border);
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-shrink: 0;
+  min-width: 0;
+}
+#composer > button {
+  flex-shrink: 0;
 }
 #input {
   flex: 1;
+  min-width: 0;
   border: 1px solid var(--border-light);
   border-radius: 999px;
   padding: 10px 16px;
@@ -238,15 +242,15 @@ body.light #loading-icon-light { display: block; }
 #input::placeholder { color: var(--text-sub); }
 #input:focus { border-color: var(--accent); }
 
-#send, #settings-btn {
+#send, #settings-btn, #mic-btn {
   width: 40px; height: 40px;
   border-radius: 50%;
   border: 0;
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform .12s, opacity .12s;
   flex-shrink: 0;
+  transition: transform 0.12s, opacity 0.12s, background 0.15s, border-color 0.15s;
 }
 #send { background: var(--accent); color: #000; }
 #send:disabled { opacity:.4; }
@@ -363,10 +367,33 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   color: var(--text);
   font-size: 12px;
   cursor: pointer;
-  transition: all .15s;
+  transition: all 0.15s;
 }
 .theme-opt.active {
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 600;
+}
+
+/* === Voice === */
+#mic-btn {
+  background: var(--bg-input);
+  color: var(--text-sub);
+  border: 1px solid var(--border-light);
+}
+#mic-btn.on {
+  background: #ef4444; border-color: #ef4444; color: #fff;
+  animation: pulse 1.2s infinite;
+}
+#mic-btn.muted { opacity:.5; }
+#mic-btn.speak { background: #8b5cf6; border-color: #8b5cf6; color: #fff; }
+@keyframes pulse {
+  0%{ box-shadow: 0 0 0 0 rgba(239,68,68,.4); }
+  70%{ box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+  100%{ box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
+
+@media (max-width: 380px) {
+  #composer { gap: 6px; padding: 10px 8px; }
+  #mic-btn, #send, #settings-btn { width: 36px; height: 36px; }
 }

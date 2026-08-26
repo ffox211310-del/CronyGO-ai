@@ -167,21 +167,20 @@ async function sendMessage() {
   inputEl.value = "";
   voicePreview.textContent = '';
 
-  // ★Kill Switch用意: 回答メッセージの真下に
+  // ★Kill Switch: 回答メッセージの真下に生成
   const assistantDiv = addMessage("assistant", "");
   const killBtn = document.createElement("button");
   killBtn.textContent = "■ 生成を停止";
   killBtn.className = "kill-switch";
   killBtn.style.cssText = "margin:6px 0 10px 0;background:#ff3b3b;color:#fff;border:0;border-radius:18px;padding:6px 14px;font-size:12px;cursor:pointer;align-self:flex-start;";
   assistantDiv.after(killBtn);
-  chatEl.scrollTop = chatEl.scrollHeight;
 
   let abortFlag = false;
-  killBtn.onclick = async () => {
+  // ★ここではフラグだけ立てる、エンジンは止めない
+  killBtn.onclick = () => {
     abortFlag = true;
     killBtn.textContent = "停止中...";
-    try { await engine.interruptGenerate(); } catch {}
-    killBtn.remove();
+    killBtn.disabled = true;
   };
 
   isGenerating = true; sendEl.disabled = true;
@@ -191,12 +190,19 @@ async function sendMessage() {
     });
     let full = "";
     for await (const chunk of chunks) {
-      if (abortFlag) break;
+      // ★停止フラグが立ったらここで初めて1回だけエンジンを止める
+      if (abortFlag) {
+        try { await engine.interruptGenerate(); } catch {}
+        full += "\n\n[中断しました]";
+        assistantDiv.textContent = full;
+        break;
+      }
+
       full += chunk.choices[0]?.delta?.content || "";
 
-      // ★MAX文字制限 2000
-      if (full.length >= MAX_CHARS) {
-        full = full.slice(0, MAX_CHARS) + "\n\n[2000文字制限で停止]";
+      // ★MAX 2000文字制限
+      if (full.length >= 2000) {
+        full = full.slice(0, 2000) + "\n\n[2000文字制限で停止]";
         assistantDiv.textContent = full;
         try { await engine.interruptGenerate(); } catch {}
         break;
@@ -212,14 +218,15 @@ async function sendMessage() {
       voice.speak(full);
     }
   } catch (e) {
-    if(!abortFlag) assistantDiv.textContent = "生成エラー: " + e.message;
+    // 中断によるエラーは無視
+    if (!abortFlag) assistantDiv.textContent = "生成エラー: " + e.message;
   }
   finally {
     isGenerating = false;
     sendEl.disabled = false;
     inputEl.readOnly = false;
     inputEl.focus();
-    // ★回答終了時もボタンを消す
+    // ★回答終了時もボタン押した時もここで1回だけ消す
     try { killBtn.remove(); } catch {}
   }
 }

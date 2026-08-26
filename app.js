@@ -7,13 +7,13 @@ const MODELS = {
   "3B": "Qwen2.5-3B-Instruct-q4f16_1-MLC",
   "7B": "Qwen2.5-7B-Instruct-q4f16_1-MLC",
   "14B": "Qwen2.5-14B-Instruct-q4f16_1-MLC",
-"3-0.6B": "Qwen3-0.6B-q4f16_1-MLC",
+  "3-0.6B": "Qwen3-0.6B-q4f16_1-MLC",
 };
 
 const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
-const MAX_CHARS = 2000; // ★MAX文字制限
+const MAX_CHARS = 2000;
 
 let voice = null;
 let engine = null;
@@ -104,7 +104,7 @@ function resetSystemPrompt() {
 async function loadModel(key, isReload = false) {
   const MODEL_ID = MODELS[key];
   if (!MODEL_ID) return;
-  const isFirstPhase =!hasChatted &&!isReload;
+  const isFirstPhase = !hasChatted && !isReload;
 
   if (engine) {
     if (!isFirstPhase) addMessage("system", `${currentKey} を解放中...`);
@@ -113,7 +113,7 @@ async function loadModel(key, isReload = false) {
   }
 
   dlBtn.disabled = true;
-  dlBtn.textContent = isReload? "再読込中..." : "読込中...";
+  dlBtn.textContent = isReload ? "再読込中..." : "読込中...";
   statusEl.className = "loading";
   progressBar.style.opacity = "1";
   progressBar.style.width = "0%";
@@ -121,7 +121,6 @@ async function loadModel(key, isReload = false) {
   inputEl.disabled = true;
   sendEl.disabled = true;
 
-  // ★再読込時もローディング画面を強制表示
   if (isFirstPhase) {
     showFirstLoadingUI(`${key} 準備中...`);
   } else if (isReload) {
@@ -133,19 +132,19 @@ async function loadModel(key, isReload = false) {
     updateLoadingText("準備中...");
   }
 
-  if (!isFirstPhase) addMessage("system", isReload? `${key} 再読込開始` : `${key} を読み込み開始。`);
+  if (!isFirstPhase) addMessage("system", isReload ? `${key} 再読込開始` : `${key} を読み込み開始。`);
 
   try {
     engine = await webllm.CreateMLCEngine(MODEL_ID, {
       initProgressCallback: (p) => {
         const pct = Math.round(p.progress * 100);
-        const txt = isReload? `積み直し ${pct}% ${p.text}` : `${pct}% ${p.text}`;
+        const txt = isReload ? `積み直し ${pct}% ${p.text}` : `${pct}% ${p.text}`;
         updateLoadingText(txt);
         progressBar.style.width = `${pct}%`;
       }
     });
     currentKey = key;
-    statusEl.textContent = isReload? `再起動完了 ${key}` : `Ready ${key}`;
+    statusEl.textContent = isReload ? `再起動完了 ${key}` : `Ready ${key}`;
     statusEl.className = "ready";
     progressBar.style.width = "100%";
     setTimeout(() => progressBar.style.opacity = "0", 800);
@@ -156,7 +155,7 @@ async function loadModel(key, isReload = false) {
     sendEl.disabled = false;
     inputEl.placeholder = `${key}で入力...`;
     hideFirstLoadingUI();
-    addMessage("assistant", isReload? `${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
+    addMessage("assistant", isReload ? `${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
   } catch (e) {
     console.error(e);
     statusEl.textContent = "エラー";
@@ -169,9 +168,9 @@ async function loadModel(key, isReload = false) {
   }
 }
 
-async function sendMessage() {
-  const text = inputEl.value.trim();
-  if (!text || isGenerating ||!engine) return;
+async function sendMessageWithText(forcedText) {
+  const text = (forcedText || inputEl.value).trim();
+  if (!text || isGenerating || !engine) return;
   const isVoiceMode = lastInputWasVoice;
   lastInputWasVoice = false;
 
@@ -197,15 +196,11 @@ async function sendMessage() {
     isKilled = true;
     killBtn.textContent = "停止→再読込中...";
     killBtn.disabled = true;
-
     try { await engine.interruptGenerate(); } catch {}
     assistantDiv.textContent += "\n\n[停止→モデル積み直し開始]";
-
     const keyToReload = currentKey;
     messages = [{ role: "system", content: loadStoredPrompt() }];
     try { killBtn.remove(); } catch {}
-
-    // ★積み直しが分かるように isReload=true で呼ぶ
     await loadModel(keyToReload, true);
   };
 
@@ -247,18 +242,31 @@ async function sendMessage() {
     try { killBtn.remove(); } catch {}
   }
 }
+
+async function sendMessage() {
+  return sendMessageWithText();
+}
+
 // ===== VOICE INIT BLOCK =====
 voice = new VoiceManager({
   lang: 'ja-JP',
+  autoSendDelay: 1300,
   onFinal: (text) => {
     inputEl.value = text;
-    voicePreview.textContent = '';
-    voice.clearBuffer();
-    lastInputWasVoice = true;
-    sendMessage();
+    voicePreview.textContent = text;
   },
   onInterim: (full, interim, finalPart) => {
-    voicePreview.textContent = interim? `聞き取り: ${interim}` : finalPart;
+    inputEl.value = full;
+    voicePreview.textContent = interim ? `聞き取り: ${interim}` : finalPart;
+  },
+  onAutoSend: (text) => {
+    const t = text.trim();
+    if (!t) return;
+    console.log('[AutoSend]', t);
+    voicePreview.textContent = '';
+    lastInputWasVoice = true;
+    sendMessageWithText(t);
+    voice.clearBuffer();
   },
   onStatus: (msg, state) => {
     console.log('[Voice]', msg, state);
@@ -274,8 +282,7 @@ micBtn.addEventListener('click', () => {
   } else {
     inputEl.blur();
     inputEl.readOnly = true;
-    inputEl.placeholder = "🎤 聞き取り中...";
-
+    inputEl.placeholder = "聞き取り中...";
     voice.start().then(ok => {
       if(ok) micBtn.classList.add('on');
       else {
@@ -292,7 +299,7 @@ sendEl.addEventListener("click", () => {
   sendMessage();
 });
 inputEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" &&!e.shiftKey) {
+  if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     lastInputWasVoice = false;
     sendMessage();

@@ -1,13 +1,16 @@
-const CACHE_NAME = "cronygo-v51";
+const CACHE_NAME = "cronygo-v55";
 
-// ★app.jsとindex.htmlとstyle.cssはここに入れないのがコツ
 const urlsToCache = [
   "./",
+  "./index.html",
+  "./style.css",
+  "./app.js",
   "./manifest.json",
   "./CronyGOicon_192.png",
   "./CronyGOicon_512.png"
 ];
 
+/* インストール - Solpon方式 */
 self.addEventListener("install", e => {
   self.skipWaiting();
   e.waitUntil(
@@ -17,6 +20,7 @@ self.addEventListener("install", e => {
   );
 });
 
+/* 有効化 - 古いキャッシュ削除 */
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys().then(keys => {
@@ -27,12 +31,14 @@ self.addEventListener("activate", e => {
           }
         })
       );
-    }).then(() => self.clients.claim()) // ★中に入れた
+    })
   );
+  self.clients.claim();
 });
 
+/* 通信 - ネットワーク優先、失敗時キャッシュ */
 self.addEventListener("fetch", e => {
-  // AIモデルは触らない
+  // AIモデルはキャッシュしない
   if(
     e.request.url.includes("huggingface") ||
     e.request.url.includes("mlc-ai") ||
@@ -41,31 +47,17 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // ★開発中の3ファイルは常にネットワーク優先 + キャッシュを汚さない
-  const isDevFile = e.request.url.includes("app.js") || 
-                    e.request.url.includes("index.html") || 
-                    e.request.url.includes("style.css") ||
-                    e.request.url.includes("voice.js");
-
-  if (isDevFile) {
-    e.respondWith(
-      fetch(e.request, { cache: "no-store" }) // ★ブラウザキャッシュ無視
-        .then(response => {
-          return response;
-        })
-        .catch(() => caches.match(e.request))
-    );
-    return;
-  }
-
-  // アイコンとかはキャッシュ優先でOK
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      return cached || fetch(e.request).then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-        return response;
+    fetch(e.request)
+    .then(response => {
+      const responseClone = response.clone();
+      caches.open(CACHE_NAME).then(cache => {
+        cache.put(e.request, responseClone);
       });
+      return response;
+    })
+    .catch(() => {
+      return caches.match(e.request);
     })
   );
 });

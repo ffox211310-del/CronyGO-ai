@@ -16,7 +16,6 @@ export class VoiceManager {
     this.lastFinalChunk = '';
     this._autoSendTimer = null;
 
-    // ★文単位ストリーミング用キュー
     this._speakQueue = [];
     this._currentUtterance = null;
     this._isSpeakingQueue = false;
@@ -43,11 +42,9 @@ export class VoiceManager {
     rec.lang = this.lang;
     rec.continuous = true;
     rec.interimResults = true;
-
     rec.onstart = () => {
       if (!this.isSpeaking) this.onStatus('聞いています... (永遠モード)', 'hearing');
     };
-
     rec.onresult = (event) => {
       if (this.isSpeaking) return;
       let fullFinal = '';
@@ -76,7 +73,6 @@ export class VoiceManager {
         this.onInterim(fullFinal, '', fullFinal);
       }
     };
-
     rec.onend = () => {
       if (this.isSpeaking) return;
       if (this.isListening) {
@@ -90,7 +86,6 @@ export class VoiceManager {
         this.onStatus('停止中', 'idle');
       }
     };
-
     rec.onerror = (e) => {
       console.error('[Voice]', e);
       if (e.error === 'not-allowed') {
@@ -105,7 +100,6 @@ export class VoiceManager {
         }, 800);
       }
     };
-
     this.recognition = rec;
     return rec;
   }
@@ -146,17 +140,21 @@ export class VoiceManager {
     this.onStatus('停止中', 'idle');
   }
 
-  // 一括読み上げはキュー経由に統一
   speak(text, opts = {}) {
     if (!text) return;
-    this.clearQueue(false);
+    // 完全リセットしてから喋る
+    this._speakQueue = [];
+    this._currentUtterance = null;
+    window.speechSynthesis.cancel();
+    this._isSpeakingQueue = false;
+    this.isSpeaking = false;
     this.enqueueSpeak(text, opts);
   }
 
-  // ★文単位で積む
   enqueueSpeak(text, opts = {}) {
     const t = text.trim();
     if (!t) return;
+    console.log('[TTS enqueue]', t);
     this._speakQueue.push({ text: t, opts });
     if (!this._isSpeakingQueue) {
       this.wasListeningBeforeSpeak = this.isListening;
@@ -169,17 +167,18 @@ export class VoiceManager {
         this.isSpeaking = true;
         this._isSpeakingQueue = true;
       }
-      this.onStatus('AIが話しています... マイク一時OFF', 'speaking');
+      this.onStatus('AIが話しています...', 'speaking');
       this._playNext();
     }
   }
 
   _playNext() {
     if (this._speakQueue.length === 0) {
+      console.log('[TTS] queue empty -> done');
       this._isSpeakingQueue = false;
       this.isSpeaking = false;
       this._currentUtterance = null;
-      window.speechSynthesis.cancel();
+      // ★ここでcancel()しない。最後の発話が切れる原因だった
       if (this.wasListeningBeforeSpeak) {
         this.isListening = true;
         this.wasListeningBeforeSpeak = false;
@@ -194,36 +193,61 @@ export class VoiceManager {
       }
       return;
     }
+
     const { text, opts } = this._speakQueue.shift();
-    window.speechSynthesis.cancel();
+    console.log('[TTS play]', text);
+    // ★直前のcancel()を削除。Chromeで直後のspeakが無効化されるバグ回避
     const uttr = new SpeechSynthesisUtterance(text);
     uttr.lang = opts.lang || this.lang;
     uttr.rate = opts.rate || 1.1;
     uttr.pitch = opts.pitch || 1;
+
     const voices = window.speechSynthesis.getVoices();
-    const jaVoice = voices.find(v => v.lang.startsWith('ja')) || voices[0];
-    if (jaVoice) uttr.voice = jaVoice;
+    // voicesがまだ空ならデフォルトで喋らせる
+    if (voices.length > 0) {
+      const jaVoice = voices.find(v => v.lang.startsWith('ja')) || voices[0];
+      if (jaVoice) uttr.voice = jaVoice;
+    }
+
     this._currentUtterance = uttr;
-    uttr.onstart = () => { this.isSpeaking = true; this._isSpeakingQueue = true; };
-    uttr.onend = () => { this._currentUtterance = null; this._playNext(); if (opts.onEnd) opts.onEnd(); };
-    uttr.onerror = (e) => { console.error('[TTS error]', e); this._currentUtterance = null; this._playNext(); if (opts.onError) opts.onError(e); };
+    uttr.onstart = () => {
+      console.log('[TTS start]', text);
+      this.isSpeaking = true;
+      this._isSpeakingQueue = true;
+    };
+    uttr.onend = () => {
+      console.log('[TTS end]', text);
+      this._currentUtterance = null;
+      // 次を少し待ってから再生 (cancel競合回避)
+      setTimeout(() => this._playNext(), 50);
+      if (opts.onEnd) opts.onEnd();
+    };
+    uttr.onerror = (e) => {
+      console.error('[TTS error]', e, text);
+      this._currentUtterance = null;
+      setTimeout(() => this._playNext(), 100);
+      if (opts.onError) opts.onError(e);
+    };
     window.speechSynthesis.speak(uttr);
   }
 
   cancelSpeak() { this.clearQueue(true); }
 
   clearQueue(restartMic = true) {
+    console.log('[TTS clearQueue]', restartMic);
     this._speakQueue = [];
     this._currentUtterance = null;
     window.speechSynthesis.cancel();
     this._isSpeakingQueue = false;
-    if (restartMic) {
-      this.isSpeaking = false;
-      if (this.wasListeningBeforeSpeak) {
-        this.isListening = true;
-        this.wasListeningBeforeSpeak = false;
-        setTimeout(() => { if (this.isListening && this.recognition) { try { this.recognition.start(); } catch {} } }, 300);
-      }
+    this.isSpeaking = false;
+    if (restartMic && this.wasListeningBeforeSpeak) {
+      this.isListening = true;
+      this.wasListeningBeforeSpeak = false;
+      setTimeout(() => {
+        if (this.isListening && this.recognition) {
+          try { this.recognition.start(); } catch {}
+        }
+      }, 300);
     }
   }
 

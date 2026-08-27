@@ -24,6 +24,13 @@ export class VoiceManager {
     this.isSupported = !!this.SpeechRecognition;
   }
 
+  _dbg(msg) {
+    try {
+      if (window.__cronyDbg) window.__cronyDbg(msg);
+      console.log(msg);
+    } catch {}
+  }
+
   removeConsecutiveDuplicates(text) {
     if (!text || text.length < 2) return text;
     let t = text.trim();
@@ -36,6 +43,7 @@ export class VoiceManager {
   init() {
     if (!this.isSupported) {
       this.onStatus('このブラウザは音声認識非対応 (Chrome/Edge推奨)', 'idle');
+      this._dbg('[Voice] not supported');
       return null;
     }
     const rec = new this.SpeechRecognition();
@@ -43,6 +51,7 @@ export class VoiceManager {
     rec.continuous = true;
     rec.interimResults = true;
     rec.onstart = () => {
+      this._dbg('[Voice] onstart hearing');
       if (!this.isSpeaking) this.onStatus('聞いています... (永遠モード)', 'hearing');
     };
     rec.onresult = (event) => {
@@ -74,12 +83,13 @@ export class VoiceManager {
       }
     };
     rec.onend = () => {
+      this._dbg(`[Voice] onend isSpeaking=${this.isSpeaking} isListening=${this.isListening}`);
       if (this.isSpeaking) return;
       if (this.isListening) {
         this.onStatus('再接続中...', 'on');
         setTimeout(() => {
           if (this.isListening && !this.isSpeaking) {
-            try { rec.start(); } catch {}
+            try { rec.start(); } catch (e) { this._dbg('[Voice] restart fail '+e.message); }
           }
         }, this.autoRestartDelay);
       } else {
@@ -87,6 +97,7 @@ export class VoiceManager {
       }
     };
     rec.onerror = (e) => {
+      this._dbg(`[Voice] onerror ${e.error} ${e.message||''}`);
       console.error('[Voice]', e);
       if (e.error === 'not-allowed') {
         this.isListening = false;
@@ -95,7 +106,7 @@ export class VoiceManager {
         this.onStatus(`再接続中... (${e.error})`, 'on');
         setTimeout(() => {
           if (this.isListening && !this.isSpeaking) {
-            try { rec.start(); } catch {}
+            try { rec.start(); } catch (e2) { this._dbg('[Voice] restart fail2 '+e2.message); }
           }
         }, 800);
       }
@@ -105,6 +116,7 @@ export class VoiceManager {
   }
 
   async start() {
+    this._dbg('[Voice] start() called');
     if (!this.isSupported) {
       alert('このブラウザは音声認識に対応していません。Chrome / Edge で開いてください。');
       return false;
@@ -113,7 +125,9 @@ export class VoiceManager {
     try {
       const s = await navigator.mediaDevices.getUserMedia({ audio: true });
       s.getTracks().forEach(t => t.stop());
+      this._dbg('[Voice] getUserMedia ok');
     } catch (e) {
+      this._dbg('[Voice] getUserMedia FAIL '+e.message);
       alert('マイク許可が必要です: ' + e.message);
       this.onStatus('マイク許可なし', 'idle');
       return false;
@@ -124,13 +138,15 @@ export class VoiceManager {
     this.lastFinalChunk = '';
     this.wasListeningBeforeSpeak = false;
     clearTimeout(this._autoSendTimer);
-    try { this.recognition.start(); } catch {
-      setTimeout(() => { try { this.recognition.start(); } catch {} }, 200);
+    try { this.recognition.start(); this._dbg('[Voice] recognition.start ok'); } catch (e) {
+      this._dbg('[Voice] recognition.start FAIL '+e.message);
+      setTimeout(() => { try { this.recognition.start(); } catch (e2) { this._dbg('[Voice] retry start FAIL '+e2.message); } }, 200);
     }
     return true;
   }
 
   stop() {
+    this._dbg('[Voice] stop()');
     this.isListening = false;
     this.isSpeaking = false;
     this.wasListeningBeforeSpeak = false;
@@ -141,11 +157,11 @@ export class VoiceManager {
   }
 
   speak(text, opts = {}) {
-    if (!text) return;
-    // 完全リセットしてから喋る
+    this._dbg(`[TTS] speak() called len=${text?.length} text=${text?.slice(0,30)}`);
+    if (!text) { this._dbg('[TTS] speak empty skip'); return; }
     this._speakQueue = [];
     this._currentUtterance = null;
-    window.speechSynthesis.cancel();
+    try { window.speechSynthesis.cancel(); } catch(e){ this._dbg('[TTS] cancel FAIL '+e.message); }
     this._isSpeakingQueue = false;
     this.isSpeaking = false;
     this.enqueueSpeak(text, opts);
@@ -153,8 +169,8 @@ export class VoiceManager {
 
   enqueueSpeak(text, opts = {}) {
     const t = text.trim();
-    if (!t) return;
-    console.log('[TTS enqueue]', t);
+    if (!t) { this._dbg('[TTS] enqueue empty skip'); return; }
+    this._dbg(`[TTS] enqueue "${t.slice(0,40)}" queueLen=${this._speakQueue.length} isSpeakingQueue=${this._isSpeakingQueue} isListening=${this.isListening}`);
     this._speakQueue.push({ text: t, opts });
     if (!this._isSpeakingQueue) {
       this.wasListeningBeforeSpeak = this.isListening;
@@ -162,7 +178,7 @@ export class VoiceManager {
         this.isSpeaking = true;
         this._isSpeakingQueue = true;
         this.isListening = false;
-        try { this.recognition.stop(); } catch {}
+        try { this.recognition.stop(); } catch(e){ this._dbg('[TTS] rec stop FAIL '+e.message); }
       } else {
         this.isSpeaking = true;
         this._isSpeakingQueue = true;
@@ -173,19 +189,19 @@ export class VoiceManager {
   }
 
   _playNext() {
+    this._dbg(`[TTS] _playNext queueLen=${this._speakQueue.length}`);
     if (this._speakQueue.length === 0) {
-      console.log('[TTS] queue empty -> done');
+      this._dbg('[TTS] queue empty -> done');
       this._isSpeakingQueue = false;
       this.isSpeaking = false;
       this._currentUtterance = null;
-      // ★ここでcancel()しない。最後の発話が切れる原因だった
       if (this.wasListeningBeforeSpeak) {
         this.isListening = true;
         this.wasListeningBeforeSpeak = false;
         this.onStatus('待機中... 喋ってください', 'on');
         setTimeout(() => {
           if (this.isListening && !this.isSpeaking && this.recognition) {
-            try { this.recognition.start(); } catch {}
+            try { this.recognition.start(); } catch(e){ this._dbg('[TTS] rec restart FAIL '+e.message); }
           }
         }, 400);
       } else {
@@ -195,49 +211,73 @@ export class VoiceManager {
     }
 
     const { text, opts } = this._speakQueue.shift();
-    console.log('[TTS play]', text);
-    // ★直前のcancel()を削除。Chromeで直後のspeakが無効化されるバグ回避
+    this._dbg(`[TTS] trying to play "${text.slice(0,40)}" voices=${window.speechSynthesis.getVoices().length} speaking=${window.speechSynthesis.speaking} pending=${window.speechSynthesis.pending}`);
+
+    // speechSynthesis チェック
+    if (!window.speechSynthesis) {
+      this._dbg('[TTS] speechSynthesis NOT EXISTS');
+      this._playNext();
+      return;
+    }
+
     const uttr = new SpeechSynthesisUtterance(text);
     uttr.lang = opts.lang || this.lang;
     uttr.rate = opts.rate || 1.1;
     uttr.pitch = opts.pitch || 1;
 
     const voices = window.speechSynthesis.getVoices();
-    // voicesがまだ空ならデフォルトで喋らせる
+    this._dbg(`[TTS] voices.length=${voices.length}`);
     if (voices.length > 0) {
       const jaVoice = voices.find(v => v.lang.startsWith('ja')) || voices[0];
-      if (jaVoice) uttr.voice = jaVoice;
+      if (jaVoice) {
+        uttr.voice = jaVoice;
+        this._dbg(`[TTS] using voice ${jaVoice.name} ${jaVoice.lang}`);
+      }
+    } else {
+      this._dbg('[TTS] voices empty, using default');
     }
 
     this._currentUtterance = uttr;
     uttr.onstart = () => {
-      console.log('[TTS start]', text);
+      this._dbg(`[TTS] onstart "${text.slice(0,30)}"`);
       this.isSpeaking = true;
       this._isSpeakingQueue = true;
     };
     uttr.onend = () => {
-      console.log('[TTS end]', text);
+      this._dbg(`[TTS] onend "${text.slice(0,30)}"`);
       this._currentUtterance = null;
-      // 次を少し待ってから再生 (cancel競合回避)
-      setTimeout(() => this._playNext(), 50);
+      setTimeout(() => this._playNext(), 80);
       if (opts.onEnd) opts.onEnd();
     };
     uttr.onerror = (e) => {
-      console.error('[TTS error]', e, text);
+      this._dbg(`[TTS] onerror ${e.error} "${text.slice(0,30)}"`);
+      console.error('[TTS error]', e);
       this._currentUtterance = null;
-      setTimeout(() => this._playNext(), 100);
+      setTimeout(() => this._playNext(), 150);
       if (opts.onError) opts.onError(e);
     };
-    window.speechSynthesis.speak(uttr);
+    try {
+      window.speechSynthesis.speak(uttr);
+      this._dbg('[TTS] speak() called, now speaking='+window.speechSynthesis.speaking);
+      // 100ms後にまだspeakingでなければ失敗とみなす
+      setTimeout(()=>{
+        if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+          this._dbg('[TTS] still NOT speaking after 100ms -> maybe blocked');
+        }
+      }, 150);
+    } catch(e) {
+      this._dbg('[TTS] speak() THROW '+e.message);
+      this._playNext();
+    }
   }
 
-  cancelSpeak() { this.clearQueue(true); }
+  cancelSpeak() { this._dbg('[TTS] cancelSpeak'); this.clearQueue(true); }
 
   clearQueue(restartMic = true) {
-    console.log('[TTS clearQueue]', restartMic);
+    this._dbg(`[TTS] clearQueue restartMic=${restartMic} qLen=${this._speakQueue.length}`);
     this._speakQueue = [];
     this._currentUtterance = null;
-    window.speechSynthesis.cancel();
+    try { window.speechSynthesis.cancel(); } catch(e){ this._dbg('[TTS] cancel in clearQueue FAIL '+e.message); }
     this._isSpeakingQueue = false;
     this.isSpeaking = false;
     if (restartMic && this.wasListeningBeforeSpeak) {
@@ -245,7 +285,7 @@ export class VoiceManager {
       this.wasListeningBeforeSpeak = false;
       setTimeout(() => {
         if (this.isListening && this.recognition) {
-          try { this.recognition.start(); } catch {}
+          try { this.recognition.start(); } catch(e){ this._dbg('[TTS] rec restart after clear FAIL '+e.message); }
         }
       }, 300);
     }

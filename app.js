@@ -197,6 +197,7 @@ async function sendMessageWithText(forcedText) {
     killBtn.textContent = "停止→再読込中...";
     killBtn.disabled = true;
     try { await engine.interruptGenerate(); } catch {}
+    if (voice) voice.clearQueue(true);
     assistantDiv.textContent += "\n\n[停止→モデル積み直し開始]";
     const keyToReload = currentKey;
     messages = [{ role: "system", content: loadStoredPrompt() }];
@@ -205,31 +206,56 @@ async function sendMessageWithText(forcedText) {
   };
 
   isGenerating = true; sendEl.disabled = true;
+
+  let full = "";
+  let speakBuffer = "";
+  const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
+
   try {
     const chunks = await engine.chat.completions.create({
       messages, stream: true, temperature: 0.7, max_tokens: 5000
     });
-    let full = "";
+
     for await (const chunk of chunks) {
       if (abortFlag) break;
-      full += chunk.choices[0]?.delta?.content || "";
+      const delta = chunk.choices[0]?.delta?.content || "";
+      full += delta;
+
       if (full.length >= MAX_CHARS) {
-        full = full.slice(0, MAX_CHARS) + "\n\n[2000文字制限→自動で積み直し]";
+        full = full.slice(0, MAX_CHARS) + "\n\n[1500文字制限→自動で積み直し]";
         assistantDiv.textContent = full;
         try { await engine.interruptGenerate(); } catch {}
+        if (voice) voice.clearQueue(true);
         const keyToReload = currentKey;
         messages = [{ role: "system", content: loadStoredPrompt() }];
         await loadModel(keyToReload, true);
         break;
       }
+
       assistantDiv.textContent = full;
       chatEl.scrollTop = chatEl.scrollHeight;
+
+      if (isVoiceMode && voice && delta) {
+        speakBuffer += delta;
+        const matches = speakBuffer.match(sentenceSplitRegex);
+        if (matches) {
+          let consumed = 0;
+          for (const sent of matches) {
+            const s = sent.trim();
+            if (s) voice.enqueueSpeak(s);
+            consumed += sent.length;
+          }
+          speakBuffer = speakBuffer.slice(consumed);
+        }
+      }
     }
+
     if (!isKilled) {
       messages.push({ role: "assistant", content: full });
       if (voice && full && isVoiceMode) {
+        const remaining = speakBuffer.trim();
+        if (remaining) voice.enqueueSpeak(remaining);
         voice.clearBuffer();
-        voice.speak(full);
       }
     }
   } catch (e) {
@@ -250,7 +276,7 @@ async function sendMessage() {
 // ===== VOICE INIT BLOCK =====
 voice = new VoiceManager({
   lang: 'ja-JP',
-  autoSendDelay: 1300,
+  autoSendDelay: 1200,
   onFinal: (text) => {
     inputEl.value = text;
     voicePreview.textContent = text;

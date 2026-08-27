@@ -4,9 +4,9 @@ export class VoiceManager {
     this.onFinal = options.onFinal || (() => {});
     this.onInterim = options.onInterim || (() => {});
     this.onStatus = options.onStatus || (() => {});
-    this.onAutoSend = options.onAutoSend || null; // ★自動送信コールバック
+    this.onAutoSend = options.onAutoSend || null;
     this.autoRestartDelay = options.autoRestartDelay || 300;
-    this.autoSendDelay = options.autoSendDelay || 1200; // ★無音で自動送信
+    this.autoSendDelay = options.autoSendDelay || 1200;
 
     this.isListening = false;
     this.isSpeaking = false;
@@ -16,18 +16,62 @@ export class VoiceManager {
     this.lastFinalChunk = '';
     this._autoSendTimer = null;
 
+    this._speakQueue = [];
+    this._currentUtterance = null;
+    this._isSpeakingQueue = false;
+
     this.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    this.isSupported =!!this.SpeechRecognition;
+    this.isSupported = !!this.SpeechRecognition;
   }
 
   removeConsecutiveDuplicates(text) {
     if (!text || text.length < 2) return text;
     let t = text.trim();
-    t = t.replace(/(\S+)(?:\s+\1)+/g, '$1');
-    // 日本語の塊の重複は末尾2回だけ見る、過激なループはやめる
-    t = t.replace(/(.{2,20})\1$/g, '$1');
+
+    // 1. 同じ文字が4回以上続く -> 2回に圧縮 (例: ああああ -> ああ)
     t = t.replace(/(.)\1{3,}/g, '$1$1');
-    return t;
+
+    // 2. 即時連結の重複を潰す: AIAI -> AI, こんにちはこんにちは -> こんにちは
+    // 長さ2〜30の塊が直後にそのまま続くケース
+    let prev;
+    do {
+      prev = t;
+      // 英字・英数2文字以上の即時重複 (AI AI など)
+      t = t.replace(/([A-Za-z]{2,})(\1)+/g, '$1');
+      // 汎用: 任意2文字以上の塊がすぐ続く
+      t = t.replace(/(.{2,30})\1+/g, '$1');
+    } while (t !== prev);
+
+    // 3. 空白・句読点区切りの重複を潰す: "AIとは？ AIとは？" -> "AIとは？"
+    do {
+      prev = t;
+      // スペース区切り
+      t = t.replace(/(.{2,50}?)\s+\1/g, '$1');
+      // 全角スペース区切り
+      t = t.replace(/(.{2,50}?)[\s　]+\1/g, '$1');
+      // 句読点・？！区切りで同じ文が続く
+      t = t.replace(/(.{2,50}?)[。！？？！\s　、，,]+\1/g, '$1');
+    } while (t !== prev);
+
+    // 4. 文単位で連続同一文を除去: "こんにちは。こんにちは。" -> "こんにちは。"
+    const sentenceRegex = /[^。！？\n?！]+[。！？\n?！]?/g;
+    const sentences = t.match(sentenceRegex);
+    if (sentences && sentences.length > 1) {
+      const deduped = [];
+      for (let s of sentences) {
+        const trimmed = s.trim();
+        if (!trimmed) continue;
+        const last = deduped[deduped.length - 1];
+        if (last && last.trim() === trimmed) continue;
+        deduped.push(s);
+      }
+      t = deduped.join('');
+    }
+
+    // 5. 末尾の重複最終保険
+    t = t.replace(/(.{2,50})\1$/g, '$1');
+
+    return t.trim();
   }
 
   init() {
@@ -46,39 +90,25 @@ export class VoiceManager {
 
     rec.onresult = (event) => {
       if (this.isSpeaking) return;
-
-      // ★ここが重要: 毎回全resultsから組み立て直す
       let fullFinal = '';
       let interim = '';
-
       for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
         const transcript = result[0].transcript.trim();
-        if (result.isFinal) {
-          fullFinal += transcript;
-        } else {
-          interim += transcript;
-        }
+        if (result.isFinal) fullFinal += transcript;
+        else interim += transcript;
       }
-
       fullFinal = this.removeConsecutiveDuplicates(fullFinal);
-
-      // finalが更新された時だけ
-      if (fullFinal && fullFinal!== this.finalBuffer) {
+      if (fullFinal && fullFinal !== this.finalBuffer) {
         this.finalBuffer = fullFinal;
         this.onFinal(this.finalBuffer);
-
-        // ★自動送信は無音1.2秒後に1回だけ
         if (this.onAutoSend) {
           clearTimeout(this._autoSendTimer);
           this._autoSendTimer = setTimeout(() => {
-            if (this.finalBuffer) {
-              this.onAutoSend(this.finalBuffer);
-            }
+            if (this.finalBuffer) this.onAutoSend(this.finalBuffer);
           }, this.autoSendDelay);
         }
       }
-
       if (interim) {
         const cleanedInterim = this.removeConsecutiveDuplicates(interim);
         this.onInterim(this.finalBuffer + cleanedInterim, cleanedInterim, this.finalBuffer);
@@ -92,7 +122,7 @@ export class VoiceManager {
       if (this.isListening) {
         this.onStatus('再接続中...', 'on');
         setTimeout(() => {
-          if (this.isListening &&!this.isSpeaking) {
+          if (this.isListening && !this.isSpeaking) {
             try { rec.start(); } catch {}
           }
         }, this.autoRestartDelay);
@@ -109,7 +139,7 @@ export class VoiceManager {
       } else if (!this.isSpeaking && this.isListening) {
         this.onStatus(`再接続中... (${e.error})`, 'on');
         setTimeout(() => {
-          if (this.isListening &&!this.isSpeaking) {
+          if (this.isListening && !this.isSpeaking) {
             try { rec.start(); } catch {}
           }
         }, 800);
@@ -120,7 +150,7 @@ export class VoiceManager {
     return rec;
   }
 
-  async start() { /* ここは同じでOK */
+  async start() {
     if (!this.isSupported) {
       alert('このブラウザは音声認識に対応していません。Chrome / Edge で開いてください。');
       return false;
@@ -152,57 +182,106 @@ export class VoiceManager {
     this.wasListeningBeforeSpeak = false;
     clearTimeout(this._autoSendTimer);
     if (this.recognition) try { this.recognition.stop(); } catch {}
+    this.clearQueue(false);
     this.onStatus('停止中', 'idle');
   }
 
   speak(text, opts = {}) {
     if (!text) return;
-    this.wasListeningBeforeSpeak = this.isListening;
-    if (this.isListening && this.recognition) {
-      this.isSpeaking = true;
-      this.isListening = false;
-      try { this.recognition.stop(); } catch {}
-    } else {
-      this.isSpeaking = true;
+    this._speakQueue = [];
+    this._currentUtterance = null;
+    try { window.speechSynthesis.cancel(); } catch {}
+    this._isSpeakingQueue = false;
+    this.isSpeaking = false;
+    this.enqueueSpeak(text, opts);
+  }
+
+  enqueueSpeak(text, opts = {}) {
+    const t = text.trim();
+    if (!t) return;
+    this._speakQueue.push({ text: t, opts });
+    if (!this._isSpeakingQueue) {
+      this.wasListeningBeforeSpeak = this.isListening;
+      if (this.isListening && this.recognition) {
+        this.isSpeaking = true;
+        this._isSpeakingQueue = true;
+        this.isListening = false;
+        try { this.recognition.stop(); } catch {}
+      } else {
+        this.isSpeaking = true;
+        this._isSpeakingQueue = true;
+      }
+      this.onStatus('AIが話しています... マイク一時OFF', 'speaking');
+      this._playNext();
     }
-    clearTimeout(this._autoSendTimer);
-    this.onStatus('AIが話しています... マイク一時OFF', 'speaking');
-    window.speechSynthesis.cancel();
-    const uttr = new SpeechSynthesisUtterance(text);
-    uttr.lang = opts.lang || this.lang;
-    uttr.rate = opts.rate || 1.1;
-    uttr.pitch = opts.pitch || 1;
-    const voices = window.speechSynthesis.getVoices();
-    const jaVoice = voices.find(v => v.lang.startsWith('ja')) || voices[0];
-    if (jaVoice) uttr.voice = jaVoice;
-    uttr.onstart = () => { this.isSpeaking = true; };
-    uttr.onend = () => {
+  }
+
+  _playNext() {
+    if (this._speakQueue.length === 0) {
+      this._isSpeakingQueue = false;
       this.isSpeaking = false;
+      this._currentUtterance = null;
       if (this.wasListeningBeforeSpeak) {
         this.isListening = true;
+        this.wasListeningBeforeSpeak = false;
         this.onStatus('待機中... 喋ってください', 'on');
         setTimeout(() => {
-          if (this.isListening &&!this.isSpeaking && this.recognition) {
+          if (this.isListening && !this.isSpeaking && this.recognition) {
             try { this.recognition.start(); } catch {}
           }
         }, 400);
       } else {
         this.onStatus('停止中', 'idle');
       }
+      return;
+    }
+
+    const { text, opts } = this._speakQueue.shift();
+    const uttr = new SpeechSynthesisUtterance(text);
+    uttr.lang = opts.lang || this.lang;
+    uttr.rate = opts.rate || 1.1;
+    uttr.pitch = opts.pitch || 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      const jaVoice = voices.find(v => v.lang.startsWith('ja')) || voices[0];
+      if (jaVoice) uttr.voice = jaVoice;
+    }
+
+    this._currentUtterance = uttr;
+    uttr.onstart = () => { this.isSpeaking = true; this._isSpeakingQueue = true; };
+    uttr.onend = () => {
+      this._currentUtterance = null;
+      setTimeout(() => this._playNext(), 60);
       if (opts.onEnd) opts.onEnd();
     };
     uttr.onerror = (e) => {
       console.error('[TTS error]', e);
-      this.isSpeaking = false;
-      if (this.wasListeningBeforeSpeak) {
-        this.isListening = true;
-        try { this.recognition.start(); } catch {}
-      }
+      this._currentUtterance = null;
+      setTimeout(() => this._playNext(), 120);
       if (opts.onError) opts.onError(e);
     };
-    window.speechSynthesis.speak(uttr);
+    try { window.speechSynthesis.speak(uttr); } catch { this._playNext(); }
   }
 
-  cancelSpeak() { window.speechSynthesis.cancel(); this.isSpeaking = false; }
+  cancelSpeak() { this.clearQueue(true); }
+
+  clearQueue(restartMic = true) {
+    this._speakQueue = [];
+    this._currentUtterance = null;
+    try { window.speechSynthesis.cancel(); } catch {}
+    this._isSpeakingQueue = false;
+    this.isSpeaking = false;
+    if (restartMic && this.wasListeningBeforeSpeak) {
+      this.isListening = true;
+      this.wasListeningBeforeSpeak = false;
+      setTimeout(() => {
+        if (this.isListening && this.recognition) {
+          try { this.recognition.start(); } catch {}
+        }
+      }, 300);
+    }
+  }
+
   clearBuffer() { this.finalBuffer = ''; this.lastFinalChunk = ''; clearTimeout(this._autoSendTimer); }
 }

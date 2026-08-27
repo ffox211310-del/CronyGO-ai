@@ -22,51 +22,6 @@ let isGenerating = false;
 let hasChatted = false;
 let lastInputWasVoice = false;
 
-// ===== DEBUG OVERLAY =====
-function createDebugOverlay() {
-  let el = document.getElementById('debug-overlay');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'debug-overlay';
-    el.style.cssText = 'position:fixed;bottom:80px;left:6px;right:6px;max-height:42vh;overflow:auto;background:rgba(0,0,0,0.88);color:#0f8;font-size:11px;line-height:1.3;padding:8px;border-radius:8px;z-index:99999;white-space:pre-wrap;font-family:monospace;border:1px solid #0f0;';
-    document.body.appendChild(el);
-    const clearBtn = document.createElement('button');
-    clearBtn.textContent = 'DBGクリア';
-    clearBtn.style.cssText = 'position:fixed;bottom:48px;right:10px;z-index:100000;background:#0f0;color:#000;border:0;border-radius:12px;padding:4px 10px;font-size:11px;';
-    clearBtn.onclick = () => { el.textContent=''; };
-    document.body.appendChild(clearBtn);
-    const testBtn = document.createElement('button');
-    testBtn.textContent = 'TTSテスト';
-    testBtn.style.cssText = 'position:fixed;bottom:48px;left:10px;z-index:100000;background:#ff0;color:#000;border:0;border-radius:12px;padding:4px 10px;font-size:11px;';
-    testBtn.onclick = () => {
-      window.__cronyDbg('--- TTSテストボタン押下 ---');
-      if (voice) voice.speak('テストです。こんにちは。聞こえますか？');
-      else window.__cronyDbg('voice null');
-    };
-    document.body.appendChild(testBtn);
-  }
-  return el;
-}
-window.__cronyDbg = (msg) => {
-  try {
-    const el = createDebugOverlay();
-    const time = new Date().toLocaleTimeString();
-    el.textContent += `[${time}] ${msg}\n`;
-    el.scrollTop = el.scrollHeight;
-    console.log(msg);
-  } catch {}
-};
-function dbg(m){ window.__cronyDbg(m); }
-
-dbg('app.js loaded debug mode');
-dbg(`speechSynthesis exists=${!!window.speechSynthesis} voices=${window.speechSynthesis?window.speechSynthesis.getVoices().length:0}`);
-
-if (window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => {
-    dbg(`voiceschanged voices=${window.speechSynthesis.getVoices().length}`);
-  };
-}
-
 function loadStoredPrompt() {
   try { return localStorage.getItem(LS_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT; }
   catch { return DEFAULT_SYSTEM_PROMPT; }
@@ -201,9 +156,7 @@ async function loadModel(key, isReload = false) {
     inputEl.placeholder = `${key}で入力...`;
     hideFirstLoadingUI();
     addMessage("assistant", isReload ? `${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
-    dbg(`model ${key} loaded`);
   } catch (e) {
-    dbg(`model load ERROR ${e.message}`);
     console.error(e);
     statusEl.textContent = "エラー";
     statusEl.className = "";
@@ -217,14 +170,9 @@ async function loadModel(key, isReload = false) {
 
 async function sendMessageWithText(forcedText) {
   const text = (forcedText || inputEl.value).trim();
-  dbg(`sendMessageWithText called text="${text.slice(0,30)}" isGenerating=${isGenerating} engine=${!!engine} lastInputWasVoice=${lastInputWasVoice}`);
-  if (!text || isGenerating || !engine) {
-    dbg('send blocked');
-    return;
-  }
+  if (!text || isGenerating || !engine) return;
   const isVoiceMode = lastInputWasVoice;
   lastInputWasVoice = false;
-  dbg(`isVoiceMode=${isVoiceMode}`);
 
   if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
   addMessage("user", text);
@@ -294,33 +242,23 @@ async function sendMessageWithText(forcedText) {
           let consumed = 0;
           for (const sent of matches) {
             const s = sent.trim();
-            if (s) {
-              dbg(`[APP] enqueueSpeak "${s.slice(0,30)}"`);
-              voice.enqueueSpeak(s);
-            }
+            if (s) voice.enqueueSpeak(s);
             consumed += sent.length;
           }
           speakBuffer = speakBuffer.slice(consumed);
-          dbg(`[APP] speakBuffer remaining "${speakBuffer.slice(0,20)}"`);
         }
       }
     }
-
-    dbg(`generation done fullLen=${full.length} speakBuffer="${speakBuffer.slice(0,30)}" isKilled=${isKilled}`);
 
     if (!isKilled) {
       messages.push({ role: "assistant", content: full });
       if (voice && full && isVoiceMode) {
         const remaining = speakBuffer.trim();
-        dbg(`[APP] final remaining="${remaining.slice(0,40)}" queueLen=${voice._speakQueue.length} isSpeakingQueue=${voice._isSpeakingQueue}`);
         if (remaining) voice.enqueueSpeak(remaining);
         voice.clearBuffer();
-      } else {
-        dbg(`[APP] no TTS because voice=${!!voice} full=${!!full} isVoiceMode=${isVoiceMode}`);
       }
     }
   } catch (e) {
-    dbg(`generation ERROR ${e.message}`);
     if (!abortFlag) assistantDiv.textContent = "生成エラー: " + e.message;
   } finally {
     isGenerating = false;
@@ -350,20 +288,18 @@ voice = new VoiceManager({
   onAutoSend: (text) => {
     const t = text.trim();
     if (!t) return;
-    dbg(`[AutoSend] "${t.slice(0,40)}"`);
+    console.log('[AutoSend]', t);
     voicePreview.textContent = '';
     lastInputWasVoice = true;
     sendMessageWithText(t);
     voice.clearBuffer();
   },
   onStatus: (msg, state) => {
-    dbg(`[Status] ${msg} ${state}`);
     console.log('[Voice]', msg, state);
   }
 });
 
 micBtn.addEventListener('click', () => {
-  dbg(`micBtn click isListening=${voice.isListening}`);
   if (voice.isListening) {
     voice.stop();
     micBtn.classList.remove('on', 'muted');
@@ -374,7 +310,6 @@ micBtn.addEventListener('click', () => {
     inputEl.readOnly = true;
     inputEl.placeholder = "聞き取り中...";
     voice.start().then(ok => {
-      dbg(`voice.start result ${ok}`);
       if(ok) micBtn.classList.add('on');
       else {
         inputEl.readOnly = false;
@@ -387,14 +322,12 @@ micBtn.addEventListener('click', () => {
 
 sendEl.addEventListener("click", () => {
   lastInputWasVoice = false;
-  dbg('sendBtn click -> text mode');
   sendMessage();
 });
 inputEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     lastInputWasVoice = false;
-    dbg('Enter -> text mode');
     sendMessage();
   }
 });

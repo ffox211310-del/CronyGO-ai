@@ -23,7 +23,6 @@ let isGenerating = false;
 let hasChatted = false;
 let lastInputWasVoice = false;
 
-// ===== DEV CONSOLE =====
 let devConsoleEnabled = false;
 let debugOverlayEl = null;
 let debugClearBtn = null;
@@ -37,15 +36,13 @@ function loadStoredTheme() {
   try { return localStorage.getItem(LS_THEME_KEY) || "dark"; }
   catch { return "dark"; }
 }
-
 function stripThinkTags(text) {
   if (!text) return text;
-  let t = text.replace(/<think>[\s\S]*?<\/think>/g, ""); // <think>～</think>を丸ごと消す
-  t = t.replace(/<think>[\s\S]*$/g, ""); // 閉じタグがまだ来てない途中のthinkも消す
+  let t = text.replace(/<think>[\s\S]*?<\/think>/g, "");
+  t = t.replace(/<think>[\s\S]*$/g, "");
   t = t.replace(/<\/think>/g, "");
   return t;
 }
-
 function loadDevConsoleEnabled() {
   try { return localStorage.getItem(LS_DEV_CONSOLE_KEY) === "true"; }
   catch { return false; }
@@ -53,7 +50,6 @@ function loadDevConsoleEnabled() {
 function saveDevConsoleEnabled(v) {
   try { localStorage.setItem(LS_DEV_CONSOLE_KEY, v ? "true" : "false"); } catch {}
 }
-
 function createDebugOverlay() {
   if (debugOverlayEl) return debugOverlayEl;
   const el = document.createElement('div');
@@ -61,25 +57,21 @@ function createDebugOverlay() {
   el.style.cssText = 'position:fixed;bottom:80px;left:6px;right:6px;max-height:38vh;overflow:auto;background:rgba(0,0,0,0.88);color:#0f8;font-size:11px;line-height:1.35;padding:8px;border-radius:8px;z-index:99999;white-space:pre-wrap;font-family:monospace;border:1px solid #0f0;';
   document.body.appendChild(el);
   debugOverlayEl = el;
-
   const clearBtn = document.createElement('button');
   clearBtn.textContent = 'クリア';
   clearBtn.style.cssText = 'position:fixed;bottom:48px;right:10px;z-index:100000;background:#0f0;color:#000;border:0;border-radius:12px;padding:5px 12px;font-size:11px;font-weight:600;';
   clearBtn.onclick = () => { if(debugOverlayEl) debugOverlayEl.textContent=''; };
   document.body.appendChild(clearBtn);
   debugClearBtn = clearBtn;
-
   const testBtn = document.createElement('button');
   testBtn.textContent = 'TTSテスト';
   testBtn.style.cssText = 'position:fixed;bottom:48px;left:10px;z-index:100000;background:#ff0;color:#000;border:0;border-radius:12px;padding:5px 12px;font-size:11px;font-weight:600;';
   testBtn.onclick = () => {
-    dbg('--- TTSテストボタン ---');
+    dbg('--- TTSテスト ---');
     if (voice) voice.speak('テストです。こんにちは。聞こえますか？');
-    else dbg('voice null');
   };
   document.body.appendChild(testBtn);
   debugTestBtn = testBtn;
-
   return el;
 }
 function removeDebugOverlay() {
@@ -98,7 +90,6 @@ function dbg(msg) {
   console.log(msg);
 }
 window.__cronyDbg = (msg) => dbg(msg);
-
 function setDevConsoleEnabled(enabled) {
   devConsoleEnabled = enabled;
   saveDevConsoleEnabled(enabled);
@@ -113,10 +104,7 @@ function setDevConsoleEnabled(enabled) {
   if (enabled) {
     createDebugOverlay();
     dbg('dev console ON');
-    dbg(`speechSynthesis voices=${window.speechSynthesis ? window.speechSynthesis.getVoices().length : 0}`);
   } else {
-    dbg('dev console OFF -> removing overlay');
-    // 少し待ってから消すと最後のログ見える
     setTimeout(()=>removeDebugOverlay(), 300);
   }
 }
@@ -153,7 +141,7 @@ setDevConsoleEnabled(devConsoleEnabled);
 
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => {
-    dbg(`voiceschanged voices=${window.speechSynthesis.getVoices().length}`);
+    dbg(`voiceschanged ${window.speechSynthesis.getVoices().length}`);
   };
 }
 
@@ -204,13 +192,11 @@ async function loadModel(key, isReload = false) {
   const MODEL_ID = MODELS[key];
   if (!MODEL_ID) return;
   const isFirstPhase = !hasChatted && !isReload;
-
   if (engine) {
     if (!isFirstPhase) addMessage("system", `${currentKey} を解放中...`);
     try { await engine.unload(); } catch {}
     engine = null;
   }
-
   dlBtn.disabled = true;
   dlBtn.textContent = isReload ? "再読込中..." : "読込中...";
   statusEl.className = "loading";
@@ -219,20 +205,14 @@ async function loadModel(key, isReload = false) {
   progressBar.style.background = "#4FD1C5";
   inputEl.disabled = true;
   sendEl.disabled = true;
-
-  if (isFirstPhase) {
-    showFirstLoadingUI(`${key} 準備中...`);
-  } else if (isReload) {
+  if (isFirstPhase) showFirstLoadingUI(`${key} 準備中...`);
+  else if (isReload) {
     loadingText.textContent = `${key} 積み直し中...`;
     loadingView.classList.add("show");
     chatEl.classList.add("is-first-loading");
     updateLoadingText(`${key} 積み直し中...`);
-  } else {
-    updateLoadingText("準備中...");
-  }
-
+  } else updateLoadingText("準備中...");
   if (!isFirstPhase) addMessage("system", isReload ? `${key} 再読込開始` : `${key} を読み込み開始。`);
-
   try {
     engine = await webllm.CreateMLCEngine(MODEL_ID, {
       initProgressCallback: (p) => {
@@ -254,10 +234,10 @@ async function loadModel(key, isReload = false) {
     sendEl.disabled = false;
     inputEl.placeholder = `${key}で入力...`;
     hideFirstLoadingUI();
-    addMessage("assistant", isReload ? `${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
+    addMessage("assistant", isReload ? `${key} 積み直し完了！` : `${key} 起動完了！`);
     dbg(`model ${key} loaded`);
   } catch (e) {
-    dbg(`model load ERROR ${e.message}`);
+    dbg(`load ERROR ${e.message}`);
     console.error(e);
     statusEl.textContent = "エラー";
     statusEl.className = "";
@@ -271,60 +251,49 @@ async function loadModel(key, isReload = false) {
 
 async function sendMessageWithText(forcedText) {
   const text = (forcedText || inputEl.value).trim();
-  dbg(`sendMessageWithText text="${text.slice(0,40)}" isGenerating=${isGenerating} isVoiceMode=${lastInputWasVoice}`);
   if (!text || isGenerating || !engine) return;
   const isVoiceMode = lastInputWasVoice;
   lastInputWasVoice = false;
-
   if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
   addMessage("user", text);
   messages.push({ role: "user", content: text });
   inputEl.value = "";
   voicePreview.textContent = '';
-
   const assistantDiv = addMessage("assistant", "");
   const killBtn = document.createElement("button");
   killBtn.textContent = "■ 生成を停止";
   killBtn.className = "kill-switch";
-  killBtn.style.cssText = "margin:6px 0 10px 0;background:#ff3b3b;color:#fff;border:0;border-radius:18px;padding:6px 14px;font-size:12px;cursor:pointer;align-self:flex-start;";
+  killBtn.style.cssText = "margin:6px 0 10px 0;background:#ff3b3b;color:#fff;border:0;border-radius:18px;padding:6px 14px;font-size:12px;cursor:pointer;";
   assistantDiv.after(killBtn);
-
   let abortFlag = false;
   let isKilled = false;
-
   killBtn.onclick = async () => {
     if (abortFlag) return;
-    abortFlag = true;
-    isKilled = true;
-    killBtn.textContent = "停止→再読込中...";
-    killBtn.disabled = true;
+    abortFlag = true; isKilled = true;
+    killBtn.textContent = "停止→再読込中..."; killBtn.disabled = true;
     try { await engine.interruptGenerate(); } catch {}
     if (voice) voice.clearQueue(true);
-    assistantDiv.textContent += "\n\n[停止→モデル積み直し開始]";
+    assistantDiv.textContent += "\n\n[停止→積み直し]";
     const keyToReload = currentKey;
     messages = [{ role: "system", content: loadStoredPrompt() }];
     try { killBtn.remove(); } catch {}
     await loadModel(keyToReload, true);
   };
-
   isGenerating = true; sendEl.disabled = true;
-
   let full = "";
   let speakBuffer = "";
   const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
-
   try {
     const chunks = await engine.chat.completions.create({
       messages, stream: true, temperature: 0.7, max_tokens: 5000
     });
-
     for await (const chunk of chunks) {
       if (abortFlag) break;
       const delta = chunk.choices[0]?.delta?.content || "";
+      if (!delta) continue;
       full += delta;
-
       if (full.length >= MAX_CHARS) {
-        full = full.slice(0, MAX_CHARS) + "\n\n[1500文字制限→自動で積み直し]";
+        full = full.slice(0, MAX_CHARS) + "\n\n[1500文字制限→積み直し]";
         assistantDiv.textContent = stripThinkTags(full);
         try { await engine.interruptGenerate(); } catch {}
         if (voice) voice.clearQueue(true);
@@ -333,37 +302,36 @@ async function sendMessageWithText(forcedText) {
         await loadModel(keyToReload, true);
         break;
       }
-
       assistantDiv.textContent = stripThinkTags(full);
       chatEl.scrollTop = chatEl.scrollHeight;
-
-    if (isVoiceMode && voice) {
-  const cleanDelta = stripThinkTags(delta);
-  if (cleanDelta) {  // ← 空じゃなければ喋る
-    speakBuffer += cleanDelta;
-    const matches = speakBuffer.match(sentenceSplitRegex);
-        if (matches) {
-          let consumed = 0;
-          for (const sent of matches) {
-            const s = sent.trim();
-            if (s) voice.enqueueSpeak(s);
-            consumed += sent.length;
+      if (isVoiceMode && voice) {
+        const cleanDelta = stripThinkTags(delta);
+        if (cleanDelta) {
+          speakBuffer += cleanDelta;
+          const matches = speakBuffer.match(sentenceSplitRegex);
+          if (matches) {
+            let consumed = 0;
+            for (const sent of matches) {
+              const s = sent.trim();
+              if (s) voice.enqueueSpeak(s);
+              consumed += sent.length;
+            }
+            speakBuffer = speakBuffer.slice(consumed);
           }
-          speakBuffer = speakBuffer.slice(consumed);
         }
       }
     }
-
     if (!isKilled) {
-    messages.push({ role: "assistant", content: stripThinkTags(full) });
-      if (voice && full && isVoiceMode) {
-        const remaining = speakBuffer.trim();
+      const finalClean = stripThinkTags(full);
+      messages.push({ role: "assistant", content: finalClean });
+      if (voice && finalClean && isVoiceMode) {
+        const remaining = stripThinkTags(speakBuffer.trim());
         if (remaining) voice.enqueueSpeak(remaining);
         voice.clearBuffer();
       }
     }
   } catch (e) {
-    dbg(`generation ERROR ${e.message}`);
+    dbg(`gen ERROR ${e.message}`);
     if (!abortFlag) assistantDiv.textContent = "生成エラー: " + e.message;
   } finally {
     isGenerating = false;
@@ -373,82 +341,49 @@ async function sendMessageWithText(forcedText) {
     try { killBtn.remove(); } catch {}
   }
 }
+async function sendMessage() { return sendMessageWithText(); }
 
-async function sendMessage() {
-  return sendMessageWithText();
-}
-
-// ===== VOICE INIT BLOCK =====
 voice = new VoiceManager({
   lang: 'ja-JP',
   autoSendDelay: 1200,
-  onFinal: (text) => {
-    inputEl.value = text;
-    voicePreview.textContent = text;
-  },
+  onFinal: (text) => { inputEl.value = text; voicePreview.textContent = text; },
   onInterim: (full, interim, finalPart) => {
     inputEl.value = full;
     voicePreview.textContent = interim ? `聞き取り: ${interim}` : finalPart;
   },
   onAutoSend: (text) => {
-    const t = text.trim();
-    if (!t) return;
-    dbg(`[AutoSend] "${t.slice(0,40)}"`);
+    const t = text.trim(); if (!t) return;
+    dbg(`[AutoSend] "${t.slice(0,30)}"`);
     voicePreview.textContent = '';
     lastInputWasVoice = true;
     sendMessageWithText(t);
     voice.clearBuffer();
   },
-  onStatus: (msg, state) => {
-    dbg(`[Status] ${msg} ${state}`);
-  }
+  onStatus: (msg, state) => { dbg(`[Status] ${msg} ${state}`); }
 });
-
 micBtn.addEventListener('click', () => {
   if (voice.isListening) {
-    voice.stop();
-    micBtn.classList.remove('on', 'muted');
-    inputEl.readOnly = false;
+    voice.stop(); micBtn.classList.remove('on'); inputEl.readOnly = false;
     inputEl.placeholder = `${currentKey || 'モデル'}で入力...`;
   } else {
     if (voice.isSpeaking) voice.clearQueue(false);
-    inputEl.blur();
-    inputEl.readOnly = true;
-    inputEl.placeholder = "聞き取り中...";
+    inputEl.blur(); inputEl.readOnly = true; inputEl.placeholder = "聞き取り中...";
     voice.start().then(ok => {
-      dbg(`voice.start result ${ok}`);
       if(ok) micBtn.classList.add('on');
-      else {
-        inputEl.readOnly = false;
-        inputEl.placeholder = `${currentKey || 'モデル'}で入力...`;
-      }
+      else { inputEl.readOnly = false; inputEl.placeholder = `${currentKey || 'モデル'}で入力...`; }
     });
   }
 });
-// ===== END VOICE INIT =====
-
-sendEl.addEventListener("click", () => {
-  lastInputWasVoice = false;
-  sendMessage();
-});
+sendEl.addEventListener("click", () => { lastInputWasVoice = false; sendMessage(); });
 inputEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    lastInputWasVoice = false;
-    sendMessage();
-  }
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); lastInputWasVoice = false; sendMessage(); }
 });
 selectEl.addEventListener("change", () => {
   const key = selectEl.value;
   if (currentKey === key && engine) {
-    dlBtn.textContent = "起動済み";
-    statusEl.textContent = `Ready ${key}`;
-    statusEl.className = "ready";
+    dlBtn.textContent = "起動済み"; statusEl.textContent = `Ready ${key}`; statusEl.className = "ready";
   } else {
-    dlBtn.textContent = "ダウンロード";
-    dlBtn.classList.remove("ready");
-    statusEl.textContent = "未DL";
-    statusEl.className = "";
+    dlBtn.textContent = "ダウンロード"; dlBtn.classList.remove("ready"); statusEl.textContent = "未DL"; statusEl.className = "";
     inputEl.placeholder = `${key} をダウンロードしてください`;
   }
 });
@@ -458,31 +393,15 @@ dlBtn.addEventListener("click", () => {
   loadModel(key);
 });
 statusEl.textContent = "未DL";
-
-function openSettings() {
-  settingsPanel.classList.add("show");
-  settingsOverlay.classList.add("show");
-}
-function closeSettings() {
-  settingsPanel.classList.remove("show");
-  settingsOverlay.classList.remove("show");
-}
+function openSettings() { settingsPanel.classList.add("show"); settingsOverlay.classList.add("show"); }
+function closeSettings() { settingsPanel.classList.remove("show"); settingsOverlay.classList.remove("show"); }
 settingsBtn.addEventListener("click", openSettings);
 settingsClose.addEventListener("click", closeSettings);
 settingsOverlay.addEventListener("click", closeSettings);
 savePromptBtn.addEventListener("click", saveSystemPrompt);
 resetPromptBtn.addEventListener("click", resetSystemPrompt);
-themeOpts.forEach(btn => {
-  btn.addEventListener("click", () => { applyTheme(btn.dataset.theme, true); });
-});
-if (devConsoleToggle) {
-  devConsoleToggle.addEventListener('change', (e)=>{
-    setDevConsoleEnabled(e.target.checked);
-  });
-}
-
+themeOpts.forEach(btn => { btn.addEventListener("click", () => { applyTheme(btn.dataset.theme, true); }); });
+if (devConsoleToggle) devConsoleToggle.addEventListener('change', (e)=>{ setDevConsoleEnabled(e.target.checked); });
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(reg => {
-    console.log('[PWA] SW registered', reg.scope);
-  }).catch(err => console.error('[PWA] SW failed', err));
+  navigator.serviceWorker.register('./sw.js').then(reg => console.log('[PWA] SW', reg.scope)).catch(()=>{});
 }

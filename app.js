@@ -7,7 +7,7 @@ const MODELS = {
   "3B": "Qwen2.5-3B-Instruct-q4f16_1-MLC",
   "7B": "Qwen2.5-7B-Instruct-q4f16_1-MLC",
   "14B": "Qwen2.5-14B-Instruct-q4f16_1-MLC",
-  "3-0.6B": "Qwen3-0.6B-q4f16_1-MLC",
+  "Q3-0.6B": "Qwen3-0.6B-q4f16_1-MLC",
 };
 
 const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";

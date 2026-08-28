@@ -1,6 +1,27 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
@@ -34,8 +55,7 @@
       <option value="3B">3B 少し重い</option>
       <option value="7B" selected>7B 高性能</option>
       <option value="14B">14B PC最大</option>
-      <option value="Q3-0.6B">3-0.6B(試験運用)</option>
-  </select>
+    </select>
   </div>
   <div class="header-right">
     <button id="download-btn">ダウンロード</button>
@@ -102,17 +122,36 @@
           <button class="theme-opt" data-theme="light">ライト (e5e5e5)</button>
         </div>
         <div class="settings-desc">差し色 #4FD1C5 は共通。アイコンも自動切替</div>
+      </div>
+
+      <div class="settings-section" style="border-top:1px solid #222; padding-top:14px; margin-top:10px;">
+        <label class="settings-label">開発者オプション</label>
+        <div class="settings-row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin:8px 0;">
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-size:13px; font-weight:500;">開発者コンソール</span>
+            <span style="font-size:11px; opacity:0.6;">TTSログや音声認識状態を画面に表示</span>
+          </div>
+          <label style="position:relative; display:inline-block; width:44px; height:24px; cursor:pointer;">
+            <input type="checkbox" id="dev-console-toggle" style="opacity:0; width:0; height:0;">
+            <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#333; border-radius:24px; transition:.2s;" id="dev-toggle-bg"></span>
+            <span style="position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.2s;" id="dev-toggle-dot"></span>
+          </label>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <span style="font-size:11px; opacity:0.7;">状態: <span id="dev-console-label" style="color:#4FD1C5;">OFF</span></span>
+        </div>
+        <div class="settings-desc" style="margin-top:6px;">ONで画面下にログ窓と「TTSテスト」「クリア」ボタンが出ます。スマホでもデバッグ可能。</div>
+      </div>
+
      <div class="settings-section" style="border-top:1px solid #222; padding-top:12px; margin-top:8px;">
         <div class="settings-desc" style="text-align:center; opacity:0.6; font-size:11px;">
-          CronyGO v.0.6＋<br>
+          CronyGO v.0.7.1<br>
           Engine: WebLLM / Qwen
         </div>
       </div>
 
-      </div>
     </div>
   </div>
 
   <script type="module" src="./app.js"></script>
-
 </html>

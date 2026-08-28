@@ -13,6 +13,7 @@ const MODELS = {
 const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
+const LS_DEV_CONSOLE_KEY = "cronygo_dev_console";
 const MAX_CHARS = 1500;
 
 let voice = null;
@@ -22,6 +23,12 @@ let isGenerating = false;
 let hasChatted = false;
 let lastInputWasVoice = false;
 
+// ===== DEV CONSOLE =====
+let devConsoleEnabled = false;
+let debugOverlayEl = null;
+let debugClearBtn = null;
+let debugTestBtn = null;
+
 function loadStoredPrompt() {
   try { return localStorage.getItem(LS_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT; }
   catch { return DEFAULT_SYSTEM_PROMPT; }
@@ -29,6 +36,80 @@ function loadStoredPrompt() {
 function loadStoredTheme() {
   try { return localStorage.getItem(LS_THEME_KEY) || "dark"; }
   catch { return "dark"; }
+}
+function loadDevConsoleEnabled() {
+  try { return localStorage.getItem(LS_DEV_CONSOLE_KEY) === "true"; }
+  catch { return false; }
+}
+function saveDevConsoleEnabled(v) {
+  try { localStorage.setItem(LS_DEV_CONSOLE_KEY, v ? "true" : "false"); } catch {}
+}
+
+function createDebugOverlay() {
+  if (debugOverlayEl) return debugOverlayEl;
+  const el = document.createElement('div');
+  el.id = 'debug-overlay';
+  el.style.cssText = 'position:fixed;bottom:80px;left:6px;right:6px;max-height:38vh;overflow:auto;background:rgba(0,0,0,0.88);color:#0f8;font-size:11px;line-height:1.35;padding:8px;border-radius:8px;z-index:99999;white-space:pre-wrap;font-family:monospace;border:1px solid #0f0;';
+  document.body.appendChild(el);
+  debugOverlayEl = el;
+
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = 'クリア';
+  clearBtn.style.cssText = 'position:fixed;bottom:48px;right:10px;z-index:100000;background:#0f0;color:#000;border:0;border-radius:12px;padding:5px 12px;font-size:11px;font-weight:600;';
+  clearBtn.onclick = () => { if(debugOverlayEl) debugOverlayEl.textContent=''; };
+  document.body.appendChild(clearBtn);
+  debugClearBtn = clearBtn;
+
+  const testBtn = document.createElement('button');
+  testBtn.textContent = 'TTSテスト';
+  testBtn.style.cssText = 'position:fixed;bottom:48px;left:10px;z-index:100000;background:#ff0;color:#000;border:0;border-radius:12px;padding:5px 12px;font-size:11px;font-weight:600;';
+  testBtn.onclick = () => {
+    dbg('--- TTSテストボタン ---');
+    if (voice) voice.speak('テストです。こんにちは。聞こえますか？');
+    else dbg('voice null');
+  };
+  document.body.appendChild(testBtn);
+  debugTestBtn = testBtn;
+
+  return el;
+}
+function removeDebugOverlay() {
+  if (debugOverlayEl) { try { debugOverlayEl.remove(); } catch {} debugOverlayEl=null; }
+  if (debugClearBtn) { try { debugClearBtn.remove(); } catch {} debugClearBtn=null; }
+  if (debugTestBtn) { try { debugTestBtn.remove(); } catch {} debugTestBtn=null; }
+}
+function dbg(msg) {
+  if (!devConsoleEnabled) return;
+  try {
+    const el = createDebugOverlay();
+    const time = new Date().toLocaleTimeString();
+    el.textContent += `[${time}] ${msg}\n`;
+    el.scrollTop = el.scrollHeight;
+  } catch {}
+  console.log(msg);
+}
+window.__cronyDbg = (msg) => dbg(msg);
+
+function setDevConsoleEnabled(enabled) {
+  devConsoleEnabled = enabled;
+  saveDevConsoleEnabled(enabled);
+  const toggle = document.getElementById('dev-console-toggle');
+  const label = document.getElementById('dev-console-label');
+  const bg = document.getElementById('dev-toggle-bg');
+  const dot = document.getElementById('dev-toggle-dot');
+  if (toggle) toggle.checked = enabled;
+  if (label) { label.textContent = enabled ? 'ON' : 'OFF'; label.style.color = enabled ? '#4FD1C5' : '#888'; }
+  if (bg) bg.style.background = enabled ? '#4FD1C5' : '#333';
+  if (dot) dot.style.transform = enabled ? 'translateX(20px)' : 'translateX(0)';
+  if (enabled) {
+    createDebugOverlay();
+    dbg('dev console ON');
+    dbg(`speechSynthesis voices=${window.speechSynthesis ? window.speechSynthesis.getVoices().length : 0}`);
+  } else {
+    dbg('dev console OFF -> removing overlay');
+    // 少し待ってから消すと最後のログ見える
+    setTimeout(()=>removeDebugOverlay(), 300);
+  }
 }
 
 let messages = [{ role: "system", content: loadStoredPrompt() }];
@@ -54,9 +135,18 @@ const savePromptBtn = document.getElementById("save-prompt-btn");
 const resetPromptBtn = document.getElementById("reset-prompt-btn");
 const promptStatus = document.getElementById("prompt-status");
 const themeOpts = document.querySelectorAll(".theme-opt");
+const devConsoleToggle = document.getElementById("dev-console-toggle");
 
 systemPromptInput.value = loadStoredPrompt();
 applyTheme(loadStoredTheme(), false);
+devConsoleEnabled = loadDevConsoleEnabled();
+setDevConsoleEnabled(devConsoleEnabled);
+
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    dbg(`voiceschanged voices=${window.speechSynthesis.getVoices().length}`);
+  };
+}
 
 function addMessage(role, content) {
   const div = document.createElement("div");
@@ -156,7 +246,9 @@ async function loadModel(key, isReload = false) {
     inputEl.placeholder = `${key}で入力...`;
     hideFirstLoadingUI();
     addMessage("assistant", isReload ? `${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
+    dbg(`model ${key} loaded`);
   } catch (e) {
+    dbg(`model load ERROR ${e.message}`);
     console.error(e);
     statusEl.textContent = "エラー";
     statusEl.className = "";
@@ -170,6 +262,7 @@ async function loadModel(key, isReload = false) {
 
 async function sendMessageWithText(forcedText) {
   const text = (forcedText || inputEl.value).trim();
+  dbg(`sendMessageWithText text="${text.slice(0,40)}" isGenerating=${isGenerating} isVoiceMode=${lastInputWasVoice}`);
   if (!text || isGenerating || !engine) return;
   const isVoiceMode = lastInputWasVoice;
   lastInputWasVoice = false;
@@ -259,6 +352,7 @@ async function sendMessageWithText(forcedText) {
       }
     }
   } catch (e) {
+    dbg(`generation ERROR ${e.message}`);
     if (!abortFlag) assistantDiv.textContent = "生成エラー: " + e.message;
   } finally {
     isGenerating = false;
@@ -288,14 +382,14 @@ voice = new VoiceManager({
   onAutoSend: (text) => {
     const t = text.trim();
     if (!t) return;
-    console.log('[AutoSend]', t);
+    dbg(`[AutoSend] "${t.slice(0,40)}"`);
     voicePreview.textContent = '';
     lastInputWasVoice = true;
     sendMessageWithText(t);
     voice.clearBuffer();
   },
   onStatus: (msg, state) => {
-    console.log('[Voice]', msg, state);
+    dbg(`[Status] ${msg} ${state}`);
   }
 });
 
@@ -306,10 +400,12 @@ micBtn.addEventListener('click', () => {
     inputEl.readOnly = false;
     inputEl.placeholder = `${currentKey || 'モデル'}で入力...`;
   } else {
+    if (voice.isSpeaking) voice.clearQueue(false);
     inputEl.blur();
     inputEl.readOnly = true;
     inputEl.placeholder = "聞き取り中...";
     voice.start().then(ok => {
+      dbg(`voice.start result ${ok}`);
       if(ok) micBtn.classList.add('on');
       else {
         inputEl.readOnly = false;
@@ -368,6 +464,11 @@ resetPromptBtn.addEventListener("click", resetSystemPrompt);
 themeOpts.forEach(btn => {
   btn.addEventListener("click", () => { applyTheme(btn.dataset.theme, true); });
 });
+if (devConsoleToggle) {
+  devConsoleToggle.addEventListener('change', (e)=>{
+    setDevConsoleEnabled(e.target.checked);
+  });
+}
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {

@@ -37,6 +37,15 @@ function loadStoredTheme() {
   try { return localStorage.getItem(LS_THEME_KEY) || "dark"; }
   catch { return "dark"; }
 }
+
+function stripThinkTags(text) {
+  if (!text) return text;
+  let t = text.replace(/<think>[\s\S]*?<\/think>/g, ""); // <think>～</think>を丸ごと消す
+  t = t.replace(/<think>[\s\S]*$/g, ""); // 閉じタグがまだ来てない途中のthinkも消す
+  t = t.replace(/<\/think>/g, "");
+  return t;
+}
+
 function loadDevConsoleEnabled() {
   try { return localStorage.getItem(LS_DEV_CONSOLE_KEY) === "true"; }
   catch { return false; }
@@ -316,7 +325,7 @@ async function sendMessageWithText(forcedText) {
 
       if (full.length >= MAX_CHARS) {
         full = full.slice(0, MAX_CHARS) + "\n\n[1500文字制限→自動で積み直し]";
-        assistantDiv.textContent = full;
+        assistantDiv.textContent = stripThinkTags(full);
         try { await engine.interruptGenerate(); } catch {}
         if (voice) voice.clearQueue(true);
         const keyToReload = currentKey;
@@ -329,7 +338,10 @@ async function sendMessageWithText(forcedText) {
       chatEl.scrollTop = chatEl.scrollHeight;
 
       if (isVoiceMode && voice && delta) {
-        speakBuffer += delta;
+  const cleanDelta = stripThinkTags(delta);
+  if (!cleanDelta) continue; // think中は何も読まない
+  speakBuffer += cleanDelta;
+        
         const matches = speakBuffer.match(sentenceSplitRegex);
         if (matches) {
           let consumed = 0;
@@ -344,7 +356,7 @@ async function sendMessageWithText(forcedText) {
     }
 
     if (!isKilled) {
-      messages.push({ role: "assistant", content: full });
+    messages.push({ role: "assistant", content: stripThinkTags(full) });
       if (voice && full && isVoiceMode) {
         const remaining = speakBuffer.trim();
         if (remaining) voice.enqueueSpeak(remaining);

@@ -341,9 +341,8 @@ async function sendMessageWithText(forcedText) {
   const cleanDelta = stripThinkTags(delta);
   if (cleanDelta) {  // ← 空じゃなければ喋る
     speakBuffer += cleanDelta;
-    // ...
   }
-}
+
         
         const matches = speakBuffer.match(sentenceSplitRegex);
         if (matches) {

@@ -334,13 +334,16 @@ async function sendMessageWithText(forcedText) {
         break;
       }
 
-      assistantDiv.textContent = full;
+      assistantDiv.textContent = stripThinkTags(full);
       chatEl.scrollTop = chatEl.scrollHeight;
 
-      if (isVoiceMode && voice && delta) {
+    if (isVoiceMode && voice) {
   const cleanDelta = stripThinkTags(delta);
-  if (!cleanDelta) continue; // think中は何も読まない
-  speakBuffer += cleanDelta;
+  if (cleanDelta) {  // ← 空じゃなければ喋る
+    speakBuffer += cleanDelta;
+    // ...
+  }
+}
         
         const matches = speakBuffer.match(sentenceSplitRegex);
         if (matches) {

@@ -10,7 +10,6 @@ const MODELS = {
   "L1B": "Llama-3.2-1B-Instruct-q4f32_1-MLC",
   "L3B": "Llama-3.2-3B-Instruct-q4f32_1-MLC",
   "G2B-jpn": "gemma-2-2b-jpn-it-q4f16_1-MLC",
-"G2B-jpn-lite": "gemma-2-2b-jpn-it-q0f32-MLC",
   "PhM": "Phi-3.5-mini-instruct-q4f16_1-MLC",
   "M7B": "Mistral-7B-Instruct-v0.3-q4f16_1-MLC",
   "HM7B": "Hermes-2-Pro-Mistral-7B-q4f16_1-MLC",

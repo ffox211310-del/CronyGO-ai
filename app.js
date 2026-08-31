@@ -2,10 +2,18 @@ import * as webllm from "@mlc-ai/web-llm";
 import { VoiceManager } from "./voice.js";
 
 const MODELS = {
-  "0.5B": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-  "1.5B": "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
-  "3B": "Qwen2.5-3B-Instruct-q4f16_1-MLC",
-  "7B": "Qwen2.5-7B-Instruct-q4f16_1-MLC",
+  "Q0.5B": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+  "Q1.5B": "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+  "Q3B": "Qwen2.5-3B-Instruct-q4f16_1-MLC",
+  "Q7B": "Qwen2.5-7B-Instruct-q4f16_1-MLC",
+// 今回追加で試す4つ
+  "L1B": "Llama-3.2-1B-Instruct-q4f32_1-MLC",
+  "L3B": "Llama-3.2-3B-Instruct-q4f32_1-MLC",
+  "G2B": "Gemma-2-2B-it-q4f32_1-MLC",
+  "PhM": "Phi-3.5-mini-instruct-q4f16_1-MLC",
+  "M7B": "Mistral-7B-Instruct-v0.3-q4f16_1-MLC",
+  "HM7B": "Hermes-2-Pro-Mistral-7B-q4f16_1-MLC",
+  "OH7B": "OpenHermes-2.5-Mistral-7B-q4f16_1-MLC",
 };
 
 const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";

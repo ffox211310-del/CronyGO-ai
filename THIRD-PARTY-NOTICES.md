@@ -41,8 +41,8 @@ The Qwen2.5 models are distributed under the Apache License 2.0.
 
 Models used by CronyGO:
 
-- Gemma-2-2B-it (gemma-2-2b-it-q4f32_1-MLC)
-- Gemma-2-2B-JPN-it (gemma-2-2b-jpn-it-q4f32-MLC / q0f32-MLC) - Japanese fine-tuned variant
+- Gemma-2-2B-it (gemma-2-2b-it-q4f16_1-MLC,gemma-2-2b-it-q4f32_1-MLC)
+- Gemma-2-2B-JPN-it (gemma-2-2b-jpn-it-q4f16_1-MLC / q4f32_1-MLC) - Japanese fine-tuned variant
 
 License: Gemma Terms of Use
 Copyright: Google LLC

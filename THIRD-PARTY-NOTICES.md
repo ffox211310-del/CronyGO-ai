@@ -38,7 +38,26 @@ The Qwen2.5 models are distributed under the Apache License 2.0.
 
 ---
 
-3. Inter
+3. Gemma
+
+Models used by CronyGO:
+
+- Gemma-2-2B-it (gemma-2-2b-it-q4f32_1-MLC)
+- Gemma-2-2B-JPN-it (gemma-2-2b-jpn-it-q4f32-MLC / q0f32-MLC) - Japanese fine-tuned variant
+
+License: Gemma Terms of Use
+Copyright: Google LLC
+Source: https://ai.google.dev/gemma/terms
+
+Gemma models are used by CronyGO for local, browser-based AI inference.
+
+The Gemma models are distributed under the Gemma Terms of Use, which permits commercial use and redistribution with attribution, subject to the Gemma Prohibited Use Policy.
+
+CronyGO includes MLC-compiled versions of these models (HF: mlc-ai/gemma-2-2b-jpn-it-q0f32-MLC, mlc-ai/gemma-2-2b-jpn-it-q4f16_1-MLC), which remain subject to the original Gemma Terms.
+
+---
+
+4. Inter
 
 Font: Inter
 License: SIL Open Font License 1.1 (OFL-1.1)
@@ -49,7 +68,7 @@ The font is distributed under the SIL Open Font License 1.1 and is not covered b
 
 ---
 
-4. JetBrains Mono
+5. JetBrains Mono
 
 Font: JetBrains Mono
 License: SIL Open Font License 1.1 (OFL-1.1)

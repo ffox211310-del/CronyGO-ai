@@ -1,6 +1,8 @@
 <div align="center">
   
-<img width="300" height="auto" alt="CronyGOicon" src="https://github.com/user-attachments/assets/0f261b9a-57b6-458f-a9b6-1e5b13b82ce8" />
+<p align="center">
+  <img src="./assets/CronyGOicon.jpg" width="200" alt="CronyGO Icon">
+</p>
 
 # CronyGO AI
 モデルをダウンロードすることで、完全オフラインで動作するAIプラットフォーム。たとえ宇宙でも、端末が動く限りあなたのそばに居続けます。
@@ -12,7 +14,7 @@ HTML､CSS､JSのみを使用しているので、Web上で完結します。�
 
 ### 動作テスト済みブラウザ
 
-•Chrome
+•Chrome(最新版)
 <br>(FireFoxはまだ不安定です)
 <br>※基本的にWebGPUが使えないと動きません。
 

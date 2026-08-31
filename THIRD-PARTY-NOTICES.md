@@ -27,7 +27,6 @@ Models used by CronyGO:
 - Qwen2.5-1.5B-Instruct
 - Qwen2.5-3B-Instruct
 - Qwen2.5-7B-Instruct
-- Qwen2.5-14B-Instruct
 
 License: Apache License 2.0
 Copyright: Alibaba Cloud / Qwen team and contributors

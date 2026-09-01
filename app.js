@@ -10,7 +10,7 @@ const MODELS = {
   "G2B-jpnHv": "gemma-2-2b-jpn-it-q4f32_1-MLC",
 };
 
-const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。強調したい時は **太字** を使ってください。";
+const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。強調は **太字** を使ってください。箇条書きは • を使ってください。* は使わないでください。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
 const LS_DEV_CONSOLE_KEY = "cronygo_dev_console";
@@ -142,44 +142,40 @@ if (window.speechSynthesis) {
   };
 }
 
-// ===== 改善版 Markdownレンダー =====
+// ===== 最終改良版 Markdownレンダー: 太字 + 箇条書き =====
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 function renderMarkdown(text) {
   if (!text) return '';
-  // 1. 前後の謎空白を除去
   let t = text.trim();
-  // 2. 単独の ** 行を削除 (Gemmaが改行で ** を出す対策)
   t = t.replace(/^\s*\*\*\s*$/gm, '');
-  // 3. ** の前後に改行が入ったパターン **\n文字\n** を **文字** に正規化
   t = t.replace(/\*\*\s*\n\s*([\s\S]+?)\s*\n\s*\*\*/g, '**$1**');
   t = t.replace(/\*\*\s+([\s\S]+?)\s+\*\*/g, '**$1**');
+  // 行頭 * - ・ を • に正規化 (Gemmaの箇条書き対策)
+  t = t.split('\n').map(line => {
+    const m = line.match(/^\s*([\*\-・])\s+(.+)$/);
+    if (m) return `• ${m[2]}`;
+    return line;
+  }).join('\n');
 
   let html = escapeHtml(t);
-
-  // ***太字斜体***
-  html = html.replace(/\*\*\*([\s\S]+?)\*\*\*/g, (m, p1) => {
+  html = html.replace(/\*\*\*([\s\S]+?)\*\*\*/g, (m,p1)=>{ const inner=p1.trim(); return inner ? `<strong><em>${inner}</em></strong>` : ''; });
+  html = html.replace(/\*\*([\s\S]+?)\*\*/g, (m,p1)=>{
     const inner = p1.trim();
-    return inner ? `<strong><em>${inner}</em></strong>` : '';
-  });
-  // **太字** 改行を含んでもOK、非貪欲
-  html = html.replace(/\*\*([\s\S]+?)\*\*/g, (m, p1) => {
-    const inner = p1.trim();
-    if (!inner || inner === ':' || inner.length === 0) return ''; // :** のようなゴミ除去
+    if (!inner || inner === ':' ) return '';
     return `<strong>${inner}</strong>`;
   });
-  // *斜体* ( ** ではない単独 *)
-  html = html.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<em>$1</em>');
+  // 斜体は • で始まる行では無効化 (箇条書きを斜体にしない)
+  html = html.replace(/(^|[^•\*\n])\*([^*\n•]+?)\*(?!\*)/g, (m, pre, inner)=>{
+    if (pre.includes('•')) return m;
+    return `${pre}<em>${inner}</em>`;
+  });
 
-  // 連続する空行を1つに
   html = html.replace(/\n{3,}/g, '\n\n');
-  // 改行 -> <br>
   html = html.replace(/\n/g, '<br>');
-  // 最後の余分な<br>を削除 (謎空白対策)
   html = html.replace(/(<br>\s*)+$/g, '');
-  html = html.trim();
-  return html;
+  return html.trim();
 }
 
 function addMessage(role, content) {

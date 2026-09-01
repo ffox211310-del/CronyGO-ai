@@ -6,11 +6,11 @@ const MODELS = {
   "Q1.5B": "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
   "Q3B": "Qwen2.5-3B-Instruct-q4f16_1-MLC",
   "Q7B": "Qwen2.5-7B-Instruct-q4f16_1-MLC",
- "G2B-jpn": "gemma-2-2b-jpn-it-q4f16_1-MLC",
+  "G2B-jpn": "gemma-2-2b-jpn-it-q4f16_1-MLC",
   "G2B-jpnHv": "gemma-2-2b-jpn-it-q4f32_1-MLC",
 };
 
-const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";
+const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。強調したい時は **太字** を使ってください。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
 const LS_DEV_CONSOLE_KEY = "cronygo_dev_console";
@@ -44,7 +44,6 @@ function loadDevConsoleEnabled() {
 function saveDevConsoleEnabled(v) {
   try { localStorage.setItem(LS_DEV_CONSOLE_KEY, v ? "true" : "false"); } catch {}
 }
-
 function createDebugOverlay() {
   if (debugOverlayEl) return debugOverlayEl;
   const el = document.createElement('div');
@@ -52,25 +51,22 @@ function createDebugOverlay() {
   el.style.cssText = 'position:fixed;bottom:80px;left:6px;right:6px;max-height:38vh;overflow:auto;background:rgba(0,0,0,0.88);color:#0f8;font-size:11px;line-height:1.35;padding:8px;border-radius:8px;z-index:99999;white-space:pre-wrap;font-family:monospace;border:1px solid #0f0;';
   document.body.appendChild(el);
   debugOverlayEl = el;
-
   const clearBtn = document.createElement('button');
   clearBtn.textContent = 'クリア';
   clearBtn.style.cssText = 'position:fixed;bottom:48px;right:10px;z-index:100000;background:#0f0;color:#000;border:0;border-radius:12px;padding:5px 12px;font-size:11px;font-weight:600;';
   clearBtn.onclick = () => { if(debugOverlayEl) debugOverlayEl.textContent=''; };
   document.body.appendChild(clearBtn);
   debugClearBtn = clearBtn;
-
   const testBtn = document.createElement('button');
   testBtn.textContent = 'TTSテスト';
   testBtn.style.cssText = 'position:fixed;bottom:48px;left:10px;z-index:100000;background:#ff0;color:#000;border:0;border-radius:12px;padding:5px 12px;font-size:11px;font-weight:600;';
   testBtn.onclick = () => {
-    dbg('--- TTSテストボタン ---');
-    if (voice) voice.speak('テストです。こんにちは。聞こえますか？');
+    dbg('--- TTSテスト ---');
+    if (voice) voice.speak('テストです。**太字**は声では読まないはず。聞こえますか？');
     else dbg('voice null');
   };
   document.body.appendChild(testBtn);
   debugTestBtn = testBtn;
-
   return el;
 }
 function removeDebugOverlay() {
@@ -89,7 +85,6 @@ function dbg(msg) {
   console.log(msg);
 }
 window.__cronyDbg = (msg) => dbg(msg);
-
 function setDevConsoleEnabled(enabled) {
   devConsoleEnabled = enabled;
   saveDevConsoleEnabled(enabled);
@@ -104,10 +99,9 @@ function setDevConsoleEnabled(enabled) {
   if (enabled) {
     createDebugOverlay();
     dbg('dev console ON');
-    dbg(`speechSynthesis voices=${window.speechSynthesis ? window.speechSynthesis.getVoices().length : 0}`);
+    dbg(`voices=${window.speechSynthesis ? window.speechSynthesis.getVoices().length : 0}`);
   } else {
-    dbg('dev console OFF -> removing overlay');
-    // 少し待ってから消すと最後のログ見える
+    dbg('dev console OFF');
     setTimeout(()=>removeDebugOverlay(), 300);
   }
 }
@@ -144,28 +138,57 @@ setDevConsoleEnabled(devConsoleEnabled);
 
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => {
-    dbg(`voiceschanged voices=${window.speechSynthesis.getVoices().length}`);
+    dbg(`voiceschanged ${window.speechSynthesis.getVoices().length}`);
   };
 }
 
+// ===== 改善版 Markdownレンダー =====
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 function renderMarkdown(text) {
-  let html = escapeHtml(text);
-  html = html.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); // **太字**
-  html = html.replace(/(?<!\*)\*([^\*\n]+)\*(?!\*)/g, '<em>$1</em>'); // *斜体*
+  if (!text) return '';
+  // 1. 前後の謎空白を除去
+  let t = text.trim();
+  // 2. 単独の ** 行を削除 (Gemmaが改行で ** を出す対策)
+  t = t.replace(/^\s*\*\*\s*$/gm, '');
+  // 3. ** の前後に改行が入ったパターン **\n文字\n** を **文字** に正規化
+  t = t.replace(/\*\*\s*\n\s*([\s\S]+?)\s*\n\s*\*\*/g, '**$1**');
+  t = t.replace(/\*\*\s+([\s\S]+?)\s+\*\*/g, '**$1**');
+
+  let html = escapeHtml(t);
+
+  // ***太字斜体***
+  html = html.replace(/\*\*\*([\s\S]+?)\*\*\*/g, (m, p1) => {
+    const inner = p1.trim();
+    return inner ? `<strong><em>${inner}</em></strong>` : '';
+  });
+  // **太字** 改行を含んでもOK、非貪欲
+  html = html.replace(/\*\*([\s\S]+?)\*\*/g, (m, p1) => {
+    const inner = p1.trim();
+    if (!inner || inner === ':' || inner.length === 0) return ''; // :** のようなゴミ除去
+    return `<strong>${inner}</strong>`;
+  });
+  // *斜体* ( ** ではない単独 *)
+  html = html.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<em>$1</em>');
+
+  // 連続する空行を1つに
+  html = html.replace(/\n{3,}/g, '\n\n');
+  // 改行 -> <br>
   html = html.replace(/\n/g, '<br>');
+  // 最後の余分な<br>を削除 (謎空白対策)
+  html = html.replace(/(<br>\s*)+$/g, '');
+  html = html.trim();
   return html;
 }
+
 function addMessage(role, content) {
   const div = document.createElement("div");
   div.className = `msg ${role}`;
   if (role === 'assistant') {
-    div.innerHTML = renderMarkdown(content); // assistantだけ太字に
+    div.innerHTML = renderMarkdown(content);
   } else {
-    div.textContent = content; // userはそのまま
+    div.textContent = content;
   }
   chatEl.appendChild(div);
   chatEl.scrollTop = chatEl.scrollHeight;
@@ -210,13 +233,11 @@ async function loadModel(key, isReload = false) {
   const MODEL_ID = MODELS[key];
   if (!MODEL_ID) return;
   const isFirstPhase = !hasChatted && !isReload;
-
   if (engine) {
     if (!isFirstPhase) addMessage("system", `${currentKey} を解放中...`);
     try { await engine.unload(); } catch {}
     engine = null;
   }
-
   dlBtn.disabled = true;
   dlBtn.textContent = isReload ? "再読込中..." : "読込中...";
   statusEl.className = "loading";
@@ -225,7 +246,6 @@ async function loadModel(key, isReload = false) {
   progressBar.style.background = "#4FD1C5";
   inputEl.disabled = true;
   sendEl.disabled = true;
-
   if (isFirstPhase) {
     showFirstLoadingUI(`${key} 準備中...`);
   } else if (isReload) {
@@ -236,9 +256,7 @@ async function loadModel(key, isReload = false) {
   } else {
     updateLoadingText("準備中...");
   }
-
   if (!isFirstPhase) addMessage("system", isReload ? `${key} 再読込開始` : `${key} を読み込み開始。`);
-
   try {
     engine = await webllm.CreateMLCEngine(MODEL_ID, {
       initProgressCallback: (p) => {
@@ -277,11 +295,10 @@ async function loadModel(key, isReload = false) {
 
 async function sendMessageWithText(forcedText) {
   const text = (forcedText || inputEl.value).trim();
-  dbg(`sendMessageWithText text="${text.slice(0,40)}" isGenerating=${isGenerating} isVoiceMode=${lastInputWasVoice}`);
+  dbg(`sendMessage text="${text.slice(0,40)}" generating=${isGenerating} voice=${lastInputWasVoice}`);
   if (!text || isGenerating || !engine) return;
   const isVoiceMode = lastInputWasVoice;
   lastInputWasVoice = false;
-
   if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
   addMessage("user", text);
   messages.push({ role: "user", content: text });
@@ -297,7 +314,6 @@ async function sendMessageWithText(forcedText) {
 
   let abortFlag = false;
   let isKilled = false;
-
   killBtn.onclick = async () => {
     if (abortFlag) return;
     abortFlag = true;
@@ -306,7 +322,7 @@ async function sendMessageWithText(forcedText) {
     killBtn.disabled = true;
     try { await engine.interruptGenerate(); } catch {}
     if (voice) voice.clearQueue(true);
-    assistantDiv.textContent += "\n\n[停止→モデル積み直し開始]";
+    assistantDiv.innerHTML = renderMarkdown(assistantDiv.textContent + "\n\n[停止→積み直し]");
     const keyToReload = currentKey;
     messages = [{ role: "system", content: loadStoredPrompt() }];
     try { killBtn.remove(); } catch {}
@@ -314,26 +330,21 @@ async function sendMessageWithText(forcedText) {
   };
 
   isGenerating = true; sendEl.disabled = true;
-
   let full = "";
   let speakBuffer = "";
   const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
-
   try {
     const chunks = await engine.chat.completions.create({
       messages, stream: true, temperature: 0.7, max_tokens: 5000
     });
-
     for await (const chunk of chunks) {
       if (abortFlag) break;
       const delta = chunk.choices[0]?.delta?.content || "";
       full += delta;
 
       if (full.length >= MAX_CHARS) {
-        full = full.slice(0, MAX_CHARS) + "\n\n[1500文字制限→自動で積み直し]";
-      
+        full = full.slice(0, MAX_CHARS).trim() + "\n\n[1500文字制限→自動で積み直し]";
         assistantDiv.innerHTML = renderMarkdown(full);
-        
         try { await engine.interruptGenerate(); } catch {}
         if (voice) voice.clearQueue(true);
         const keyToReload = currentKey;
@@ -341,8 +352,8 @@ async function sendMessageWithText(forcedText) {
         await loadModel(keyToReload, true);
         break;
       }
-
-      assistantDiv.textContent = full;
+      // ★重要: ストリーミング中も太字レンダーする
+      assistantDiv.innerHTML = renderMarkdown(full);
       chatEl.scrollTop = chatEl.scrollHeight;
 
       if (isVoiceMode && voice && delta) {
@@ -359,8 +370,14 @@ async function sendMessageWithText(forcedText) {
         }
       }
     }
+    // 最後の謎空白を除去
+    full = full.trim();
+    // 単独 ** 行が末尾に残るのを除去
+    full = full.replace(/^\s*\*\*\s*$/gm, '').trim();
+    full = full.replace(/\n{3,}/g, '\n\n').trim();
 
     if (!isKilled) {
+      assistantDiv.innerHTML = renderMarkdown(full);
       messages.push({ role: "assistant", content: full });
       if (voice && full && isVoiceMode) {
         const remaining = speakBuffer.trim();
@@ -370,7 +387,7 @@ async function sendMessageWithText(forcedText) {
     }
   } catch (e) {
     dbg(`generation ERROR ${e.message}`);
-    if (!abortFlag) assistantDiv.textContent = "生成エラー: " + e.message;
+    if (!abortFlag) assistantDiv.innerHTML = renderMarkdown("生成エラー: " + e.message);
   } finally {
     isGenerating = false;
     sendEl.disabled = false;
@@ -380,34 +397,22 @@ async function sendMessageWithText(forcedText) {
   }
 }
 
-async function sendMessage() {
-  return sendMessageWithText();
-}
+async function sendMessage() { return sendMessageWithText(); }
 
-// ===== VOICE INIT BLOCK =====
 voice = new VoiceManager({
   lang: 'ja-JP',
   autoSendDelay: 1200,
-  onFinal: (text) => {
-    inputEl.value = text;
-    voicePreview.textContent = text;
-  },
-  onInterim: (full, interim, finalPart) => {
-    inputEl.value = full;
-    voicePreview.textContent = interim ? `聞き取り: ${interim}` : finalPart;
-  },
+  onFinal: (text) => { inputEl.value = text; voicePreview.textContent = text; },
+  onInterim: (full, interim, finalPart) => { inputEl.value = full; voicePreview.textContent = interim ? `聞き取り: ${interim}` : finalPart; },
   onAutoSend: (text) => {
-    const t = text.trim();
-    if (!t) return;
+    const t = text.trim(); if (!t) return;
     dbg(`[AutoSend] "${t.slice(0,40)}"`);
     voicePreview.textContent = '';
     lastInputWasVoice = true;
     sendMessageWithText(t);
     voice.clearBuffer();
   },
-  onStatus: (msg, state) => {
-    dbg(`[Status] ${msg} ${state}`);
-  }
+  onStatus: (msg, state) => { dbg(`[Status] ${msg} ${state}`); }
 });
 
 micBtn.addEventListener('click', () => {
@@ -422,73 +427,37 @@ micBtn.addEventListener('click', () => {
     inputEl.readOnly = true;
     inputEl.placeholder = "聞き取り中...";
     voice.start().then(ok => {
-      dbg(`voice.start result ${ok}`);
+      dbg(`voice.start ${ok}`);
       if(ok) micBtn.classList.add('on');
-      else {
-        inputEl.readOnly = false;
-        inputEl.placeholder = `${currentKey || 'モデル'}で入力...`;
-      }
+      else { inputEl.readOnly = false; inputEl.placeholder = `${currentKey || 'モデル'}で入力...`; }
     });
   }
 });
-// ===== END VOICE INIT =====
 
-sendEl.addEventListener("click", () => {
-  lastInputWasVoice = false;
-  sendMessage();
-});
+sendEl.addEventListener("click", () => { lastInputWasVoice = false; sendMessage(); });
 inputEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    lastInputWasVoice = false;
-    sendMessage();
-  }
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); lastInputWasVoice = false; sendMessage(); }
 });
 selectEl.addEventListener("change", () => {
   const key = selectEl.value;
   if (currentKey === key && engine) {
-    dlBtn.textContent = "起動済み";
-    statusEl.textContent = `Ready ${key}`;
-    statusEl.className = "ready";
+    dlBtn.textContent = "起動済み"; statusEl.textContent = `Ready ${key}`; statusEl.className = "ready";
   } else {
-    dlBtn.textContent = "ダウンロード";
-    dlBtn.classList.remove("ready");
-    statusEl.textContent = "未DL";
-    statusEl.className = "";
-    inputEl.placeholder = `${key} をダウンロードしてください`;
+    dlBtn.textContent = "ダウンロード"; dlBtn.classList.remove("ready"); statusEl.textContent = "未DL"; statusEl.className = ""; inputEl.placeholder = `${key} をダウンロードしてください`;
   }
 });
-dlBtn.addEventListener("click", () => {
-  const key = selectEl.value;
-  if (currentKey === key && engine) return;
-  loadModel(key);
-});
+dlBtn.addEventListener("click", () => { const key = selectEl.value; if (currentKey === key && engine) return; loadModel(key); });
 statusEl.textContent = "未DL";
 
-function openSettings() {
-  settingsPanel.classList.add("show");
-  settingsOverlay.classList.add("show");
-}
-function closeSettings() {
-  settingsPanel.classList.remove("show");
-  settingsOverlay.classList.remove("show");
-}
+function openSettings() { settingsPanel.classList.add("show"); settingsOverlay.classList.add("show"); }
+function closeSettings() { settingsPanel.classList.remove("show"); settingsOverlay.classList.remove("show"); }
 settingsBtn.addEventListener("click", openSettings);
 settingsClose.addEventListener("click", closeSettings);
 settingsOverlay.addEventListener("click", closeSettings);
 savePromptBtn.addEventListener("click", saveSystemPrompt);
 resetPromptBtn.addEventListener("click", resetSystemPrompt);
-themeOpts.forEach(btn => {
-  btn.addEventListener("click", () => { applyTheme(btn.dataset.theme, true); });
-});
-if (devConsoleToggle) {
-  devConsoleToggle.addEventListener('change', (e)=>{
-    setDevConsoleEnabled(e.target.checked);
-  });
-}
-
+themeOpts.forEach(btn => { btn.addEventListener("click", () => { applyTheme(btn.dataset.theme, true); }); });
+if (devConsoleToggle) { devConsoleToggle.addEventListener('change', (e)=>{ setDevConsoleEnabled(e.target.checked); }); }
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(reg => {
-    console.log('[PWA] SW registered', reg.scope);
-  }).catch(err => console.error('[PWA] SW failed', err));
+  navigator.serviceWorker.register('./sw.js').then(reg => { console.log('[PWA] SW registered', reg.scope); }).catch(err => console.error('[PWA] SW failed', err));
 }

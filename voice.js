@@ -44,13 +44,11 @@ export class VoiceManager {
     t = t.replace(/(.{2,50})\1$/g, '$1');
     return t.trim();
   }
-  // 改善版: :** や改行 ** も消す
+  // 改善版: :** や改行 ** や箇条書き記号も消す
   cleanForTTS(text) {
     if (!text) return '';
     let t = text;
-    // 単独 ** 行を削除
     t = t.replace(/^\s*\*\*\s*$/gm, '');
-    // **\n文字\n** パターンを **文字** に
     t = t.replace(/\*\*\s*\n\s*([\s\S]+?)\s*\n\s*\*\*/g, '$1');
     return t
       .replace(/\*\*\*([\s\S]+?)\*\*\*/g, '$1')
@@ -61,6 +59,7 @@ export class VoiceManager {
       .replace(/```[\s\S]*?```/g, '')
       .replace(/`([^`]+)`/g, '$1')
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/^\s*[•\-・]\s+/gm, '') // 箇条書き記号を消す
       .replace(/^[#>\-•・]+\s*/gm, '')
       .replace(/\*/g, '')
       .replace(/　/g, ' ')

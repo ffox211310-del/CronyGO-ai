@@ -148,10 +148,25 @@ if (window.speechSynthesis) {
   };
 }
 
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function renderMarkdown(text) {
+  let html = escapeHtml(text);
+  html = html.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); // **太字**
+  html = html.replace(/(?<!\*)\*([^\*\n]+)\*(?!\*)/g, '<em>$1</em>'); // *斜体*
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
 function addMessage(role, content) {
   const div = document.createElement("div");
   div.className = `msg ${role}`;
-  div.textContent = content;
+  if (role === 'assistant') {
+    div.innerHTML = renderMarkdown(content); // assistantだけ太字に
+  } else {
+    div.textContent = content; // userはそのまま
+  }
   chatEl.appendChild(div);
   chatEl.scrollTop = chatEl.scrollHeight;
   return div;

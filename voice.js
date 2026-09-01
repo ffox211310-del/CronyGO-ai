@@ -19,6 +19,9 @@ export class VoiceManager {
     this._isSpeakingQueue = false;
     this.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     this.isSupported = !!this.SpeechRecognition;
+    // Croni専用ボイス
+    this.rate = 0.92;
+    this.pitch = 1.38;
   }
   _dbg(msg) { try { if (window.__cronyDbg) window.__cronyDbg(msg); } catch {} }
   removeConsecutiveDuplicates(text) {

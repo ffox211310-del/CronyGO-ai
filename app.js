@@ -331,7 +331,9 @@ async function sendMessageWithText(forcedText) {
 
       if (full.length >= MAX_CHARS) {
         full = full.slice(0, MAX_CHARS) + "\n\n[1500文字制限→自動で積み直し]";
-        assistantDiv.textContent = full;
+      
+        assistantDiv.innerHTML = renderMarkdown(full);
+        
         try { await engine.interruptGenerate(); } catch {}
         if (voice) voice.clearQueue(true);
         const keyToReload = currentKey;

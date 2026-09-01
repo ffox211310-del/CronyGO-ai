@@ -61,6 +61,14 @@ export class VoiceManager {
     return t.trim();
   }
 
+cleanForTTS(text) {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/\*/g, '')
+    .trim();
+}
+  
   init() {
     if (!this.isSupported) {
       this.onStatus('このブラウザは音声認識非対応 (Chrome/Edge推奨)', 'idle');
@@ -178,36 +186,38 @@ export class VoiceManager {
   }
 
   speak(text, opts = {}) {
-    this._dbg(`[TTS] speak len=${text?.length} "${text?.slice(0,30)}"`);
-    if (!text) return;
-    this._speakQueue = [];
-    this._currentUtterance = null;
-    try { window.speechSynthesis.cancel(); } catch {}
-    this._isSpeakingQueue = false;
-    this.isSpeaking = false;
-    this.enqueueSpeak(text, opts);
-  }
-
+  const cleaned = this.cleanForTTS(text); // ★追加：* を消す
+  if (!cleaned) return;
+  this._speakQueue = [];
+  this._currentUtterance = null;
+  try { window.speechSynthesis.cancel(); } catch {}
+  this._isSpeakingQueue = false;
+  this.isSpeaking = false;
+  this.enqueueSpeak(cleaned, opts); // ★cleanedを渡す
+}
+  
   enqueueSpeak(text, opts = {}) {
-    const t = text.trim();
-    if (!t) return;
-    this._dbg(`[TTS] enqueue "${t.slice(0,40)}" q=${this._speakQueue.length} speakingQ=${this._isSpeakingQueue}`);
-    this._speakQueue.push({ text: t, opts });
-    if (!this._isSpeakingQueue) {
-      this.wasListeningBeforeSpeak = this.isListening;
-      if (this.isListening && this.recognition) {
-        this.isSpeaking = true;
-        this._isSpeakingQueue = true;
-        this.isListening = false;
-        try { this.recognition.stop(); } catch {}
-      } else {
-        this.isSpeaking = true;
-        this._isSpeakingQueue = true;
-      }
-      this.onStatus('AIが話しています... マイク一時OFF', 'speaking');
-      this._playNext();
+  const cleaned = this.cleanForTTS(text); 
+  const t = cleaned.trim(); 
+  if (!t) return;
+  this._dbg(`[TTS] enqueue "${t.slice(0,40)}" q=${this._speakQueue.length} speakingQ=${this._isSpeakingQueue}`);
+  this._speakQueue.push({ text: t, opts });
+  if (!this._isSpeakingQueue) {
+    this.wasListeningBeforeSpeak = this.isListening;
+    if (this.isListening && this.recognition) { 
+      this.isSpeaking = true; 
+      this._isSpeakingQueue = true; 
+      this.isListening = false; 
+      try { this.recognition.stop(); } catch {} 
     }
+    else { 
+      this.isSpeaking = true; 
+      this._isSpeakingQueue = true; 
+    }
+    this.onStatus('AIが話しています... マイク一時OFF', 'speaking'); 
+    this._playNext();
   }
+}
 
   _playNext() {
     this._dbg(`[TTS] _playNext q=${this._speakQueue.length}`);

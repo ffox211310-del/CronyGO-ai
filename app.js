@@ -16,6 +16,28 @@ const LS_THEME_KEY = "cronygo_theme";
 const LS_DEV_CONSOLE_KEY = "cronygo_dev_console";
 const MAX_CHARS = 1500;
 
+// ★ 時間キーワード即答用 - システムプロンプトには混ぜない
+function getCurrentTimeString() {
+  const now = new Date(); // ← スマホのリアルタイム
+  const weekdays = ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"];
+  const y = now.getFullYear();
+  const m = now.getMonth()+1;
+  const d = now.getDate();
+  const wd = weekdays[now.getDay()];
+  const h = now.getHours();
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  return `${y}年${m}月${d}日 ${wd} ${h}時${mm}分`;
+}
+function isTimeQuery(text) {
+  const t = text.trim().toLowerCase();
+  if (/(今日は何日|今日何日|きょうは何日|今日の日付|何曜日|今何時|いまなんじ|現在時刻|今の時間|いまのじかん)/.test(t)) return true;
+  if (t === "何日" || t === "何日?" || t === "何時" || t === "何時?" || t === "何日？" || t === "何時？") return true;
+  if (t.includes("何日ですか") || t.includes("何時ですか") || t.includes("何曜日ですか")) return true;
+  if (t.includes("今日") && (t.includes("何日") || t.includes("何曜日") || t.includes("日付") || t.includes("曜日"))) return true;
+  if ((t.includes("今") || t.includes("現在")) && (t.includes("何時") || t.includes("時間") || t.includes("じかん"))) return true;
+  return false;
+}
+
 let voice = null;
 let engine = null;
 let currentKey = null;
@@ -288,15 +310,40 @@ async function loadModel(key, isReload = false) {
     addMessage("assistant", "エラー: " + e.message);
   }
 }
-
 async function sendMessageWithText(forcedText) {
   const text = (forcedText || inputEl.value).trim();
-  dbg(`sendMessage text="${text.slice(0,40)}" generating=${isGenerating} voice=${lastInputWasVoice}`);
-  if (!text || isGenerating || !engine) return;
+  if (!text || isGenerating) return; // ← !engine をここではチェックしない
   const isVoiceMode = lastInputWasVoice;
   lastInputWasVoice = false;
   if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
+
+  // ★★★ 時間キーワードならAI停止、JS即答 ★★★
+  if (isTimeQuery(text)) {
+    addMessage("user", text);
+    messages.push({ role: "user", content: text });
+    inputEl.value = "";
+    voicePreview.textContent = '';
+
+    const nowStr = getCurrentTimeString();
+    const reply = `${nowStr}です`;
+
+    addMessage("assistant", reply);
+    messages.push({ role: "assistant", content: reply });
+
+    dbg(`[TimeQuery] matched "${text}" -> ${reply}`);
+
+    if (voice) {
+      voice.speak(reply); // ← テキスト入力でも必ずViceが読み上げる
+    }
+    return; // ← ここで終了、engine.chat.completions.create には行かない
+  }
+
+  if (!engine) {
+    addMessage("system", "モデルをダウンロードしてください");
+    return;
+  }
   addMessage("user", text);
+
   messages.push({ role: "user", content: text });
   inputEl.value = "";
   voicePreview.textContent = '';

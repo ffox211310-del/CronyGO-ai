@@ -22,6 +22,9 @@ export class VoiceManager {
     // Croni専用ボイス
     this.rate = 0.92;
     this.pitch = 1.38;
+   this.LS_VOICE = "cronygo_tts_voice";
+    this.preferredVoiceURI = null;
+    try{ this.preferredVoiceURI = localStorage.getItem(this.LS_VOICE); }catch{}
   }
   _dbg(msg) { try { if (window.__cronyDbg) window.__cronyDbg(msg); } catch {} }
   removeConsecutiveDuplicates(text) {
@@ -152,6 +155,11 @@ export class VoiceManager {
     uttr.onend = () => { this._dbg(`[TTS] onend "${text.slice(0,20)}"`); this._currentUtterance = null; setTimeout(() => this._playNext(), 60); if (opts.onEnd) opts.onEnd(); };
     uttr.onerror = (e) => { this._dbg(`[TTS] onerror ${e.error}`); this._currentUtterance = null; setTimeout(() => this._playNext(), 120); if (opts.onError) opts.onError(e); };
     try { window.speechSynthesis.speak(uttr); } catch (e) { this._dbg('[TTS] speak throw '+e.message); this._playNext(); }
+  }
+    getVoices(){ return window.speechSynthesis.getVoices(); }
+  setPreferredVoice(uri){
+    this.preferredVoiceURI = uri;
+    try{ localStorage.setItem(this.LS_VOICE, uri); }catch{}
   }
   cancelSpeak() { this.clearQueue(true); }
   clearQueue(restartMic = true) {

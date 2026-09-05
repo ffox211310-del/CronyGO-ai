@@ -116,7 +116,20 @@
         </div>
         <div id="prompt-status" class="settings-desc"></div>
       </div>
-      <div class="settings-section">
+            <div class="settings-section">
+        <label class="settings-label">読み上げ音声</label>
+        <select id="tts-voice-select" style="width:100%;background:var(--bg-input);color:var(--text);border:1px solid var(--border-light);border-radius:12px;padding:10px 12px;font-size:12px;outline:none;">
+          <option>読み込み中...</option>
+        </select>
+        <div id="tts-voice-desc" class="settings-desc" style="margin-top:6px;"></div>
+        <div class="settings-row" style="margin-top:8px; display:flex; gap:8px;">
+          <button id="tts-test-btn" class="secondary-btn">試聴する</button>
+          <button id="tts-reload-voices-btn" class="secondary-btn">再読込</button>
+        </div>
+        <div class="settings-desc">日本語は★印。Chrome/Edgeだと一番多く出ます</div>
+      </div>
+
+      <div class="settings-section" style="border-top:1px solid #222; padding-top:14px; margin-top:10px;">
         <label class="settings-label">テーマ</label>
         <div class="theme-options">
           <button class="theme-opt" data-theme="dark">ダーク (黒)</button>

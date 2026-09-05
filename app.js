@@ -152,16 +152,69 @@ const resetPromptBtn = document.getElementById("reset-prompt-btn");
 const promptStatus = document.getElementById("prompt-status");
 const themeOpts = document.querySelectorAll(".theme-opt");
 const devConsoleToggle = document.getElementById("dev-console-toggle");
+const ttsVoiceSelect = document.getElementById('tts-voice-select');
+const ttsVoiceDesc = document.getElementById('tts-voice-desc');
+const ttsTestBtn = document.getElementById('tts-test-btn');
+const ttsReloadBtn = document.getElementById('tts-reload-voices-btn');
 
 systemPromptInput.value = loadStoredPrompt();
 applyTheme(loadStoredTheme(), false);
 devConsoleEnabled = loadDevConsoleEnabled();
 setDevConsoleEnabled(devConsoleEnabled);
 
+// ===== TTS VOICE SELECT =====
+function refreshVoiceList() {
+  if (!ttsVoiceSelect ||!window.speechSynthesis) return;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) {
+    ttsVoiceSelect.innerHTML = '<option>読み込み中... 少し待つか再読込押して</option>';
+    return;
+  }
+  const ja = voices.filter(v => v.lang.toLowerCase().startsWith('ja'));
+  const other = voices.filter(v =>!v.lang.toLowerCase().startsWith('ja'));
+  const sorted = [...ja.sort((a,b)=>a.name.localeCompare(b.name)),...other.sort((a,b)=>a.name.localeCompare(b.name))];
+
+  const saved = localStorage.getItem("cronygo_tts_voice");
+  ttsVoiceSelect.innerHTML = '';
+  sorted.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.voiceURI;
+    opt.textContent = `${v.name} (${v.lang})${ja.includes(v)?' ★':''}`;
+    ttsVoiceSelect.appendChild(opt);
+  });
+  if (saved) ttsVoiceSelect.value = saved;
+  else if (ja[0]) ttsVoiceSelect.value = ja[0].voiceURI;
+  updateVoiceDesc();
+}
+function updateVoiceDesc() {
+  if (!ttsVoiceDesc ||!ttsVoiceSelect) return;
+  const v = window.speechSynthesis.getVoices().find(x => x.voiceURI === ttsVoiceSelect.value);
+  if (v) ttsVoiceDesc.textContent = `選択中: ${v.name} / ${v.lang}`;
+}
+if (ttsVoiceSelect) {
+  ttsVoiceSelect.addEventListener('change', () => {
+    const uri = ttsVoiceSelect.value;
+    if (voice) voice.setPreferredVoice(uri);
+    try { localStorage.setItem("cronygo_tts_voice", uri); } catch {}
+    updateVoiceDesc();
+  });
+}
+if (ttsTestBtn) {
+  ttsTestBtn.addEventListener('click', () => {
+    const txt = "こんにちは、クロニーゴーです。この声はいかがですか？";
+    if (voice) voice.speak(txt);
+  });
+}
+if (ttsReloadBtn) {
+  ttsReloadBtn.addEventListener('click', refreshVoiceList);
+}
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => {
     dbg(`voiceschanged ${window.speechSynthesis.getVoices().length}`);
+    refreshVoiceList();
   };
+  setTimeout(refreshVoiceList, 400);
+  setTimeout(refreshVoiceList, 1500);
 }
 
 // ===== 最終改良版 Markdownレンダー: 太字 + 箇条書き =====

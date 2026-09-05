@@ -397,7 +397,23 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   #composer { gap: 6px; padding: 10px 8px; }
   #mic-btn, #send, #settings-btn { width: 36px; height: 36px; }
 }
-
+/* アイコンの四角をモヤで消す */
+.loading-icon {
+  width: 110px;
+  height: 110px;
+  border-radius: 36px;
+  /* 中心はくっきり、端は透明にフェード */
+  -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
+  mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
+  /* 周りに背景色のモヤを焚く */
+  box-shadow: 0 0 45px 18px var(--bg, #0a0a0a);
+}
+body.light.loading-icon {
+  box-shadow: 0 0 50px 22px #e5e5e5;
+}
+#loading-view {
+  position: relative;
+}
 
 /* チャット背景 */
 #chat {
@@ -424,20 +440,4 @@ body.light #chat.has-custom-bg::before {
   z-index: 1;
 }
 
-/* アイコンの四角をモヤで消す */
-.loading-icon {
-  width: 110px;
-  height: 110px;
-  border-radius: 36px;
-  /* 中心はくっきり、端は透明にフェード */
-  -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
-  mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
-  /* 周りに背景色のモヤを焚く */
-  box-shadow: 0 0 45px 18px var(--bg, #0a0a0a);
-}
-body.light.loading-icon {
-  box-shadow: 0 0 50px 22px #e5e5e5;
-}
-#loading-view {
-  position: relative;
-}
+

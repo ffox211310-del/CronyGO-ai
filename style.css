@@ -397,25 +397,8 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   #composer { gap: 6px; padding: 10px 8px; }
   #mic-btn, #send, #settings-btn { width: 36px; height: 36px; }
 }
-/* アイコンの四角をモヤで消す */
-.loading-icon {
-  width: 110px;
-  height: 110px;
-  border-radius: 36px;
-  /* 中心はくっきり、端は透明にフェード */
-  -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
-  mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
-  /* 周りに背景色のモヤを焚く */
-  box-shadow: 0 0 45px 18px var(--bg, #0a0a0a);
-}
-body.light.loading-icon {
-  box-shadow: 0 0 50px 22px #e5e5e5;
-}
-#loading-view {
-  position: relative;
-}
 
-/* チャット背景 */
+/* チャット背景 - 修正版 */
 #chat {
   position: relative;
   background-size: cover;
@@ -426,18 +409,26 @@ body.light.loading-icon {
   position: absolute;
   inset: 0;
   background: rgba(0,0,0,var(--chat-bg-overlay, 0.4));
-  backdrop-filter: blur(2px);
   z-index: 0;
   pointer-events: none;
+  /* blurは削除。背景をボカさない */
 }
 body.light #chat.has-custom-bg::before {
   background: rgba(229,229,229,var(--chat-bg-overlay, 0.4));
 }
-#chat.has-custom-bg.msg,
-#chat.has-custom-bg #loading-view,
-#chat.has-custom-bg.hint {
+/* ←ここスペース入れるのが重要 */
+#chat.has-custom-bg .msg,
+#chat.has-custom-bg #loading-view {
   position: relative;
   z-index: 1;
 }
 
-
+/* アイコンのモヤはそのままでOK */
+.loading-icon {
+  width: 110px;
+  height: 110px;
+  border-radius: 36px;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
+  mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
+  box-shadow: 0 0 45px 18px var(--bg, #0a0a0a);
+}

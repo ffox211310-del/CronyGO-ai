@@ -148,8 +148,13 @@ export class VoiceManager {
     const { text, opts } = this._speakQueue.shift();
     this._dbg(`[TTS] play "${text.slice(0,40)}" voices=${window.speechSynthesis.getVoices().length}`);
     const uttr = new SpeechSynthesisUtterance(text); uttr.lang = opts.lang || this.lang; uttr.rate = opts.rate || 1.1; uttr.pitch = opts.pitch || 1;
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) { const jaVoice = voices.find(v => v.lang.startsWith('ja')) || voices[0]; if (jaVoice) uttr.voice = jaVoice; }
+  
+    const voices = this.getVoices();
+    let target = null;
+    if (this.preferredVoiceURI) target = voices.find(v => v.voiceURI === this.preferredVoiceURI);
+    if (!target) target = voices.find(v => v.lang.startsWith('ja') && v.default) || voices.find(v => v.lang.startsWith('ja')) || voices[0];
+    if (target){ uttr.voice = target; uttr.lang = target.lang; }
+    
     this._currentUtterance = uttr;
     uttr.onstart = () => { this._dbg(`[TTS] onstart "${text.slice(0,20)}"`); this.isSpeaking = true; this._isSpeakingQueue = true; };
     uttr.onend = () => { this._dbg(`[TTS] onend "${text.slice(0,20)}"`); this._currentUtterance = null; setTimeout(() => this._playNext(), 60); if (opts.onEnd) opts.onEnd(); };

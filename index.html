@@ -138,6 +138,20 @@
         <div class="settings-desc">差し色 #4FD1C5 は共通。アイコンも自動切替</div>
       </div>
 
+      <div class="settings-section" style="border-top:1px solid #222; padding-top:14px;">
+  <label class="settings-label">チャット背景</label>
+  <input type="file" id="bg-upload" accept="image/*" style="display:none">
+  <div class="settings-row" style="display:flex; gap:8px; margin-top:6px;">
+    <button id="bg-upload-btn" class="secondary-btn">写真を選ぶ</button>
+    <button id="bg-clear-btn" class="secondary-btn">消す</button>
+  </div>
+  <div style="margin-top:10px;">
+    <label style="font-size:11px; opacity:0.7;">文字の読みやすさ</label>
+    <input type="range" id="bg-opacity" min="0" max="85" value="40" style="width:100%">
+  </div>
+  <div class="settings-desc">端末内だけに保存。外に出ません</div>
+</div>
+      
       <div class="settings-section" style="border-top:1px solid #222; padding-top:14px; margin-top:10px;">
         <label class="settings-label">開発者オプション</label>
         <div class="settings-row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin:8px 0;">

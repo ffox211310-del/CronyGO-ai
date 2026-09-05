@@ -162,6 +162,69 @@ applyTheme(loadStoredTheme(), false);
 devConsoleEnabled = loadDevConsoleEnabled();
 setDevConsoleEnabled(devConsoleEnabled);
 
+// ===== チャット背景アップロード =====
+const bgUpload = document.getElementById('bg-upload');
+const bgUploadBtn = document.getElementById('bg-upload-btn');
+const bgClearBtn = document.getElementById('bg-clear-btn');
+const bgOpacity = document.getElementById('bg-opacity');
+const LS_BG = "cronygo_chat_bg";
+const LS_BG_OP = "cronygo_chat_bg_op";
+
+function applyBg(dataUrl){
+  if(dataUrl){
+    chatEl.style.backgroundImage = `url("${dataUrl}")`;
+    chatEl.classList.add('has-custom-bg');
+  }else{
+    chatEl.style.backgroundImage = '';
+    chatEl.classList.remove('has-custom-bg');
+  }
+}
+function applyOpacity(v){
+  document.documentElement.style.setProperty('--chat-bg-overlay', v/100);
+  try{ localStorage.setItem(LS_BG_OP, String(v)); }catch{}
+}
+
+// 起動時に復元
+try{
+  const savedBg = localStorage.getItem(LS_BG);
+  const savedOp = localStorage.getItem(LS_BG_OP);
+  if(savedBg) applyBg(savedBg);
+  if(savedOp && bgOpacity){ bgOpacity.value = savedOp; applyOpacity(savedOp); }
+  else if(bgOpacity){ applyOpacity(bgOpacity.value); }
+}catch{}
+
+bgUploadBtn?.addEventListener('click', ()=> bgUpload?.click());
+bgClearBtn?.addEventListener('click', ()=>{
+  localStorage.removeItem(LS_BG);
+  applyBg(null);
+});
+bgOpacity?.addEventListener('input', (e)=> applyOpacity(e.target.value));
+
+bgUpload?.addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  // でかすぎるとlocalStorage死ぬから canvasで圧縮
+  const dataUrl = await new Promise((res)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const c = document.createElement('canvas');
+      const max = 1024;
+      let w = img.width, h = img.height;
+      if(w>max || h>max){ const r = Math.min(max/w, max/h); w*=r; h*=r; }
+      c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      res(c.toDataURL('image/jpeg', 0.7));
+    };
+    img.src = URL.createObjectURL(file);
+  });
+  try{
+    localStorage.setItem(LS_BG, dataUrl);
+    applyBg(dataUrl);
+  }catch(err){
+    alert('画像が大きすぎます。もっと小さい画像で試して');
+  }
+});
+
 // ===== TTS VOICE SELECT =====
 function refreshVoiceList() {
   if (!ttsVoiceSelect ||!window.speechSynthesis) return;

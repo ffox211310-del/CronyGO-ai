@@ -332,10 +332,11 @@ async function sendMessageWithText(forcedText) {
 
     dbg(`[TimeQuery] matched "${text}" -> ${reply}`);
 
-    if (voice) {
-      voice.speak(reply); // ← テキスト入力でも必ずViceが読み上げる
-    }
-    return; // ← ここで終了、engine.chat.completions.create には行かない
+      // マイクの時だけ喋る
+  if (isVoiceMode && voice) {
+    voice.speak(reply);
+  }
+  return; // ← ここで終了、engine.chat.completions.create には行かない
   }
 
   if (!engine) {

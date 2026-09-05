@@ -397,3 +397,47 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   #composer { gap: 6px; padding: 10px 8px; }
   #mic-btn, #send, #settings-btn { width: 36px; height: 36px; }
 }
+
+
+/* チャット背景 */
+#chat {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+#chat.has-custom-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,var(--chat-bg-overlay, 0.4));
+  backdrop-filter: blur(2px);
+  z-index: 0;
+  pointer-events: none;
+}
+body.light #chat.has-custom-bg::before {
+  background: rgba(229,229,229,var(--chat-bg-overlay, 0.4));
+}
+#chat.has-custom-bg.msg,
+#chat.has-custom-bg #loading-view,
+#chat.has-custom-bg.hint {
+  position: relative;
+  z-index: 1;
+}
+
+/* アイコンの四角をモヤで消す */
+.loading-icon {
+  width: 110px;
+  height: 110px;
+  border-radius: 36px;
+  /* 中心はくっきり、端は透明にフェード */
+  -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
+  mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
+  /* 周りに背景色のモヤを焚く */
+  box-shadow: 0 0 45px 18px var(--bg, #0a0a0a);
+}
+body.light.loading-icon {
+  box-shadow: 0 0 50px 22px #e5e5e5;
+}
+#loading-view {
+  position: relative;
+}

@@ -411,10 +411,9 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,var(--chat-bg-overlay, 0.4));
+  background: transparent; /* 暗幕なし = 写真そのまま */
   z-index: 0;
   pointer-events: none;
-  /* blurは削除。背景をボカさない */
 }
 body.light #chat.has-custom-bg::before {
   background: rgba(229,229,229,var(--chat-bg-overlay, 0.4));

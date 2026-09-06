@@ -403,24 +403,34 @@ function renderRoomList(){
   `).join('');
 }
 
+const WELCOME_TEXT = "こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。";
+
 function clearChatUI(){
-  // msgだけ消す。loading-viewは残す
   chatEl.querySelectorAll('.msg').forEach(el=>el.remove());
   if(!chatEl.contains(loadingView)){
     chatEl.appendChild(loadingView);
   }
 }
+
 function renderChatFromHistory(history){
   clearChatUI();
-  // 履歴が0なら空のまま（最初の挨拶はHTMLに残ってないので出さない）
+  if(history.length === 0){
+    // 新規ルーム用の吹き出し（保存はしない、見た目だけ）
+    const div = document.createElement("div");
+    div.className = "msg assistant";
+    div.textContent = WELCOME_TEXT;
+    chatEl.insertBefore(div, loadingView);
+    hasChatted = false;
+    hideFirstLoadingUI(); // アイコンはDL開始まで出さない
+    return;
+  }
   history.forEach(m=>{
     addMessage(m.role, m.content);
   });
-  hasChatted = history.length > 0;
-  if(hasChatted){
-    hideFirstLoadingUI();
-  }
+  hasChatted = true;
+  hideFirstLoadingUI();
 }
+
 function switchRoom(id){
   if(!id || id===currentRoomId){ closeDrawer(); return; }
   saveCurrentRoomHistory();
@@ -432,6 +442,7 @@ function switchRoom(id){
   renderRoomList();
   closeDrawer();
 }
+
 function createRoom(){
   saveCurrentRoomHistory();
   const id = Date.now().toString();
@@ -441,14 +452,20 @@ function createRoom(){
   currentRoomId = id;
   localStorage.setItem(LS_CURRENT, id);
   messages = [{ role: "system", content: loadStoredPrompt() }];
-  clearChatUI();
-  hasChatted = false; // ←これ重要。新ルームはまだ喋ってない扱いにする
-  // 新ルームでもローディングUIが出るようにリセット
-  loadingView.classList.remove("show");
-  chatEl.classList.remove("is-first-loading");
+  hasChatted = false;
+  renderChatFromHistory([]); // ←ここで「ダウンロードしてください」吹き出しを出す
   renderRoomList();
   closeDrawer();
   saveRoomMessages(id, []);
+  // 入力を未DL状態に戻す
+  inputEl.disabled = true;
+  sendEl.disabled = true;
+  inputEl.placeholder = "モデルをダウンロードしてください";
+  statusEl.textContent = "未DL";
+  statusEl.className = "";
+  dlBtn.textContent = "ダウンロード";
+  dlBtn.classList.remove("ready");
+  dlBtn.disabled = false;
 }
 function initRooms(){
   rooms = loadRooms();

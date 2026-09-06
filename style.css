@@ -457,8 +457,28 @@ body.light #chat.has-custom-bg::before {
 }
 #room-overlay.open{ display:block; }
 
-.room-item{ padding:12px 16px; border-bottom:1px solid #1a1a1a; cursor:pointer; }
-.room-item:hover{ background:#151515; }
-.room-item.active{ background:#1e1e1e; border-left:3px solid var(--accent, #4FD1C5); }
-body.light.room-item:hover{ background:#f0f0f0; }
-body.light.room-item.active{ background:#fff; }
+.room-item{
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  color: var(--text);
+  background: transparent;
+}
+.room-item:hover{ background: var(--bg-input); }
+.room-item.active{
+  background: var(--bg-input);
+  border-left:3px solid var(--accent, #4FD1C5);
+}
+.room-del-btn{
+  width:24px; height:24px; border-radius:50%;
+  border:1px solid var(--border-light);
+  background:transparent;
+  color: var(--text-sub);
+  cursor:pointer; flex-shrink:0;
+}
+.room-del-btn:hover{ color: var(--text); border-color: var(--text-sub); }
+
+/* ライトモード上書き */
+body.light .room-item{ border-bottom-color: #ddd; }
+body.light .room-item:hover{ background:#f0f0f0; }
+body.light .room-item.active{ background:#ffffff; }

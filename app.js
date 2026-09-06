@@ -16,6 +16,12 @@ const LS_THEME_KEY = "cronygo_theme";
 const LS_DEV_CONSOLE_KEY = "cronygo_dev_console";
 const MAX_CHARS = 1500;
 
+const LS_ROOMS = "cronygo_rooms";
+const LS_CURRENT = "cronygo_current_room";
+const LS_ROOM_PREFIX = "cronygo_room_";
+let rooms = [];
+let currentRoomId = null;
+
 // ★ 時間キーワード即答用 - システムプロンプトには混ぜない
 function getCurrentTimeString() {
   const now = new Date(); // ← スマホのリアルタイム
@@ -141,6 +147,8 @@ const selectEl = document.getElementById("model-select");
 const dlBtn = document.getElementById("download-btn");
 const loadingView = document.getElementById("loading-view");
 const loadingText = document.getElementById("loading-text");
+const newRoomBtn = document.getElementById('new-room-btn');
+const roomListEl = document.getElementById('room-list');
 
 const settingsBtn = document.getElementById("settings-btn");
 const settingsPanel = document.getElementById("settings-panel");
@@ -357,6 +365,93 @@ function saveSystemPrompt() {
   promptStatus.style.color = "#4FD1C5";
   setTimeout(() => { promptStatus.textContent = ""; }, 2500);
 }
+
+// ===== ルーム保存 =====
+function loadRooms(){
+  try{ const r = localStorage.getItem(LS_ROOMS); return r? JSON.parse(r) : []; }catch{ return []; }
+}
+function saveRooms(){
+  try{ localStorage.setItem(LS_ROOMS, JSON.stringify(rooms)); }catch{}
+}
+function loadRoomMessages(id){
+  try{ const r = localStorage.getItem(LS_ROOM_PREFIX+id); return r? JSON.parse(r) : []; }catch{ return []; }
+}
+function saveRoomMessages(id, msgs){
+  try{ localStorage.setItem(LS_ROOM_PREFIX+id, JSON.stringify(msgs)); }catch(e){ console.warn(e); }
+}
+function getHistory(){ return messages.slice(1); } // systemを除いた履歴
+function saveCurrentRoomHistory(){
+  if(!currentRoomId) return;
+  saveRoomMessages(currentRoomId, getHistory());
+  // タイトル自動生成
+  const room = rooms.find(r=>r.id===currentRoomId);
+  if(room && room.title==="新しいチャット" && getHistory().length>0){
+    const firstUser = getHistory().find(m=>m.role==="user");
+    if(firstUser){
+      room.title = firstUser.content.slice(0,20) + (firstUser.content.length>20?"…":"");
+      saveRooms(); renderRoomList();
+    }
+  }
+}
+function renderRoomList(){
+  if(!roomListEl) return;
+  roomListEl.innerHTML = rooms.map(r=>`
+    <div class="room-item ${r.id===currentRoomId?'active':''}" data-id="${r.id}">
+      <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">${r.title}</span>
+      <span style="font-size:10px; opacity:0.5;">${new Date(parseInt(r.id)).toLocaleDateString()}</span>
+    </div>
+  `).join('');
+}
+function clearChatUI(){
+  // 最初のあいさつは残すならここで再描画する
+  const first = chatEl.querySelector('.msg.assistant');
+  chatEl.innerHTML = '';
+  if(first) chatEl.appendChild(first);
+}
+function renderChatFromHistory(history){
+  clearChatUI();
+  history.forEach(m=>{
+    addMessage(m.role, m.content);
+  });
+}
+function switchRoom(id){
+  if(!id || id===currentRoomId){ closeDrawer(); return; }
+  saveCurrentRoomHistory(); // 今のルームを保存してから移動
+  currentRoomId = id;
+  localStorage.setItem(LS_CURRENT, id);
+  const history = loadRoomMessages(id);
+  messages = [{ role: "system", content: loadStoredPrompt() },...history];
+  renderChatFromHistory(history);
+  renderRoomList();
+  closeDrawer();
+}
+function createRoom(){
+  saveCurrentRoomHistory();
+  const id = Date.now().toString();
+  const newRoom = { id, title:"新しいチャット", createdAt: Date.now(), model: selectEl.value };
+  rooms.unshift(newRoom);
+  saveRooms();
+  currentRoomId = id;
+  localStorage.setItem(LS_CURRENT, id);
+  messages = [{ role: "system", content: loadStoredPrompt() }];
+  clearChatUI();
+  renderRoomList();
+  closeDrawer();
+  saveRoomMessages(id, []);
+}
+function initRooms(){
+  rooms = loadRooms();
+  if(rooms.length===0){
+    createRoom();
+    return;
+  }
+  currentRoomId = localStorage.getItem(LS_CURRENT) || rooms[0].id;
+  const history = loadRoomMessages(currentRoomId);
+  messages = [{ role: "system", content: loadStoredPrompt() },...history];
+  renderChatFromHistory(history);
+  renderRoomList();
+}
+
 function resetSystemPrompt() {
   systemPromptInput.value = DEFAULT_SYSTEM_PROMPT;
   saveSystemPrompt();
@@ -633,3 +728,12 @@ const closeDrawer = () => { roomDrawer?.classList.remove('open'); roomOverlay?.c
 menuBtn?.addEventListener('click', openDrawer);
 roomOverlay?.addEventListener('click', closeDrawer);
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeDrawer(); });
+
+// ルーム初期化とイベント
+initRooms();
+newRoomBtn?.addEventListener('click', createRoom);
+roomListEl?.addEventListener('click', (e)=>{
+  const item = e.target.closest('.room-item');
+  if(!item) return;
+  switchRoom(item.dataset.id);
+});

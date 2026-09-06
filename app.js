@@ -637,16 +637,42 @@ function resetSystemPrompt() {
 }
 
 async function loadModel(key, isReload = false) {
-  const MODEL_ID = MODELS[key];
+  let MODEL_ID = MODELS[key];
   if (!MODEL_ID) return;
-  const isFirstPhase = !hasChatted && !isReload;
+
+  // mlc-ai/ を含むフルID → 短いIDに変換
+  const shortId = MODEL_ID.includes('/')? MODEL_ID.split('/').pop() : MODEL_ID;
+  const isFullHF = MODEL_ID.includes('/');
+
+  const appConfig = webllm.prebuiltAppConfig;
+
+  // まだ登録されてないカスタムモデルなら appConfig に追加
+  const exists = appConfig.model_list.some(m => m.model_id === shortId || m.model_id === MODEL_ID);
+  if (!exists && isFullHF) {
+    // 適当な wasm を流用 (mlc-aiのq4f16系はほぼ共通で動く)
+    const fallbackLib = appConfig.model_list.find(m => m.model_id.includes('Qwen2'))?.model_lib
+                     || appConfig.model_list[0]?.model_lib;
+    appConfig.model_list.push({
+      model_id: shortId,
+      model: `https://huggingface.co/${MODEL_ID}/resolve/main/`,
+      model_lib: fallbackLib,
+    });
+    console.log(`[CustomModel] added ${shortId} -> ${MODEL_ID}`);
+  }
+
+  // 実際に読み込むIDは短い方を使う
+  if (appConfig.model_list.some(m => m.model_id === shortId)) {
+    MODEL_ID = shortId;
+  }
+
+  const isFirstPhase =!hasChatted &&!isReload;
   if (engine) {
     if (!isFirstPhase) addMessage("system", `${currentKey} を解放中...`);
     try { await engine.unload(); } catch {}
     engine = null;
   }
   dlBtn.disabled = true;
-  dlBtn.textContent = isReload ? "再読込中..." : "読込中...";
+  dlBtn.textContent = isReload? "再読込中..." : "読込中...";
   statusEl.className = "loading";
   progressBar.style.opacity = "1";
   progressBar.style.width = "0%";
@@ -663,18 +689,19 @@ async function loadModel(key, isReload = false) {
   } else {
     updateLoadingText("準備中...");
   }
-  if (!isFirstPhase) addMessage("system", isReload ? `${key} 再読込開始` : `${key} を読み込み開始。`);
+  if (!isFirstPhase) addMessage("system", isReload? `${key} 再読込開始` : `${key} を読み込み開始。`);
   try {
     engine = await webllm.CreateMLCEngine(MODEL_ID, {
+      appConfig: appConfig,
       initProgressCallback: (p) => {
         const pct = Math.round(p.progress * 100);
-        const txt = isReload ? `積み直し ${pct}% ${p.text}` : `${pct}% ${p.text}`;
+        const txt = isReload? `積み直し ${pct}% ${p.text}` : `${pct}% ${p.text}`;
         updateLoadingText(txt);
         progressBar.style.width = `${pct}%`;
       }
     });
     currentKey = key;
-    statusEl.textContent = isReload ? `再起動完了 ${key}` : `Ready ${key}`;
+    statusEl.textContent = isReload? `再起動完了 ${key}` : `Ready ${key}`;
     statusEl.className = "ready";
     progressBar.style.width = "100%";
     setTimeout(() => progressBar.style.opacity = "0", 800);
@@ -685,8 +712,8 @@ async function loadModel(key, isReload = false) {
     sendEl.disabled = false;
     inputEl.placeholder = `${key}で入力...`;
     hideFirstLoadingUI();
-    addMessage("assistant", isReload ? `${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
-    dbg(`model ${key} loaded`);
+    addMessage("assistant", isReload? `${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
+    dbg(`model ${key} loaded as ${MODEL_ID}`);
   } catch (e) {
     dbg(`model load ERROR ${e.message}`);
     console.error(e);

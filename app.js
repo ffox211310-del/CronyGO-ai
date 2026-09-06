@@ -221,10 +221,12 @@ applyTheme(loadStoredTheme(), false);
 devConsoleEnabled = loadDevConsoleEnabled();
 setDevConsoleEnabled(devConsoleEnabled);
 
-// ===== チャット背景アップロード =====
+
+// ===== チャット背景アップロードリニューアル =====
 const bgUpload = document.getElementById('bg-upload');
 const bgUploadBtn = document.getElementById('bg-upload-btn');
 const bgClearBtn = document.getElementById('bg-clear-btn');
+const bgOpacity = document.getElementById('bg-opacity'); // 無ければ null になるだけ
 
 const LS_BG = "cronygo_chat_bg";
 const LS_BG_OP = "cronygo_chat_bg_op";
@@ -246,7 +248,14 @@ function applyOpacity(v){
 // 起動時に復元
 try{
   const savedBg = localStorage.getItem(LS_BG);
-
+  const savedOp = localStorage.getItem(LS_BG_OP);
+  if(savedBg) applyBg(savedBg);
+  if(savedOp){
+    if(bgOpacity) bgOpacity.value = savedOp;
+    applyOpacity(savedOp);
+  } else if(bgOpacity){
+    applyOpacity(bgOpacity.value);
+  }
 }catch{}
 
 bgUploadBtn?.addEventListener('click', ()=> bgUpload?.click());
@@ -255,6 +264,8 @@ bgClearBtn?.addEventListener('click', ()=>{
   applyBg(null);
 });
 bgOpacity?.addEventListener('input', (e)=> applyOpacity(e.target.value));
+
+
 
 bgUpload?.addEventListener('change', async (e)=>{
   const file = e.target.files[0];

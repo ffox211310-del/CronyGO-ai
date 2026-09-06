@@ -35,8 +35,8 @@
 </style>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CronyGO</title>
-
+  <button id="menu-btn">☰</button>
+<div>CronyGO</div>
   <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0a0a0a">
   
@@ -46,6 +46,14 @@
   </script>
 </head>
 <body>
+
+  <div id="room-overlay"></div>
+<div id="room-drawer">
+  <div style="padding:16px; font-weight:bold;">ルーム</div>
+  <button id="new-room-btn" class="secondary-btn" style="margin:12px;">+ 新しいチャット</button>
+  <div id="room-list"></div>
+</div>
+  
 <header>
   <div class="header-left">
     <h1>CronyGO</h1>

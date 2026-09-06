@@ -621,3 +621,15 @@ if (devConsoleToggle) { devConsoleToggle.addEventListener('change', (e)=>{ setDe
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => { console.log('[PWA] SW registered', reg.scope); }).catch(err => console.error('[PWA] SW failed', err));
 }
+
+
+
+// ハンバーガーメニュー開閉
+const menuBtn = document.getElementById('menu-btn');
+const roomDrawer = document.getElementById('room-drawer');
+const roomOverlay = document.getElementById('room-overlay');
+const openDrawer = () => { roomDrawer?.classList.add('open'); roomOverlay?.classList.add('open'); };
+const closeDrawer = () => { roomDrawer?.classList.remove('open'); roomOverlay?.classList.remove('open'); };
+menuBtn?.addEventListener('click', openDrawer);
+roomOverlay?.addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeDrawer(); });

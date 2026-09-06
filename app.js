@@ -692,9 +692,17 @@ async function sendMessageWithText(forcedText) {
   let speakBuffer = "";
   const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
   try {
-    const chunks = await engine.chat.completions.create({
-      messages, stream: true, temperature: 0.7, max_tokens: 5000
-    });
+    
+      const temp = parseFloat(localStorage.getItem('cronygo_temp') || 0.7);
+  const max_tokens = parseInt(localStorage.getItem('cronygo_max_tokens') || 1024);
+  
+  const chunks = await engine.chat.completions.create({
+    messages,
+    temperature: temp,
+    max_tokens: max_tokens,
+    stream: true
+  });
+    
     for await (const chunk of chunks) {
       if (abortFlag) break;
       const delta = chunk.choices[0]?.delta?.content || "";

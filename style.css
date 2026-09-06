@@ -439,11 +439,20 @@ body.light #chat.has-custom-bg::before {
 
 
 #menu-btn{
-  width:36px; height:36px; border-radius:10px;
-  border:1px solid var(--border-light, #222);
-  background:transparent; color:var(--text);
-  font-size:18px; cursor:pointer;
+  width: auto;
+  height: auto;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  border-radius: 0;
 }
+#menu-btn:hover{ opacity: 0.6; }
+#menu-btn:active{ opacity: 0.4; }
+
 #room-drawer{
   position:fixed; top:0; left:0; bottom:0; width:280px;
   background:var(--bg, #0a0a0a); z-index:100;

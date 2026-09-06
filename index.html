@@ -35,21 +35,29 @@
 </style>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CronyGO</title>
-
   <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0a0a0a">
-  
+    <title>CronyGO</title>
   <link rel="stylesheet" href="./style.css" />
   <script type="importmap">
   { "imports": { "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm@0.2.79" } }
   </script>
 </head>
 <body>
+
+  <div id="room-overlay"></div>
+<div id="room-drawer">
+  <div style="padding:16px; font-weight:600; border-bottom:1px solid #222;">ルーム</div>
+  <button id="new-room-btn" class="secondary-btn" style="margin:12px; width:calc(100% - 24px);">+ 新しいチャット</button>
+  <div id="room-list"></div>
+</div>
+  
 <header>
-  <div class="header-left">
-    <h1>CronyGO</h1>
-    <select id="model-select">
+  
+<div class="header-left" style="display:flex; align-items:center; gap:10px;">
+  <button id="menu-btn" aria-label="メニュー">☰</button>
+  <select id="model-select">
+    
   <option value="Q0.5B">Qwen0.5B</option>
 <option value="Q1.5B">Qwen1.5B</option>
 <option value="Q3B">Qwen3B</option>
@@ -116,7 +124,20 @@
         </div>
         <div id="prompt-status" class="settings-desc"></div>
       </div>
-      <div class="settings-section">
+            <div class="settings-section">
+        <label class="settings-label">読み上げ音声</label>
+        <select id="tts-voice-select" style="width:100%;background:var(--bg-input);color:var(--text);border:1px solid var(--border-light);border-radius:12px;padding:10px 12px;font-size:12px;outline:none;">
+          <option>読み込み中...</option>
+        </select>
+        <div id="tts-voice-desc" class="settings-desc" style="margin-top:6px;"></div>
+        <div class="settings-row" style="margin-top:8px; display:flex; gap:8px;">
+          <button id="tts-test-btn" class="secondary-btn">試聴する</button>
+          <button id="tts-reload-voices-btn" class="secondary-btn">再読込</button>
+        </div>
+        <div class="settings-desc">日本語は★印。Chrome/Edgeだと一番多く出ます</div>
+      </div>
+
+      <div class="settings-section" style="border-top:1px solid #222; padding-top:14px; margin-top:10px;">
         <label class="settings-label">テーマ</label>
         <div class="theme-options">
           <button class="theme-opt" data-theme="dark">ダーク (黒)</button>
@@ -125,6 +146,20 @@
         <div class="settings-desc">差し色 #4FD1C5 は共通。アイコンも自動切替</div>
       </div>
 
+      <div class="settings-section" style="border-top:1px solid #222; padding-top:14px;">
+  <label class="settings-label">チャット背景</label>
+  <input type="file" id="bg-upload" accept="image/*" style="display:none">
+  <div class="settings-row" style="display:flex; gap:8px; margin-top:6px;">
+    <button id="bg-upload-btn" class="secondary-btn">写真を選ぶ</button>
+    <button id="bg-clear-btn" class="secondary-btn">消す</button>
+  </div>
+  <div style="margin-top:10px;">
+    <label style="font-size:11px; opacity:0.7;">写真のぼかし具合</label>
+    <input type="range" id="bg-opacity" min="0" max="85" value="40" style="width:100%">
+  </div>
+  <div class="settings-desc">端末内だけに保存。外に出ません</div>
+</div>
+      
       <div class="settings-section" style="border-top:1px solid #222; padding-top:14px; margin-top:10px;">
         <label class="settings-label">開発者オプション</label>
         <div class="settings-row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin:8px 0;">
@@ -146,7 +181,7 @@
 
      <div class="settings-section" style="border-top:1px solid #222; padding-top:12px; margin-top:8px;">
         <div class="settings-desc" style="text-align:center; opacity:0.6; font-size:11px;">
-          CronyGO v.0.8.3<br>
+          CronyGO v.0.8.8<br>
           Engine: WebLLM / Qwen＆Gemma
         </div>
       </div>

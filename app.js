@@ -16,6 +16,34 @@ const LS_THEME_KEY = "cronygo_theme";
 const LS_DEV_CONSOLE_KEY = "cronygo_dev_console";
 const MAX_CHARS = 1500;
 
+const LS_ROOMS = "cronygo_rooms";
+const LS_CURRENT = "cronygo_current_room";
+const LS_ROOM_PREFIX = "cronygo_room_";
+let rooms = [];
+let currentRoomId = null;
+
+// ★ 時間キーワード即答用 - システムプロンプトには混ぜない
+function getCurrentTimeString() {
+  const now = new Date(); // ← スマホのリアルタイム
+  const weekdays = ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"];
+  const y = now.getFullYear();
+  const m = now.getMonth()+1;
+  const d = now.getDate();
+  const wd = weekdays[now.getDay()];
+  const h = now.getHours();
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  return `${y}年${m}月${d}日 ${wd} ${h}時${mm}分`;
+}
+function isTimeQuery(text) {
+  const t = text.trim().toLowerCase();
+  if (/(今日は何日|今日何日|きょうは何日|今日の日付|何曜日|今何時|いまなんじ|現在時刻|今の時間|いまのじかん)/.test(t)) return true;
+  if (t === "何日" || t === "何日?" || t === "何時" || t === "何時?" || t === "何日？" || t === "何時？") return true;
+  if (t.includes("何日ですか") || t.includes("何時ですか") || t.includes("何曜日ですか")) return true;
+  if (t.includes("今日") && (t.includes("何日") || t.includes("何曜日") || t.includes("日付") || t.includes("曜日"))) return true;
+  if ((t.includes("今") || t.includes("現在")) && (t.includes("何時") || t.includes("時間") || t.includes("じかん"))) return true;
+  return false;
+}
+
 let voice = null;
 let engine = null;
 let currentKey = null;
@@ -119,6 +147,8 @@ const selectEl = document.getElementById("model-select");
 const dlBtn = document.getElementById("download-btn");
 const loadingView = document.getElementById("loading-view");
 const loadingText = document.getElementById("loading-text");
+const newRoomBtn = document.getElementById('new-room-btn');
+const roomListEl = document.getElementById('room-list');
 
 const settingsBtn = document.getElementById("settings-btn");
 const settingsPanel = document.getElementById("settings-panel");
@@ -130,16 +160,132 @@ const resetPromptBtn = document.getElementById("reset-prompt-btn");
 const promptStatus = document.getElementById("prompt-status");
 const themeOpts = document.querySelectorAll(".theme-opt");
 const devConsoleToggle = document.getElementById("dev-console-toggle");
+const ttsVoiceSelect = document.getElementById('tts-voice-select');
+const ttsVoiceDesc = document.getElementById('tts-voice-desc');
+const ttsTestBtn = document.getElementById('tts-test-btn');
+const ttsReloadBtn = document.getElementById('tts-reload-voices-btn');
 
 systemPromptInput.value = loadStoredPrompt();
 applyTheme(loadStoredTheme(), false);
 devConsoleEnabled = loadDevConsoleEnabled();
 setDevConsoleEnabled(devConsoleEnabled);
 
+// ===== チャット背景アップロード =====
+const bgUpload = document.getElementById('bg-upload');
+const bgUploadBtn = document.getElementById('bg-upload-btn');
+const bgClearBtn = document.getElementById('bg-clear-btn');
+const bgOpacity = document.getElementById('bg-opacity');
+const LS_BG = "cronygo_chat_bg";
+const LS_BG_OP = "cronygo_chat_bg_op";
+
+function applyBg(dataUrl){
+  if(dataUrl){
+    chatEl.style.backgroundImage = `url("${dataUrl}")`;
+    chatEl.classList.add('has-custom-bg');
+  }else{
+    chatEl.style.backgroundImage = '';
+    chatEl.classList.remove('has-custom-bg');
+  }
+}
+function applyOpacity(v){
+  document.documentElement.style.setProperty('--chat-bg-overlay', v/100);
+  try{ localStorage.setItem(LS_BG_OP, String(v)); }catch{}
+}
+
+// 起動時に復元
+try{
+  const savedBg = localStorage.getItem(LS_BG);
+  const savedOp = localStorage.getItem(LS_BG_OP);
+  if(savedBg) applyBg(savedBg);
+  if(savedOp && bgOpacity){ bgOpacity.value = savedOp; applyOpacity(savedOp); }
+  else if(bgOpacity){ applyOpacity(bgOpacity.value); }
+}catch{}
+
+bgUploadBtn?.addEventListener('click', ()=> bgUpload?.click());
+bgClearBtn?.addEventListener('click', ()=>{
+  localStorage.removeItem(LS_BG);
+  applyBg(null);
+});
+bgOpacity?.addEventListener('input', (e)=> applyOpacity(e.target.value));
+
+bgUpload?.addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  // でかすぎるとlocalStorage死ぬから canvasで圧縮
+  const dataUrl = await new Promise((res)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const c = document.createElement('canvas');
+      const max = 1024;
+      let w = img.width, h = img.height;
+      if(w>max || h>max){ const r = Math.min(max/w, max/h); w*=r; h*=r; }
+      c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      res(c.toDataURL('image/jpeg', 0.7));
+    };
+    img.src = URL.createObjectURL(file);
+  });
+  try{
+    localStorage.setItem(LS_BG, dataUrl);
+    applyBg(dataUrl);
+  }catch(err){
+    alert('画像が大きすぎます。もっと小さい画像で試して');
+  }
+});
+
+// ===== TTS VOICE SELECT =====
+function refreshVoiceList() {
+  if (!ttsVoiceSelect ||!window.speechSynthesis) return;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) {
+    ttsVoiceSelect.innerHTML = '<option>読み込み中... 少し待つか再読込押して</option>';
+    return;
+  }
+  const ja = voices.filter(v => v.lang.toLowerCase().startsWith('ja'));
+  const other = voices.filter(v =>!v.lang.toLowerCase().startsWith('ja'));
+  const sorted = [...ja.sort((a,b)=>a.name.localeCompare(b.name)),...other.sort((a,b)=>a.name.localeCompare(b.name))];
+
+  const saved = localStorage.getItem("cronygo_tts_voice");
+  ttsVoiceSelect.innerHTML = '';
+  sorted.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.voiceURI;
+    opt.textContent = `${v.name} (${v.lang})${ja.includes(v)?' ★':''}`;
+    ttsVoiceSelect.appendChild(opt);
+  });
+  if (saved) ttsVoiceSelect.value = saved;
+  else if (ja[0]) ttsVoiceSelect.value = ja[0].voiceURI;
+  updateVoiceDesc();
+}
+function updateVoiceDesc() {
+  if (!ttsVoiceDesc ||!ttsVoiceSelect) return;
+  const v = window.speechSynthesis.getVoices().find(x => x.voiceURI === ttsVoiceSelect.value);
+  if (v) ttsVoiceDesc.textContent = `選択中: ${v.name} / ${v.lang}`;
+}
+if (ttsVoiceSelect) {
+  ttsVoiceSelect.addEventListener('change', () => {
+    const uri = ttsVoiceSelect.value;
+    if (voice) voice.setPreferredVoice(uri);
+    try { localStorage.setItem("cronygo_tts_voice", uri); } catch {}
+    updateVoiceDesc();
+  });
+}
+if (ttsTestBtn) {
+  ttsTestBtn.addEventListener('click', () => {
+    const txt = "こんにちは、クロニーゴーです。この声はいかがですか？";
+    if (voice) voice.speak(txt);
+  });
+}
+if (ttsReloadBtn) {
+  ttsReloadBtn.addEventListener('click', refreshVoiceList);
+}
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => {
     dbg(`voiceschanged ${window.speechSynthesis.getVoices().length}`);
+    refreshVoiceList();
   };
+  setTimeout(refreshVoiceList, 400);
+  setTimeout(refreshVoiceList, 1500);
 }
 
 // ===== 最終改良版 Markdownレンダー: 太字 + 箇条書き =====
@@ -219,6 +365,142 @@ function saveSystemPrompt() {
   promptStatus.style.color = "#4FD1C5";
   setTimeout(() => { promptStatus.textContent = ""; }, 2500);
 }
+
+// ===== ルーム保存 =====
+function loadRooms(){
+  try{ const r = localStorage.getItem(LS_ROOMS); return r? JSON.parse(r) : []; }catch{ return []; }
+}
+function saveRooms(){
+  try{ localStorage.setItem(LS_ROOMS, JSON.stringify(rooms)); }catch{}
+}
+function loadRoomMessages(id){
+  try{ const r = localStorage.getItem(LS_ROOM_PREFIX+id); return r? JSON.parse(r) : []; }catch{ return []; }
+}
+function saveRoomMessages(id, msgs){
+  try{ localStorage.setItem(LS_ROOM_PREFIX+id, JSON.stringify(msgs)); }catch(e){ console.warn(e); }
+}
+function getHistory(){ return messages.slice(1); } // systemを除いた履歴
+function saveCurrentRoomHistory(){
+  if(!currentRoomId) return;
+  saveRoomMessages(currentRoomId, getHistory());
+  // タイトル自動生成
+  const room = rooms.find(r=>r.id===currentRoomId);
+  if(room && room.title==="新しいチャット" && getHistory().length>0){
+    const firstUser = getHistory().find(m=>m.role==="user");
+    if(firstUser){
+      room.title = firstUser.content.slice(0,20) + (firstUser.content.length>20?"…":"");
+      saveRooms(); renderRoomList();
+    }
+  }
+}
+function renderRoomList(){
+  if(!roomListEl) return;
+  roomListEl.innerHTML = rooms.map(r=>`
+    <div class="room-item ${r.id===currentRoomId?'active':''}" data-id="${r.id}" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div style="min-width:0; flex:1;">
+        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">${r.title}</span>
+        <span style="font-size:10px; opacity:0.5;">${new Date(parseInt(r.id)).toLocaleDateString()}</span>
+      </div>
+      <button class="room-del-btn" data-del-id="${r.id}" aria-label="削除" style="width:24px; height:24px; border-radius:50%; border:1px solid #333; background:transparent; color:#888; cursor:pointer; flex-shrink:0;">×</button>
+    </div>
+  `).join('');
+}
+
+const WELCOME_TEXT = "こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。";
+
+function clearChatUI(){
+  chatEl.querySelectorAll('.msg').forEach(el=>el.remove());
+  if(!chatEl.contains(loadingView)){
+    chatEl.appendChild(loadingView);
+  }
+}
+
+function renderChatFromHistory(history){
+  clearChatUI();
+  if(history.length === 0){
+    // 新規ルーム用の吹き出し（保存はしない、見た目だけ）
+    const div = document.createElement("div");
+    div.className = "msg assistant";
+    div.textContent = WELCOME_TEXT;
+    chatEl.insertBefore(div, loadingView);
+    hasChatted = false;
+    hideFirstLoadingUI(); // アイコンはDL開始まで出さない
+    return;
+  }
+  history.forEach(m=>{
+    addMessage(m.role, m.content);
+  });
+  hasChatted = true;
+  hideFirstLoadingUI();
+}
+
+function switchRoom(id){
+  if(!id || id===currentRoomId){ closeDrawer(); return; }
+  saveCurrentRoomHistory();
+  currentRoomId = id;
+  localStorage.setItem(LS_CURRENT, id);
+  const history = loadRoomMessages(id);
+  messages = [{ role: "system", content: loadStoredPrompt() },...history];
+  renderChatFromHistory(history);
+  renderRoomList();
+  closeDrawer();
+}
+
+function createRoom(){
+  saveCurrentRoomHistory();
+  const id = Date.now().toString();
+  const newRoom = { id, title:"新しいチャット", createdAt: Date.now(), model: currentKey || selectEl.value };
+  rooms.unshift(newRoom);
+  saveRooms();
+  currentRoomId = id;
+  localStorage.setItem(LS_CURRENT, id);
+  messages = [{ role: "system", content: loadStoredPrompt() }];
+  hasChatted = false;
+  renderChatFromHistory([]); // 挨拶吹き出し出す
+  renderRoomList();
+  closeDrawer();
+  saveRoomMessages(id, []);
+  // ここでダウンロードボタンや入力欄は一切触らない
+  // 読み込み済みならそのままReadyのまま、新規ルームでも打てる
+}
+function deleteRoom(id){
+  // 最後の1件は消さずに空にする
+  if(rooms.length <= 1){
+    saveRoomMessages(id, []);
+    messages = [{ role: "system", content: loadStoredPrompt() }];
+    const room = rooms.find(r=>r.id===id);
+    if(room) room.title = "新しいチャット";
+    saveRooms();
+    renderChatFromHistory([]);
+    renderRoomList();
+    return;
+  }
+  rooms = rooms.filter(r=>r.id!== id);
+  saveRooms();
+  try{ localStorage.removeItem(LS_ROOM_PREFIX+id); }catch{}
+
+  if(id === currentRoomId){
+    currentRoomId = rooms[0].id;
+    localStorage.setItem(LS_CURRENT, currentRoomId);
+    const history = loadRoomMessages(currentRoomId);
+    messages = [{ role: "system", content: loadStoredPrompt() },...history];
+    renderChatFromHistory(history);
+  }
+  renderRoomList();
+}
+function initRooms(){
+  rooms = loadRooms();
+  if(rooms.length===0){
+    createRoom();
+    return;
+  }
+  currentRoomId = localStorage.getItem(LS_CURRENT) || rooms[0].id;
+  const history = loadRoomMessages(currentRoomId);
+  messages = [{ role: "system", content: loadStoredPrompt() },...history];
+  renderChatFromHistory(history);
+  renderRoomList();
+}
+
 function resetSystemPrompt() {
   systemPromptInput.value = DEFAULT_SYSTEM_PROMPT;
   saveSystemPrompt();
@@ -288,15 +570,44 @@ async function loadModel(key, isReload = false) {
     addMessage("assistant", "エラー: " + e.message);
   }
 }
-
 async function sendMessageWithText(forcedText) {
   const text = (forcedText || inputEl.value).trim();
-  dbg(`sendMessage text="${text.slice(0,40)}" generating=${isGenerating} voice=${lastInputWasVoice}`);
-  if (!text || isGenerating || !engine) return;
+  if (!text || isGenerating) return; // ← !engine をここではチェックしない
   const isVoiceMode = lastInputWasVoice;
   lastInputWasVoice = false;
   if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
+
+  // ★★★ 時間キーワードならAI停止、JS即答 ★★★
+  if (isTimeQuery(text)) {
+      addMessage("user", text);
+
+  messages.push({ role: "user", content: text });
+  saveCurrentRoomHistory(); // ユーザー発言を即保存 & タイトル自動生成
+  inputEl.value = "";
+  voicePreview.textContent = '';
+
+    const nowStr = getCurrentTimeString();
+    const reply = `${nowStr}です`;
+
+       addMessage("assistant", reply);
+    messages.push({ role: "assistant", content: reply });
+    saveCurrentRoomHistory(); 
+
+    dbg(`[TimeQuery] matched "${text}" -> ${reply}`);
+
+      // マイクの時だけ喋る
+  if (isVoiceMode && voice) {
+    voice.speak(reply);
+  }
+  return; // ← ここで終了、engine.chat.completions.create には行かない
+  }
+
+  if (!engine) {
+    addMessage("system", "モデルをダウンロードしてください");
+    return;
+  }
   addMessage("user", text);
+
   messages.push({ role: "user", content: text });
   inputEl.value = "";
   voicePreview.textContent = '';
@@ -372,9 +683,10 @@ async function sendMessageWithText(forcedText) {
     full = full.replace(/^\s*\*\*\s*$/gm, '').trim();
     full = full.replace(/\n{3,}/g, '\n\n').trim();
 
-    if (!isKilled) {
+        if (!isKilled) {
       assistantDiv.innerHTML = renderMarkdown(full);
       messages.push({ role: "assistant", content: full });
+      saveCurrentRoomHistory(); // ★追加③ AI回答を保存
       if (voice && full && isVoiceMode) {
         const remaining = speakBuffer.trim();
         if (remaining) voice.enqueueSpeak(remaining);
@@ -457,3 +769,33 @@ if (devConsoleToggle) { devConsoleToggle.addEventListener('change', (e)=>{ setDe
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => { console.log('[PWA] SW registered', reg.scope); }).catch(err => console.error('[PWA] SW failed', err));
 }
+
+
+
+// ハンバーガーメニュー開閉
+const menuBtn = document.getElementById('menu-btn');
+const roomDrawer = document.getElementById('room-drawer');
+const roomOverlay = document.getElementById('room-overlay');
+const openDrawer = () => { roomDrawer?.classList.add('open'); roomOverlay?.classList.add('open'); };
+const closeDrawer = () => { roomDrawer?.classList.remove('open'); roomOverlay?.classList.remove('open'); };
+menuBtn?.addEventListener('click', openDrawer);
+roomOverlay?.addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeDrawer(); });
+
+// ルーム初期化とイベント
+initRooms();
+newRoomBtn?.addEventListener('click', createRoom);
+roomListEl?.addEventListener('click', (e)=>{
+  const delBtn = e.target.closest('.room-del-btn');
+  if(delBtn){
+    e.stopPropagation();
+    const delId = delBtn.dataset.delId;
+    if(confirm('このルームを削除しますか？')){
+      deleteRoom(delId);
+    }
+    return;
+  }
+  const item = e.target.closest('.room-item');
+  if(!item) return;
+  switchRoom(item.dataset.id);
+});

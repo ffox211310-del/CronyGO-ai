@@ -428,8 +428,8 @@ body.light #chat.has-custom-bg::before {
 
 /* アイコンのモヤはそのままでOK */
 .loading-icon {
-  width: 110px;
-  height: 110px;
+  width: 200px;
+  height: 200px;
   border-radius: 36px;
   -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
   mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);

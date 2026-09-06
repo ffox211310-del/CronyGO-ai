@@ -117,13 +117,14 @@
 
   <div class="settings-body">
 
-    <!-- システム -->
-    <div class="settings-group">
-      <div class="settings-group-title">システム</div>
-      
+  <div class="settings-group open" id="group-system">
+    <button class="settings-group-btn" data-target="system">
+      <span>システム</span><span class="arrow">›</span>
+    </button>
+    <div class="settings-group-content">
       <div class="settings-section">
         <label class="settings-label">システムプロンプト</label>
-        <textarea id="system-prompt-input" placeholder="あなたはCronyGOです。日本語で簡素に答えてください。"></textarea>
+        <textarea id="system-prompt-input"></textarea>
         <div class="settings-row">
           <button id="save-prompt-btn" class="primary-btn">保存</button>
           <button id="reset-prompt-btn" class="secondary-btn">デフォルトに戻す</button>
@@ -131,30 +132,28 @@
         <div id="prompt-status" class="settings-desc"></div>
       </div>
     </div>
+  </div>
 
-    <!-- カスタム -->
-    <div class="settings-group">
-      <div class="settings-group-title">カスタム</div>
-
+  <div class="settings-group" id="group-custom">
+    <button class="settings-group-btn" data-target="custom">
+      <span>カスタム</span><span class="arrow">›</span>
+    </button>
+    <div class="settings-group-content">
       <div class="settings-section">
         <label class="settings-label">テーマ</label>
         <div class="theme-options">
-          <button class="theme-opt" data-theme="dark">ダーク (黒)</button>
-          <button class="theme-opt" data-theme="light">ライト (e5e5e5)</button>
+          <button class="theme-opt" data-theme="dark">ダーク</button>
+          <button class="theme-opt" data-theme="light">ライト</button>
         </div>
       </div>
-
       <div class="settings-section">
         <label class="settings-label">読み上げ音声</label>
         <select id="tts-voice-select"></select>
-        <div id="tts-voice-desc" class="settings-desc" style="margin-top:6px;"></div>
         <div class="settings-row" style="margin-top:8px;">
-          <button id="tts-test-btn" class="secondary-btn">試聴する</button>
+          <button id="tts-test-btn" class="secondary-btn">試聴</button>
           <button id="tts-reload-voices-btn" class="secondary-btn">再読込</button>
         </div>
-        <div class="settings-desc">日本語は★印</div>
       </div>
-
       <div class="settings-section">
         <label class="settings-label">チャット背景</label>
         <input type="file" id="bg-upload" accept="image/*" style="display:none">
@@ -162,34 +161,31 @@
           <button id="bg-upload-btn" class="secondary-btn">写真を選ぶ</button>
           <button id="bg-clear-btn" class="secondary-btn">消す</button>
         </div>
-        <div style="margin-top:10px;">
-          <label style="font-size:11px; opacity:0.7;">ぼかし具合</label>
-          <input type="range" id="bg-opacity" min="0" max="85" value="40" style="width:100%">
-        </div>
-        <div class="settings-desc">端末内だけに保存</div>
+        <input type="range" id="bg-opacity" min="0" max="85" value="40" style="width:100%; margin-top:8px;">
       </div>
     </div>
+  </div>
 
-    <!-- 開発者 -->
-    <div class="settings-group">
-      <div class="settings-group-title">開発者オプション</div>
+  <div class="settings-group" id="group-dev">
+    <button class="settings-group-btn" data-target="dev">
+      <span>開発者オプション</span><span class="arrow">›</span>
+    </button>
+    <div class="settings-group-content">
       <div class="settings-section">
-        <div class="settings-row" style="display:flex; align-items:center; justify-content:space-between;">
-          <div style="display:flex; flex-direction:column;">
-            <span style="font-size:13px; font-weight:500;">開発者コンソール</span>
-            <span style="font-size:11px; opacity:0.6;">ログを画面に表示</span>
-          </div>
-          <label style="position:relative; display:inline-block; width:44px; height:24px; cursor:pointer;">
+        <div class="settings-row" style="justify-content:space-between; align-items:center;">
+          <span style="font-size:13px;">開発者コンソール</span>
+          <label style="position:relative; width:44px; height:24px;">
             <input type="checkbox" id="dev-console-toggle" style="opacity:0; width:0; height:0;">
-            <span id="dev-toggle-bg" style="position:absolute; inset:0; background:#333; border-radius:24px; transition:.2s;"></span>
+            <span id="dev-toggle-bg" style="position:absolute; inset:0; background:#333; border-radius:24px;"></span>
             <span id="dev-toggle-dot" style="position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.2s;"></span>
           </label>
         </div>
-        <div style="margin-top:6px;">
-          <span style="font-size:11px; opacity:0.7;">状態: <span id="dev-console-label">OFF</span></span>
-        </div>
+        <span style="font-size:11px; opacity:0.6;">状態: <span id="dev-console-label">OFF</span></span>
       </div>
     </div>
+  </div>
+
+</div>
 
     <div class="settings-desc" style="text-align:center; opacity:0.6; font-size:11px; margin-top:10px;">
       CronyGO v.0.8.9<br>Engine: WebLLM

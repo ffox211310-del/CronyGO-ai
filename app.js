@@ -61,6 +61,57 @@ function loadStoredPrompt() {
   try { return localStorage.getItem(LS_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT; }
   catch { return DEFAULT_SYSTEM_PROMPT; }
 }
+
+// --- WebLLM params ---
+const DEFAULT_TEMP = 0.7;
+const DEFAULT_MAX_TOKENS = 1024;
+
+function loadStoredTemp(){ return parseFloat(localStorage.getItem('cronygo_temp') || DEFAULT_TEMP); }
+function loadStoredMaxTokens(){ return parseInt(localStorage.getItem('cronygo_max_tokens') || DEFAULT_MAX_TOKENS); }
+
+const tempSlider = document.getElementById('temp-slider');
+const tempValue = document.getElementById('temp-value');
+const maxTokensInput = document.getElementById('max-tokens-input');
+
+if(tempSlider){
+  tempSlider.value = loadStoredTemp();
+  tempValue.textContent = tempSlider.value;
+  tempSlider.addEventListener('input', (e)=>{
+    tempValue.textContent = e.target.value;
+    localStorage.setItem('cronygo_temp', e.target.value);
+  });
+}
+if(maxTokensInput){
+  maxTokensInput.value = loadStoredMaxTokens();
+  maxTokensInput.addEventListener('change', (e)=>{
+    localStorage.setItem('cronygo_max_tokens', e.target.value);
+  });
+}
+
+// --- キャッシュ管理 ---
+async function refreshCacheInfo(){
+  const usageEl = document.getElementById('cache-usage');
+  const modelEl = document.getElementById('cache-model-name');
+  try{
+    const estimate = await navigator.storage.estimate();
+    const mb = ((estimate.usage||0)/1024/1024).toFixed(1);
+    usageEl.textContent = `${mb} MB`;
+  }catch{ usageEl.textContent = '取得失敗'; }
+  modelEl.textContent = localStorage.getItem('webllm_model_id') || selectEl?.value || '未取得';
+}
+document.getElementById('cache-refresh-btn')?.addEventListener('click', refreshCacheInfo);
+document.getElementById('cache-clear-btn')?.addEventListener('click', async ()=>{
+  if(!confirm('モデルキャッシュを削除しますか？次回は再ダウンロードが必要です')) return;
+  localStorage.removeItem('webllm_model_id');
+  if('caches' in window){
+    const keys = await caches.keys();
+    for(const k of keys) await caches.delete(k);
+  }
+  alert('キャッシュ削除しました');
+  refreshCacheInfo();
+});
+refreshCacheInfo();
+
 function loadStoredTheme() {
   try { return localStorage.getItem(LS_THEME_KEY) || "dark"; }
   catch { return "dark"; }

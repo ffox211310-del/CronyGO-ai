@@ -396,9 +396,12 @@ function saveCurrentRoomHistory(){
 function renderRoomList(){
   if(!roomListEl) return;
   roomListEl.innerHTML = rooms.map(r=>`
-    <div class="room-item ${r.id===currentRoomId?'active':''}" data-id="${r.id}">
-      <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">${r.title}</span>
-      <span style="font-size:10px; opacity:0.5;">${new Date(parseInt(r.id)).toLocaleDateString()}</span>
+    <div class="room-item ${r.id===currentRoomId?'active':''}" data-id="${r.id}" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div style="min-width:0; flex:1;">
+        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">${r.title}</span>
+        <span style="font-size:10px; opacity:0.5;">${new Date(parseInt(r.id)).toLocaleDateString()}</span>
+      </div>
+      <button class="room-del-btn" data-del-id="${r.id}" aria-label="削除" style="width:24px; height:24px; border-radius:50%; border:1px solid #333; background:transparent; color:#888; cursor:pointer; flex-shrink:0;">×</button>
     </div>
   `).join('');
 }
@@ -466,6 +469,31 @@ function createRoom(){
   dlBtn.textContent = "ダウンロード";
   dlBtn.classList.remove("ready");
   dlBtn.disabled = false;
+}
+function deleteRoom(id){
+  // 最後の1件は消さずに空にする
+  if(rooms.length <= 1){
+    saveRoomMessages(id, []);
+    messages = [{ role: "system", content: loadStoredPrompt() }];
+    const room = rooms.find(r=>r.id===id);
+    if(room) room.title = "新しいチャット";
+    saveRooms();
+    renderChatFromHistory([]);
+    renderRoomList();
+    return;
+  }
+  rooms = rooms.filter(r=>r.id!== id);
+  saveRooms();
+  try{ localStorage.removeItem(LS_ROOM_PREFIX+id); }catch{}
+
+  if(id === currentRoomId){
+    currentRoomId = rooms[0].id;
+    localStorage.setItem(LS_CURRENT, currentRoomId);
+    const history = loadRoomMessages(currentRoomId);
+    messages = [{ role: "system", content: loadStoredPrompt() },...history];
+    renderChatFromHistory(history);
+  }
+  renderRoomList();
 }
 function initRooms(){
   rooms = loadRooms();
@@ -765,6 +793,15 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeDrawer(); 
 initRooms();
 newRoomBtn?.addEventListener('click', createRoom);
 roomListEl?.addEventListener('click', (e)=>{
+  const delBtn = e.target.closest('.room-del-btn');
+  if(delBtn){
+    e.stopPropagation();
+    const delId = delBtn.dataset.delId;
+    if(confirm('このルームを削除しますか？')){
+      deleteRoom(delId);
+    }
+    return;
+  }
   const item = e.target.closest('.room-item');
   if(!item) return;
   switchRoom(item.dataset.id);

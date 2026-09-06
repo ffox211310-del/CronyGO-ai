@@ -121,18 +121,51 @@
     <button class="settings-group-btn" data-target="system">
       <span>システム</span><span class="arrow">›</span>
     </button>
-    <div class="settings-group-content">
-      <div class="settings-section">
-        <label class="settings-label">システムプロンプト</label>
-        <textarea id="system-prompt-input"></textarea>
-        <div class="settings-row">
-          <button id="save-prompt-btn" class="primary-btn">保存</button>
-          <button id="reset-prompt-btn" class="secondary-btn">デフォルトに戻す</button>
-        </div>
-        <div id="prompt-status" class="settings-desc"></div>
-      </div>
+    
+<div class="settings-group-content">
+  <!-- 既存のシステムプロンプト -->
+  <div class="settings-section">
+    <label class="settings-label">システムプロンプト</label>
+    <textarea id="system-prompt-input"></textarea>
+    <div class="settings-row">
+      <button id="save-prompt-btn" class="primary-btn">保存</button>
+      <button id="reset-prompt-btn" class="secondary-btn">リセット</button>
     </div>
+    <div id="prompt-status" class="settings-desc"></div>
   </div>
+
+  <!-- 追加: 生成パラメータ -->
+  <div class="settings-section">
+    <label class="settings-label">生成パラメータ</label>
+    
+    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+      <span style="font-size:12px;">Temperature</span>
+      <span id="temp-value" style="font-size:12px; opacity:0.7;">0.7</span>
+    </div>
+    <input type="range" id="temp-slider" min="0" max="2" step="0.1" value="0.7" style="width:100%">
+    <div class="settings-desc">低い=正確、高い=創造的</div>
+
+    <div style="margin-top:12px; display:flex; justify-content:space-between; margin-bottom:6px;">
+      <span style="font-size:12px;">Max Tokens</span>
+    </div>
+    <input type="number" id="max-tokens-input" min="128" max="4096" step="128" value="1024" style="width:100%; background:var(--input-bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px;">
+    <div class="settings-desc">1回の返答の長さ</div>
+  </div>
+
+  <!-- 追加: キャッシュ管理 -->
+  <div class="settings-section">
+    <label class="settings-label">モデルキャッシュ</label>
+    <div style="font-size:12px; opacity:0.7; margin-bottom:8px;">
+      使用量: <span id="cache-usage">計算中...</span><br>
+      モデル: <span id="cache-model-name">-</span>
+    </div>
+    <div class="settings-row">
+      <button id="cache-clear-btn" class="secondary-btn" style="color:#ff6b6b;">キャッシュを削除</button>
+      <button id="cache-refresh-btn" class="secondary-btn">更新</button>
+    </div>
+    <div class="settings-desc">消すと再DLが必要になります</div>
+  </div>
+</div>
 
   <div class="settings-group" id="group-custom">
     <button class="settings-group-btn" data-target="custom">

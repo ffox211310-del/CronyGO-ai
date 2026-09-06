@@ -14,6 +14,13 @@ const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
 const LS_DEV_CONSOLE_KEY = "cronygo_dev_console";
+const LS_CUSTOM_MODELS = "cronygo_custom_models";
+function loadCustomModels(){
+  try{ return JSON.parse(localStorage.getItem(LS_CUSTOM_MODELS) || "[]"); }catch{ return []; }
+}
+function saveCustomModels(list){
+  try{ localStorage.setItem(LS_CUSTOM_MODELS, JSON.stringify(list)); }catch{}
+}
 const MAX_CHARS = 1500;
 
 const LS_ROOMS = "cronygo_rooms";
@@ -195,6 +202,36 @@ const sendEl = document.getElementById("send");
 const statusEl = document.getElementById("status");
 const progressBar = document.getElementById("progress-bar");
 const selectEl = document.getElementById("model-select");
+function refreshModelSelect(){
+  const custom = loadCustomModels();
+  [...selectEl.options].forEach(o=>{ if(o.dataset.custom) o.remove(); });
+  custom.forEach(fullId=>{
+    const base = fullId.split('/').pop().replace(/-MLC$/,'').slice(0,28);
+    let key = base; let n=1;
+    while(MODELS[key] && MODELS[key]!==fullId) key = `${base}_${n++}`;
+    MODELS[key] = fullId;
+    if(![...selectEl.options].some(op=>op.value===key)){
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = `★ ${key}`;
+      opt.dataset.custom = "1";
+      selectEl.appendChild(opt);
+    }
+  });
+  renderCustomModelList();
+}
+function renderCustomModelList(){
+  const el = document.getElementById('custom-model-list');
+  if(!el) return;
+  const list = loadCustomModels();
+  if(!list.length){ el.innerHTML = '<span style="font-size:11px; opacity:.5;">まだ登録なし</span>'; return; }
+  el.innerHTML = list.map(id=>`
+    <div style="display:flex; justify-content:space-between; align-items:center; background:#1a1a1a; padding:6px 8px; border-radius:6px; font-size:11px; margin-bottom:4px;">
+      <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${id}</span>
+      <button data-del="${id}" style="margin-left:8px; border:1px solid #444; background:transparent; color:#f55; border-radius:4px; padding:2px 6px;">削除</button>
+    </div>
+  `).join('');
+}
 const dlBtn = document.getElementById("download-btn");
 const loadingView = document.getElementById("loading-view");
 const loadingText = document.getElementById("loading-text");
@@ -560,6 +597,39 @@ function initRooms(){
   renderRoomList();
 }
 
+// ★ カスタムモデルUI初期化は initRooms の外で1回だけ
+function initCustomModelUI(){
+  refreshModelSelect();
+
+  document.getElementById('custom-model-add-btn')?.addEventListener('click', ()=>{
+    const input = document.getElementById('custom-model-id-input');
+    const id = input?.value.trim();
+    if(!id ||!id.includes('/')){
+      alert('HF ID形式で\n例: mlc-ai/Mistral-7B-Instruct-v0.3-q4f16_1-MLC');
+      return;
+    }
+    const list = loadCustomModels();
+    if(list.includes(id)){ alert('登録済み'); return; }
+    list.unshift(id);
+    saveCustomModels(list);
+    if(input) input.value='';
+    refreshModelSelect();
+  });
+
+  document.getElementById('custom-model-list')?.addEventListener('click', (e)=>{
+    const b = e.target.closest('button[data-del]');
+    if(!b) return;
+    const id = b.dataset.del;
+    saveCustomModels(loadCustomModels().filter(x=>x!==id));
+    Object.keys(MODELS).forEach(k=>{ if(MODELS[k]===id) delete MODELS[k]; });
+    refreshModelSelect();
+  });
+}
+
+// 起動時
+initRooms();
+setTimeout(initCustomModelUI, 100);
+
 function resetSystemPrompt() {
   systemPromptInput.value = DEFAULT_SYSTEM_PROMPT;
   saveSystemPrompt();
@@ -861,6 +931,7 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeDrawer(); 
 
 // ルーム初期化とイベント
 initRooms();
+initCustomModelUI(); 
 newRoomBtn?.addEventListener('click', createRoom);
 roomListEl?.addEventListener('click', (e)=>{
   const delBtn = e.target.closest('.room-del-btn');

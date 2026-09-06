@@ -10,7 +10,7 @@ const MODELS = {
   "G2B-jpnHv": "gemma-2-2b-jpn-it-q4f32_1-MLC",
 };
 
-const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。強調は **太字** を使ってください。箇条書きは • を使ってください。* は使わないでください。";
+const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
 const LS_DEV_CONSOLE_KEY = "cronygo_dev_console";

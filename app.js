@@ -762,6 +762,12 @@ function closeSettings() { settingsPanel.classList.remove("show"); settingsOverl
 settingsBtn.addEventListener("click", openSettings);
 settingsClose.addEventListener("click", closeSettings);
 settingsOverlay.addEventListener("click", closeSettings);
+// アコーディオン
+document.querySelectorAll('.settings-group-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    btn.closest('.settings-group').classList.toggle('open');
+  });
+});
 savePromptBtn.addEventListener("click", saveSystemPrompt);
 resetPromptBtn.addEventListener("click", resetSystemPrompt);
 themeOpts.forEach(btn => { btn.addEventListener("click", () => { applyTheme(btn.dataset.theme, true); }); });

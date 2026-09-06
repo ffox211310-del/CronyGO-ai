@@ -402,21 +402,28 @@ function renderRoomList(){
     </div>
   `).join('');
 }
+
 function clearChatUI(){
-  // 最初のあいさつは残すならここで再描画する
-  const first = chatEl.querySelector('.msg.assistant');
-  chatEl.innerHTML = '';
-  if(first) chatEl.appendChild(first);
+  // msgだけ消す。loading-viewは残す
+  chatEl.querySelectorAll('.msg').forEach(el=>el.remove());
+  if(!chatEl.contains(loadingView)){
+    chatEl.appendChild(loadingView);
+  }
 }
 function renderChatFromHistory(history){
   clearChatUI();
+  // 履歴が0なら空のまま（最初の挨拶はHTMLに残ってないので出さない）
   history.forEach(m=>{
     addMessage(m.role, m.content);
   });
+  hasChatted = history.length > 0;
+  if(hasChatted){
+    hideFirstLoadingUI();
+  }
 }
 function switchRoom(id){
   if(!id || id===currentRoomId){ closeDrawer(); return; }
-  saveCurrentRoomHistory(); // 今のルームを保存してから移動
+  saveCurrentRoomHistory();
   currentRoomId = id;
   localStorage.setItem(LS_CURRENT, id);
   const history = loadRoomMessages(id);
@@ -435,6 +442,10 @@ function createRoom(){
   localStorage.setItem(LS_CURRENT, id);
   messages = [{ role: "system", content: loadStoredPrompt() }];
   clearChatUI();
+  hasChatted = false; // ←これ重要。新ルームはまだ喋ってない扱いにする
+  // 新ルームでもローディングUIが出るようにリセット
+  loadingView.classList.remove("show");
+  chatEl.classList.remove("is-first-loading");
   renderRoomList();
   closeDrawer();
   saveRoomMessages(id, []);

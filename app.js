@@ -246,10 +246,7 @@ function applyOpacity(v){
 // 起動時に復元
 try{
   const savedBg = localStorage.getItem(LS_BG);
-  const savedOp = localStorage.getItem(LS_BG_OP);
-  if(savedBg) applyBg(savedBg);
-  if(savedOp && bgOpacity){ bgOpacity.value = savedOp; applyOpacity(savedOp); }
-  else if(bgOpacity){ applyOpacity(bgOpacity.value); }
+
 }catch{}
 
 bgUploadBtn?.addEventListener('click', ()=> bgUpload?.click());

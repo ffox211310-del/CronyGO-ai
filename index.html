@@ -165,6 +165,19 @@
       <button id="cache-refresh-btn" class="secondary-btn">更新</button>
     </div>
     <div class="settings-desc">消すと再DLが必要になります</div>
+ 
+<div style="margin-top:14px; border-top:1px solid #222; padding-top:12px;">
+  <div style="font-size:12px; font-weight:600; margin-bottom:6px;">🧩 カスタムモデル追加</div>
+  <p style="font-size:11px; opacity:0.6; line-height:1.4; margin-bottom:8px;">
+    HuggingFaceのMLCモデルIDを入れるとモデルリストに追加されます<br>
+    例: mlc-ai/Mistral-7B-Instruct-v0.3-q4f16_1-MLC
+  </p>
+  <div style="display:flex; gap:6px;">
+    <input id="custom-model-id-input" placeholder="mlc-ai/..." style="flex:1; padding:7px 10px; border-radius:8px; border:1px solid #333; background:#111; color:#fff; font-size:12px;">
+    <button id="custom-model-add-btn" style="padding:7px 14px; border-radius:8px; background:#4FD1C5; color:#000; border:0; font-weight:700; white-space:nowrap;">追加</button>
+  </div>
+  <div id="custom-model-list" style="margin-top:10px;"></div>
+
   </div>
 </div>
 </div>

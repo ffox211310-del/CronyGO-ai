@@ -195,7 +195,7 @@ header h1 {
 }
 #loading-view.show { display: flex; }
 .loading-icon {
-  width: 160px;
+  width: 200px;
   height: auto;
   object-fit: contain;
   border-radius: 0;

@@ -510,3 +510,16 @@ body.light .room-item.active{ background:#ffffff; }
   text-transform: uppercase;
   opacity:0.9;
 }
+
+
+.settings-group{ border-bottom:1px solid var(--border); }
+.settings-group-btn{
+  width:100%; display:flex; justify-content:space-between; align-items:center;
+  background:none; border:none; color:var(--text);
+  font-size:14px; font-weight:600; padding:16px 2px;
+  cursor:pointer;
+}
+.settings-group-btn .arrow{ transition:transform .2s; opacity:0.5; }
+.settings-group.open .settings-group-btn .arrow{ transform:rotate(90deg); }
+.settings-group-content{ display:none; flex-direction:column; gap:14px; padding:0 0 18px; }
+.settings-group.open .settings-group-content{ display:flex; }

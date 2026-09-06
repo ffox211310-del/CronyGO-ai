@@ -456,3 +456,9 @@ body.light #chat.has-custom-bg::before {
   z-index:99; display:none;
 }
 #room-overlay.open{ display:block; }
+
+.room-item{ padding:12px 16px; border-bottom:1px solid #1a1a1a; cursor:pointer; }
+.room-item:hover{ background:#151515; }
+.room-item.active{ background:#1e1e1e; border-left:3px solid var(--accent, #4FD1C5); }
+body.light.room-item:hover{ background:#f0f0f0; }
+body.light.room-item.active{ background:#fff; }

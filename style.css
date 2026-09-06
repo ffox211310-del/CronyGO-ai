@@ -491,3 +491,22 @@ body.light #chat.has-custom-bg::before {
 body.light .room-item{ border-bottom-color: #ddd; }
 body.light .room-item:hover{ background:#f0f0f0; }
 body.light .room-item.active{ background:#ffffff; }
+
+
+
+.settings-group{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:14px 0 18px;
+  border-bottom:1px solid var(--border);
+}
+.settings-group:last-of-type{ border-bottom:none; }
+.settings-group-title{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.08em;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  opacity:0.9;
+}

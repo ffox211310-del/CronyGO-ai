@@ -225,7 +225,7 @@ setDevConsoleEnabled(devConsoleEnabled);
 const bgUpload = document.getElementById('bg-upload');
 const bgUploadBtn = document.getElementById('bg-upload-btn');
 const bgClearBtn = document.getElementById('bg-clear-btn');
-const bgOpacity = document.getElementById('bg-opacity');
+
 const LS_BG = "cronygo_chat_bg";
 const LS_BG_OP = "cronygo_chat_bg_op";
 

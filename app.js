@@ -530,16 +530,19 @@ async function sendMessageWithText(forcedText) {
 
   // ★★★ 時間キーワードならAI停止、JS即答 ★★★
   if (isTimeQuery(text)) {
-    addMessage("user", text);
-    messages.push({ role: "user", content: text });
-    inputEl.value = "";
-    voicePreview.textContent = '';
+      addMessage("user", text);
+
+  messages.push({ role: "user", content: text });
+  saveCurrentRoomHistory(); // ユーザー発言を即保存 & タイトル自動生成
+  inputEl.value = "";
+  voicePreview.textContent = '';
 
     const nowStr = getCurrentTimeString();
     const reply = `${nowStr}です`;
 
-    addMessage("assistant", reply);
+       addMessage("assistant", reply);
     messages.push({ role: "assistant", content: reply });
+    saveCurrentRoomHistory(); 
 
     dbg(`[TimeQuery] matched "${text}" -> ${reply}`);
 
@@ -631,9 +634,10 @@ async function sendMessageWithText(forcedText) {
     full = full.replace(/^\s*\*\*\s*$/gm, '').trim();
     full = full.replace(/\n{3,}/g, '\n\n').trim();
 
-    if (!isKilled) {
+        if (!isKilled) {
       assistantDiv.innerHTML = renderMarkdown(full);
       messages.push({ role: "assistant", content: full });
+      saveCurrentRoomHistory(); // ★追加③ AI回答を保存
       if (voice && full && isVoiceMode) {
         const remaining = speakBuffer.trim();
         if (remaining) voice.enqueueSpeak(remaining);

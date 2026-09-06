@@ -411,10 +411,9 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,var(--chat-bg-overlay, 0.4));
+  background: transparent; /* 暗幕なし = 写真そのまま */
   z-index: 0;
   pointer-events: none;
-  /* blurは削除。背景をボカさない */
 }
 body.light #chat.has-custom-bg::before {
   background: rgba(229,229,229,var(--chat-bg-overlay, 0.4));
@@ -439,11 +438,20 @@ body.light #chat.has-custom-bg::before {
 
 
 #menu-btn{
-  width:36px; height:36px; border-radius:10px;
-  border:1px solid var(--border-light, #222);
-  background:transparent; color:var(--text);
-  font-size:18px; cursor:pointer;
+  width: auto;
+  height: auto;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  border-radius: 0;
 }
+#menu-btn:hover{ opacity: 0.6; }
+#menu-btn:active{ opacity: 0.4; }
+
 #room-drawer{
   position:fixed; top:0; left:0; bottom:0; width:280px;
   background:var(--bg, #0a0a0a); z-index:100;
@@ -482,3 +490,35 @@ body.light #chat.has-custom-bg::before {
 body.light .room-item{ border-bottom-color: #ddd; }
 body.light .room-item:hover{ background:#f0f0f0; }
 body.light .room-item.active{ background:#ffffff; }
+
+
+
+.settings-group{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:14px 0 18px;
+  border-bottom:1px solid var(--border);
+}
+.settings-group:last-of-type{ border-bottom:none; }
+.settings-group-title{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.08em;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  opacity:0.9;
+}
+
+
+.settings-group{ border-bottom:1px solid var(--border); }
+.settings-group-btn{
+  width:100%; display:flex; justify-content:space-between; align-items:center;
+  background:none; border:none; color:var(--text);
+  font-size:14px; font-weight:600; padding:16px 2px;
+  cursor:pointer;
+}
+.settings-group-btn .arrow{ transition:transform .2s; opacity:0.5; }
+.settings-group.open .settings-group-btn .arrow{ transform:rotate(90deg); }
+.settings-group-content{ display:none; flex-direction:column; gap:14px; padding:0 0 18px; }
+.settings-group.open .settings-group-content{ display:flex; }

@@ -10,7 +10,7 @@ const MODELS = {
   "G2B-jpnHv": "gemma-2-2b-jpn-it-q4f32_1-MLC",
 };
 
-const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。強調は **太字** を使ってください。箇条書きは • を使ってください。* は使わないでください。";
+const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
 const LS_DEV_CONSOLE_KEY = "cronygo_dev_console";
@@ -61,6 +61,57 @@ function loadStoredPrompt() {
   try { return localStorage.getItem(LS_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT; }
   catch { return DEFAULT_SYSTEM_PROMPT; }
 }
+
+// --- WebLLM params ---
+const DEFAULT_TEMP = 0.7;
+const DEFAULT_MAX_TOKENS = 1024;
+
+function loadStoredTemp(){ return parseFloat(localStorage.getItem('cronygo_temp') || DEFAULT_TEMP); }
+function loadStoredMaxTokens(){ return parseInt(localStorage.getItem('cronygo_max_tokens') || DEFAULT_MAX_TOKENS); }
+
+const tempSlider = document.getElementById('temp-slider');
+const tempValue = document.getElementById('temp-value');
+const maxTokensInput = document.getElementById('max-tokens-input');
+
+if(tempSlider){
+  tempSlider.value = loadStoredTemp();
+  tempValue.textContent = tempSlider.value;
+  tempSlider.addEventListener('input', (e)=>{
+    tempValue.textContent = e.target.value;
+    localStorage.setItem('cronygo_temp', e.target.value);
+  });
+}
+if(maxTokensInput){
+  maxTokensInput.value = loadStoredMaxTokens();
+  maxTokensInput.addEventListener('change', (e)=>{
+    localStorage.setItem('cronygo_max_tokens', e.target.value);
+  });
+}
+
+// --- キャッシュ管理 ---
+async function refreshCacheInfo(){
+  const usageEl = document.getElementById('cache-usage');
+  const modelEl = document.getElementById('cache-model-name');
+  try{
+    const estimate = await navigator.storage.estimate();
+    const mb = ((estimate.usage||0)/1024/1024).toFixed(1);
+    usageEl.textContent = `${mb} MB`;
+  }catch{ usageEl.textContent = '取得失敗'; }
+  modelEl.textContent = localStorage.getItem('webllm_model_id') || selectEl?.value || '未取得';
+}
+document.getElementById('cache-refresh-btn')?.addEventListener('click', refreshCacheInfo);
+document.getElementById('cache-clear-btn')?.addEventListener('click', async ()=>{
+  if(!confirm('モデルキャッシュを削除しますか？次回は再ダウンロードが必要です')) return;
+  localStorage.removeItem('webllm_model_id');
+  if('caches' in window){
+    const keys = await caches.keys();
+    for(const k of keys) await caches.delete(k);
+  }
+  alert('キャッシュ削除しました');
+  refreshCacheInfo();
+});
+refreshCacheInfo();
+
 function loadStoredTheme() {
   try { return localStorage.getItem(LS_THEME_KEY) || "dark"; }
   catch { return "dark"; }
@@ -170,11 +221,13 @@ applyTheme(loadStoredTheme(), false);
 devConsoleEnabled = loadDevConsoleEnabled();
 setDevConsoleEnabled(devConsoleEnabled);
 
-// ===== チャット背景アップロード =====
+
+// ===== チャット背景アップロードリニューアル =====
 const bgUpload = document.getElementById('bg-upload');
 const bgUploadBtn = document.getElementById('bg-upload-btn');
 const bgClearBtn = document.getElementById('bg-clear-btn');
-const bgOpacity = document.getElementById('bg-opacity');
+const bgOpacity = document.getElementById('bg-opacity'); // 無ければ null になるだけ
+
 const LS_BG = "cronygo_chat_bg";
 const LS_BG_OP = "cronygo_chat_bg_op";
 
@@ -197,8 +250,12 @@ try{
   const savedBg = localStorage.getItem(LS_BG);
   const savedOp = localStorage.getItem(LS_BG_OP);
   if(savedBg) applyBg(savedBg);
-  if(savedOp && bgOpacity){ bgOpacity.value = savedOp; applyOpacity(savedOp); }
-  else if(bgOpacity){ applyOpacity(bgOpacity.value); }
+  if(savedOp){
+    if(bgOpacity) bgOpacity.value = savedOp;
+    applyOpacity(savedOp);
+  } else if(bgOpacity){
+    applyOpacity(bgOpacity.value);
+  }
 }catch{}
 
 bgUploadBtn?.addEventListener('click', ()=> bgUpload?.click());
@@ -207,6 +264,8 @@ bgClearBtn?.addEventListener('click', ()=>{
   applyBg(null);
 });
 bgOpacity?.addEventListener('input', (e)=> applyOpacity(e.target.value));
+
+
 
 bgUpload?.addEventListener('change', async (e)=>{
   const file = e.target.files[0];
@@ -641,9 +700,17 @@ async function sendMessageWithText(forcedText) {
   let speakBuffer = "";
   const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
   try {
-    const chunks = await engine.chat.completions.create({
-      messages, stream: true, temperature: 0.7, max_tokens: 5000
-    });
+    
+      const temp = parseFloat(localStorage.getItem('cronygo_temp') || 0.7);
+  const max_tokens = parseInt(localStorage.getItem('cronygo_max_tokens') || 1024);
+  
+  const chunks = await engine.chat.completions.create({
+    messages,
+    temperature: temp,
+    max_tokens: max_tokens,
+    stream: true
+  });
+    
     for await (const chunk of chunks) {
       if (abortFlag) break;
       const delta = chunk.choices[0]?.delta?.content || "";
@@ -762,6 +829,16 @@ function closeSettings() { settingsPanel.classList.remove("show"); settingsOverl
 settingsBtn.addEventListener("click", openSettings);
 settingsClose.addEventListener("click", closeSettings);
 settingsOverlay.addEventListener("click", closeSettings);
+document.querySelectorAll('.settings-group-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const group = btn.closest('.settings-group');
+    const isOpen = group.classList.contains('open');
+    // 全部閉じる
+    document.querySelectorAll('.settings-group').forEach(g=>g.classList.remove('open'));
+    // 閉じてたなら開く
+    if(!isOpen) group.classList.add('open');
+  });
+});
 savePromptBtn.addEventListener("click", saveSystemPrompt);
 resetPromptBtn.addEventListener("click", resetSystemPrompt);
 themeOpts.forEach(btn => { btn.addEventListener("click", () => { applyTheme(btn.dataset.theme, true); }); });

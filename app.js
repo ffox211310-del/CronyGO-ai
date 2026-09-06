@@ -821,10 +821,14 @@ function closeSettings() { settingsPanel.classList.remove("show"); settingsOverl
 settingsBtn.addEventListener("click", openSettings);
 settingsClose.addEventListener("click", closeSettings);
 settingsOverlay.addEventListener("click", closeSettings);
-// アコーディオン
 document.querySelectorAll('.settings-group-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    btn.closest('.settings-group').classList.toggle('open');
+    const group = btn.closest('.settings-group');
+    const isOpen = group.classList.contains('open');
+    // 全部閉じる
+    document.querySelectorAll('.settings-group').forEach(g=>g.classList.remove('open'));
+    // 閉じてたなら開く
+    if(!isOpen) group.classList.add('open');
   });
 });
 savePromptBtn.addEventListener("click", saveSystemPrompt);

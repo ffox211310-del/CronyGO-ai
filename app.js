@@ -456,32 +456,12 @@ function createRoom(){
   localStorage.setItem(LS_CURRENT, id);
   messages = [{ role: "system", content: loadStoredPrompt() }];
   hasChatted = false;
-  renderChatFromHistory([]);
+  renderChatFromHistory([]); // 挨拶吹き出し出す
   renderRoomList();
   closeDrawer();
   saveRoomMessages(id, []);
-
-  // エンジンが既に読み込まれてるなら、UIはReadyのままにする
-  if(engine && currentKey){
-    inputEl.disabled = false;
-    sendEl.disabled = false;
-    inputEl.placeholder = `${currentKey}で入力...`;
-    statusEl.textContent = `Ready ${currentKey}`;
-    statusEl.className = "ready";
-    dlBtn.textContent = "起動済み";
-    dlBtn.classList.add("ready");
-    dlBtn.disabled = false;
-  }else{
-    // まだ何も読み込んでない時だけ未DL表示
-    inputEl.disabled = true;
-    sendEl.disabled = true;
-    inputEl.placeholder = "モデルをダウンロードしてください";
-    statusEl.textContent = "未DL";
-    statusEl.className = "";
-    dlBtn.textContent = "ダウンロード";
-    dlBtn.classList.remove("ready");
-    dlBtn.disabled = false;
-  }
+  // ここでダウンロードボタンや入力欄は一切触らない
+  // 読み込み済みならそのままReadyのまま、新規ルームでも打てる
 }
 function deleteRoom(id){
   // 最後の1件は消さずに空にする

@@ -230,6 +230,35 @@
         </div>
         <span style="font-size:11px; opacity:0.6;">状態: <span id="dev-console-label">OFF</span></span>
       </div>
+
+      <div class="settings-section" style="border-top:1px solid #222; margin-top:12px; padding-top:12px;">
+        <label class="settings-label">推論エンジン</label>
+        <select id="engine-select" style="width:100%; background:var(--input-bg, #111); color:var(--text, #fff); border:1px solid var(--border, #333); border-radius:8px; padding:8px; font-size:12px;">
+          <option value="auto">自動 (IDで判定)</option>
+          <option value="mlc">MLCのみ (WebLLM)</option>
+          <option value="wllama">wllamaのみ (GGUF / Serow)</option>
+        </select>
+        <div class="settings-desc" style="margin-top:6px;">
+          SerowなどGGUFはwllamaが必要です。自動なら .gguf で自動切替。
+        </div>
+        <div style="margin-top:8px; font-size:11px; opacity:0.7;">
+          現在エンジン: <span id="engine-status">auto</span>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <label class="settings-label">wllamaモデル (GGUF)</label>
+        <p style="font-size:11px; opacity:0.6; line-height:1.4; margin-bottom:8px;">
+          SerowのGGUF直URLを入れてください<br>
+          例: https://huggingface.co/WebAIPocket/Serow-Qwen2.5-0.5B-Instruct-gguf/resolve/main/Serow-0.5B.Q4_K_M.gguf
+        </p>
+        <div style="display:flex; gap:6px;">
+          <input id="wllama-model-id-input" placeholder="https://.../xxx.gguf" style="flex:1; padding:7px 10px; border-radius:8px; border:1px solid #333; background:#111; color:#fff; font-size:11px;">
+          <button id="wllama-load-btn" style="padding:7px 14px; border-radius:8px; background:#6ea8fe; color:#000; border:0; font-weight:700; white-space:nowrap; font-size:12px;">読込</button>
+        </div>
+        <div id="wllama-model-list" style="margin-top:8px; font-size:11px; opacity:0.7;"></div>
+      </div>
+
     </div>
   </div>
 
@@ -243,4 +272,5 @@
 </div>
 
   <script type="module" src="./app.js"></script>
+<script type="module" src="./wllama-engine.js"></script>
 </html>

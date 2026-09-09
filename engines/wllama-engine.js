@@ -51,7 +51,7 @@ export class WllamaEngine {
     const stream = await this.wllama.createChatCompletion({
       messages,
       max_tokens: opts.max_tokens ?? 1024,
-      temperature: 0.2,
+      temperature: opts.temperature ?? 0.7, 
       top_p: 0.9,
       top_k: 40,
       stream: true,

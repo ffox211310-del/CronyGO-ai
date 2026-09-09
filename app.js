@@ -758,12 +758,37 @@ async function sendMessageWithText(forcedText) {
   return; // ← ここで終了、engine.chat.completions.create には行かない
   }
 
-  if (!engine) {
+    const isWllama = window._cronyEngineType === 'wllama' && window.CronyWllama?.getEngine();
+
+  if (!engine && !isWllama) {
     addMessage("system", "モデルをダウンロードしてください");
     return;
   }
-  addMessage("user", text);
 
+  // --- wllamaルート (Serow) ---
+  if (isWllama) {
+    addMessage("user", text);
+    messages.push({ role: "user", content: text });
+    inputEl.value = "";
+    voicePreview.textContent = '';
+
+    const assistantDiv = addMessage("assistant", "");
+    let full = "";
+    try {
+      for await (const delta of window.CronyWllama.chat(messages, { temperature: 0.2 })) {
+        full += delta;
+        assistantDiv.textContent = full;
+        chatEl.scrollTop = chatEl.scrollHeight;
+      }
+      messages.push({ role: "assistant", content: full });
+    } catch (e) {
+      assistantDiv.textContent = "エラー: " + e.message;
+    }
+    return; // ここで終わり。MLCには行かない
+  }
+
+  // --- ここから下は従来のMLCルート ---
+  addMessage("user", text);
   messages.push({ role: "user", content: text });
   inputEl.value = "";
   voicePreview.textContent = '';

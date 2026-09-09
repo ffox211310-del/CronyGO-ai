@@ -1,7 +1,6 @@
 import * as webllm from "@mlc-ai/web-llm";
 import { MODELS } from "../models.js";
 
-// WebLLM専用エンジン - UIは一切触らない
 export class WebLLMEngine {
   id = "mlc";
   engine = null;
@@ -11,9 +10,11 @@ export class WebLLMEngine {
   }
 
   async load(modelKey, onProgress) {
-    let MODEL_ID = MODELS[modelKey];
+    // modelKeyが "Q0.5B" でも "Qwen2.5-0.5B-...-MLC" でも動くように
+    let MODEL_ID = MODELS[modelKey] || modelKey;
     if (!MODEL_ID) throw new Error(`Unknown model key: ${modelKey}`);
 
+    // MLCのIDそのままならそれを使う、カスタムHF IDなら短縮処理
     const shortId = MODEL_ID.includes('/') ? MODEL_ID.split('/').pop() : MODEL_ID;
     const isFullHF = MODEL_ID.includes('/');
     const appConfig = webllm.prebuiltAppConfig;

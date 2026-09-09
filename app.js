@@ -197,7 +197,7 @@ function refreshModelSelect(){
     const opt = document.createElement('option');
     opt.value = key;
     // Serowは目立つように
-    opt.textContent = key.includes('Serow') ? `★ ${key} (wllama)` : key;
+    opt.textContent = key.includes('Serow') ? `${key}` : key;
     selectEl.appendChild(opt);
   });
   const custom = loadCustomModels();

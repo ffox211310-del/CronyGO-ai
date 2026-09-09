@@ -75,7 +75,7 @@ async function ensureWllama() {
 
 export async function loadWllamaModel(modelUrl, key, onProgress) {
   const inst = await ensureWllama();
-  const { inputEl, dlBtn, progressBar } = ui();
+  const { inputEl, dlBtn, progressBar, sendBtn, engineStatus } = ui();
   
   if (progressBar) {
     progressBar.style.opacity = "1";
@@ -88,9 +88,7 @@ export async function loadWllamaModel(modelUrl, key, onProgress) {
   if (inputEl) inputEl.disabled = true;
 
   try {
-    // 既存モデル解放
     try { await inst.exit(); } catch {}
-    
     setStatus(`${key} ダウンロード中...`);
     
     await inst.loadModelFromUrl(modelUrl, {
@@ -112,19 +110,28 @@ export async function loadWllamaModel(modelUrl, key, onProgress) {
       progressBar.style.width = "100%";
       setTimeout(()=> progressBar.style.opacity="0", 800);
     }
+
+    // 強制有効化 (app.jsとの競合対策)
     if (dlBtn) {
       dlBtn.textContent = "起動済み";
       dlBtn.disabled = false;
+      dlBtn.removeAttribute('disabled');
     }
     if (inputEl) {
       inputEl.disabled = false;
+      inputEl.removeAttribute('disabled');
       inputEl.placeholder = `${key} と会話...`;
-      inputEl.focus();
+      setTimeout(()=> inputEl.focus(), 100);
     }
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.removeAttribute('disabled');
+      sendBtn.style.pointerEvents = "auto";
+      sendBtn.style.opacity = "1";
+    }
+
     addMsg('assistant', `${key} 起動完了！ CPU推論 / Temp ${TEMPERATURE}`);
     
-    // エンジン状態表示更新
-    const { engineStatus } = ui();
     if (engineStatus) engineStatus.textContent = `wllama - ${key}`;
 
     return inst;
@@ -143,7 +150,7 @@ async function* chatStream(userText) {
   const stream = await inst.createChatCompletion({
     messages,
     max_tokens: 1024,
-    temperature: TEMPERATURE, // 0.2固定
+    temperature: 0.2,
     top_p: 0.9,
     top_k: 40,
     stream: true,

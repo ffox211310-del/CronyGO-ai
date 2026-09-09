@@ -22,7 +22,7 @@ Version: "3.5.1"
 License: MIT License
 Copyright: ngxson and contributors (wllama), ggerganov and contributors (llama.cpp)
 
-wllama is used as the browser-side GGUF inference engine (WebAssembly port of llama.cpp) for running Serow models.
+wllama is used as the browser-side GGUF inference engine (WebAssembly port of llama.cpp) for running gguf models.
 
 The wllama source code and its license are available from https://github.com/ngxson/wllama
 The underlying llama.cpp is licensed under MIT License.

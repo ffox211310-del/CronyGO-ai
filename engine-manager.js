@@ -13,13 +13,11 @@ class EngineManager {
   }
 
   pickEngine(modelId) {
-    // .gguf or httpsならwllama、そうでなければmlc
     if (isGGUFModel(modelId)) return this.engines.wllama;
     return this.engines.mlc;
   }
 
   async load(modelKey, onProgress) {
-    // ★ エンジン読み込みの度に内部リセット
     if (this.current) {
       console.log(`[EngineManager] unloading ${this.current.id}`);
       await this.current.unload();
@@ -31,7 +29,7 @@ class EngineManager {
     console.log(`[EngineManager] loading ${modelKey} -> ${engine.id} : ${modelId}`);
 
     this.current = engine;
-    await this.current.load(modelId, onProgress);
+    await this.current.load(modelKey, onProgress);
     this.currentKey = modelKey;
   }
 

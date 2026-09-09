@@ -271,6 +271,10 @@
   </div>
 </div>
 
-  <script type="module" src="./app.js"></script>
-<script type="module" src="./wllama-engine.js"></script>
+  <script type="importmap">
+{ "imports": { 
+  "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm@0.2.79" 
+} }
+</script>
+<script type="module" src="./app.js"></script>
 </html>

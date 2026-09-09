@@ -191,6 +191,15 @@ const progressBar = document.getElementById("progress-bar");
 const selectEl = document.getElementById("model-select");
 
 function refreshModelSelect(){
+  // base MODELS をセレクトに自動追加 (Serow等)
+  Object.keys(MODELS).forEach(key=>{
+    if ([...selectEl.options].some(op=>op.value===key)) return;
+    const opt = document.createElement('option');
+    opt.value = key;
+    // Serowは目立つように
+    opt.textContent = key.includes('Serow') ? `★ ${key} (wllama)` : key;
+    selectEl.appendChild(opt);
+  });
   const custom = loadCustomModels();
   [...selectEl.options].forEach(o=>{ if(o.dataset.custom) o.remove(); });
   custom.forEach(fullId=>{

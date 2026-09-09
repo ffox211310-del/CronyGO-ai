@@ -1,14 +1,6 @@
-import * as webllm from "@mlc-ai/web-llm";
 import { VoiceManager } from "./voice.js";
-
-const MODELS = {
-  "Q0.5B": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-  "Q1.5B": "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
-  "Q3B": "Qwen2.5-3B-Instruct-q4f16_1-MLC",
-  "Q7B": "Qwen2.5-7B-Instruct-q4f16_1-MLC",
-  "G2B-jpn": "gemma-2-2b-jpn-it-q4f16_1-MLC",
-  "G2B-jpnHv": "gemma-2-2b-jpn-it-q4f32_1-MLC",
-};
+import { MODELS } from "./models.js";
+import { engineManager } from "./engine-manager.js";
 
 const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
@@ -29,9 +21,8 @@ const LS_ROOM_PREFIX = "cronygo_room_";
 let rooms = [];
 let currentRoomId = null;
 
-// ★ 時間キーワード即答用 - システムプロンプトには混ぜない
 function getCurrentTimeString() {
-  const now = new Date(); // ← スマホのリアルタイム
+  const now = new Date();
   const weekdays = ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"];
   const y = now.getFullYear();
   const m = now.getMonth()+1;
@@ -52,13 +43,12 @@ function isTimeQuery(text) {
 }
 
 let voice = null;
-let engine = null;
 let currentKey = null;
 let isGenerating = false;
 let hasChatted = false;
 let lastInputWasVoice = false;
 
-// ===== DEV CONSOLE =====
+// DEV CONSOLE
 let devConsoleEnabled = false;
 let debugOverlayEl = null;
 let debugClearBtn = null;
@@ -69,10 +59,8 @@ function loadStoredPrompt() {
   catch { return DEFAULT_SYSTEM_PROMPT; }
 }
 
-// --- WebLLM params ---
 const DEFAULT_TEMP = 0.7;
 const DEFAULT_MAX_TOKENS = 1024;
-
 function loadStoredTemp(){ return parseFloat(localStorage.getItem('cronygo_temp') || DEFAULT_TEMP); }
 function loadStoredMaxTokens(){ return parseInt(localStorage.getItem('cronygo_max_tokens') || DEFAULT_MAX_TOKENS); }
 
@@ -82,9 +70,9 @@ const maxTokensInput = document.getElementById('max-tokens-input');
 
 if(tempSlider){
   tempSlider.value = loadStoredTemp();
-  tempValue.textContent = tempSlider.value;
+  if(tempValue) tempValue.textContent = tempSlider.value;
   tempSlider.addEventListener('input', (e)=>{
-    tempValue.textContent = e.target.value;
+    if(tempValue) tempValue.textContent = e.target.value;
     localStorage.setItem('cronygo_temp', e.target.value);
   });
 }
@@ -95,16 +83,15 @@ if(maxTokensInput){
   });
 }
 
-// --- キャッシュ管理 ---
 async function refreshCacheInfo(){
   const usageEl = document.getElementById('cache-usage');
   const modelEl = document.getElementById('cache-model-name');
   try{
     const estimate = await navigator.storage.estimate();
     const mb = ((estimate.usage||0)/1024/1024).toFixed(1);
-    usageEl.textContent = `${mb} MB`;
-  }catch{ usageEl.textContent = '取得失敗'; }
-  modelEl.textContent = localStorage.getItem('webllm_model_id') || selectEl?.value || '未取得';
+    if(usageEl) usageEl.textContent = `${mb} MB`;
+  }catch{ if(usageEl) usageEl.textContent = '取得失敗'; }
+  if(modelEl) modelEl.textContent = localStorage.getItem('webllm_model_id') || selectEl?.value || '未取得';
 }
 document.getElementById('cache-refresh-btn')?.addEventListener('click', refreshCacheInfo);
 document.getElementById('cache-clear-btn')?.addEventListener('click', async ()=>{
@@ -202,7 +189,17 @@ const sendEl = document.getElementById("send");
 const statusEl = document.getElementById("status");
 const progressBar = document.getElementById("progress-bar");
 const selectEl = document.getElementById("model-select");
+
 function refreshModelSelect(){
+  // base MODELS をセレクトに自動追加 (Serow等)
+  Object.keys(MODELS).forEach(key=>{
+    if ([...selectEl.options].some(op=>op.value===key)) return;
+    const opt = document.createElement('option');
+    opt.value = key;
+    // Serowは目立つように
+    opt.textContent = key.includes('Serow') ? `★ ${key} (wllama)` : key;
+    selectEl.appendChild(opt);
+  });
   const custom = loadCustomModels();
   [...selectEl.options].forEach(o=>{ if(o.dataset.custom) o.remove(); });
   custom.forEach(fullId=>{
@@ -258,16 +255,13 @@ applyTheme(loadStoredTheme(), false);
 devConsoleEnabled = loadDevConsoleEnabled();
 setDevConsoleEnabled(devConsoleEnabled);
 
-
-// ===== チャット背景アップロードリニューアル =====
+// Chat BG
 const bgUpload = document.getElementById('bg-upload');
 const bgUploadBtn = document.getElementById('bg-upload-btn');
 const bgClearBtn = document.getElementById('bg-clear-btn');
-const bgOpacity = document.getElementById('bg-opacity'); // 無ければ null になるだけ
-
+const bgOpacity = document.getElementById('bg-opacity');
 const LS_BG = "cronygo_chat_bg";
 const LS_BG_OP = "cronygo_chat_bg_op";
-
 function applyBg(dataUrl){
   if(dataUrl){
     chatEl.style.backgroundImage = `url("${dataUrl}")`;
@@ -281,8 +275,6 @@ function applyOpacity(v){
   document.documentElement.style.setProperty('--chat-bg-overlay', v/100);
   try{ localStorage.setItem(LS_BG_OP, String(v)); }catch{}
 }
-
-// 起動時に復元
 try{
   const savedBg = localStorage.getItem(LS_BG);
   const savedOp = localStorage.getItem(LS_BG_OP);
@@ -294,20 +286,15 @@ try{
     applyOpacity(bgOpacity.value);
   }
 }catch{}
-
 bgUploadBtn?.addEventListener('click', ()=> bgUpload?.click());
 bgClearBtn?.addEventListener('click', ()=>{
   localStorage.removeItem(LS_BG);
   applyBg(null);
 });
 bgOpacity?.addEventListener('input', (e)=> applyOpacity(e.target.value));
-
-
-
 bgUpload?.addEventListener('change', async (e)=>{
   const file = e.target.files[0];
   if(!file) return;
-  // でかすぎるとlocalStorage死ぬから canvasで圧縮
   const dataUrl = await new Promise((res)=>{
     const img = new Image();
     img.onload = ()=>{
@@ -329,7 +316,7 @@ bgUpload?.addEventListener('change', async (e)=>{
   }
 });
 
-// ===== TTS VOICE SELECT =====
+// TTS
 function refreshVoiceList() {
   if (!ttsVoiceSelect ||!window.speechSynthesis) return;
   const voices = window.speechSynthesis.getVoices();
@@ -340,7 +327,6 @@ function refreshVoiceList() {
   const ja = voices.filter(v => v.lang.toLowerCase().startsWith('ja'));
   const other = voices.filter(v =>!v.lang.toLowerCase().startsWith('ja'));
   const sorted = [...ja.sort((a,b)=>a.name.localeCompare(b.name)),...other.sort((a,b)=>a.name.localeCompare(b.name))];
-
   const saved = localStorage.getItem("cronygo_tts_voice");
   ttsVoiceSelect.innerHTML = '';
   sorted.forEach(v => {
@@ -384,7 +370,6 @@ if (window.speechSynthesis) {
   setTimeout(refreshVoiceList, 1500);
 }
 
-// ===== 最終改良版 Markdownレンダー: 太字 + 箇条書き =====
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
@@ -394,13 +379,11 @@ function renderMarkdown(text) {
   t = t.replace(/^\s*\*\*\s*$/gm, '');
   t = t.replace(/\*\*\s*\n\s*([\s\S]+?)\s*\n\s*\*\*/g, '**$1**');
   t = t.replace(/\*\*\s+([\s\S]+?)\s+\*\*/g, '**$1**');
-  // 行頭 * - ・ を • に正規化 (Gemmaの箇条書き対策)
   t = t.split('\n').map(line => {
     const m = line.match(/^\s*([\*\-・])\s+(.+)$/);
     if (m) return `• ${m[2]}`;
     return line;
   }).join('\n');
-
   let html = escapeHtml(t);
   html = html.replace(/\*\*\*([\s\S]+?)\*\*\*/g, (m,p1)=>{ const inner=p1.trim(); return inner ? `<strong><em>${inner}</em></strong>` : ''; });
   html = html.replace(/\*\*([\s\S]+?)\*\*/g, (m,p1)=>{
@@ -408,12 +391,10 @@ function renderMarkdown(text) {
     if (!inner || inner === ':' ) return '';
     return `<strong>${inner}</strong>`;
   });
-  // 斜体は • で始まる行では無効化 (箇条書きを斜体にしない)
   html = html.replace(/(^|[^•\*\n])\*([^*\n•]+?)\*(?!\*)/g, (m, pre, inner)=>{
     if (pre.includes('•')) return m;
     return `${pre}<em>${inner}</em>`;
   });
-
   html = html.replace(/\n{3,}/g, '\n\n');
   html = html.replace(/\n/g, '<br>');
   html = html.replace(/(<br>\s*)+$/g, '');
@@ -462,7 +443,7 @@ function saveSystemPrompt() {
   setTimeout(() => { promptStatus.textContent = ""; }, 2500);
 }
 
-// ===== ルーム保存 =====
+// ROOMS
 function loadRooms(){
   try{ const r = localStorage.getItem(LS_ROOMS); return r? JSON.parse(r) : []; }catch{ return []; }
 }
@@ -475,11 +456,10 @@ function loadRoomMessages(id){
 function saveRoomMessages(id, msgs){
   try{ localStorage.setItem(LS_ROOM_PREFIX+id, JSON.stringify(msgs)); }catch(e){ console.warn(e); }
 }
-function getHistory(){ return messages.slice(1); } // systemを除いた履歴
+function getHistory(){ return messages.slice(1); }
 function saveCurrentRoomHistory(){
   if(!currentRoomId) return;
   saveRoomMessages(currentRoomId, getHistory());
-  // タイトル自動生成
   const room = rooms.find(r=>r.id===currentRoomId);
   if(room && room.title==="新しいチャット" && getHistory().length>0){
     const firstUser = getHistory().find(m=>m.role==="user");
@@ -501,35 +481,28 @@ function renderRoomList(){
     </div>
   `).join('');
 }
-
 const WELCOME_TEXT = "こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。";
-
 function clearChatUI(){
   chatEl.querySelectorAll('.msg').forEach(el=>el.remove());
   if(!chatEl.contains(loadingView)){
     chatEl.appendChild(loadingView);
   }
 }
-
 function renderChatFromHistory(history){
   clearChatUI();
   if(history.length === 0){
-    // 新規ルーム用の吹き出し（保存はしない、見た目だけ）
     const div = document.createElement("div");
     div.className = "msg assistant";
     div.textContent = WELCOME_TEXT;
     chatEl.insertBefore(div, loadingView);
     hasChatted = false;
-    hideFirstLoadingUI(); // アイコンはDL開始まで出さない
+    hideFirstLoadingUI();
     return;
   }
-  history.forEach(m=>{
-    addMessage(m.role, m.content);
-  });
+  history.forEach(m=>{ addMessage(m.role, m.content); });
   hasChatted = true;
   hideFirstLoadingUI();
 }
-
 function switchRoom(id){
   if(!id || id===currentRoomId){ closeDrawer(); return; }
   saveCurrentRoomHistory();
@@ -541,7 +514,6 @@ function switchRoom(id){
   renderRoomList();
   closeDrawer();
 }
-
 function createRoom(){
   saveCurrentRoomHistory();
   const id = Date.now().toString();
@@ -552,15 +524,12 @@ function createRoom(){
   localStorage.setItem(LS_CURRENT, id);
   messages = [{ role: "system", content: loadStoredPrompt() }];
   hasChatted = false;
-  renderChatFromHistory([]); // 挨拶吹き出し出す
+  renderChatFromHistory([]);
   renderRoomList();
   closeDrawer();
   saveRoomMessages(id, []);
-  // ここでダウンロードボタンや入力欄は一切触らない
-  // 読み込み済みならそのままReadyのまま、新規ルームでも打てる
 }
 function deleteRoom(id){
-  // 最後の1件は消さずに空にする
   if(rooms.length <= 1){
     saveRoomMessages(id, []);
     messages = [{ role: "system", content: loadStoredPrompt() }];
@@ -574,7 +543,6 @@ function deleteRoom(id){
   rooms = rooms.filter(r=>r.id!== id);
   saveRooms();
   try{ localStorage.removeItem(LS_ROOM_PREFIX+id); }catch{}
-
   if(id === currentRoomId){
     currentRoomId = rooms[0].id;
     localStorage.setItem(LS_CURRENT, currentRoomId);
@@ -596,11 +564,8 @@ function initRooms(){
   renderChatFromHistory(history);
   renderRoomList();
 }
-
-// ★ カスタムモデルUI初期化は initRooms の外で1回だけ
 function initCustomModelUI(){
   refreshModelSelect();
-
   document.getElementById('custom-model-add-btn')?.addEventListener('click', ()=>{
     const input = document.getElementById('custom-model-id-input');
     const id = input?.value.trim();
@@ -615,7 +580,6 @@ function initCustomModelUI(){
     if(input) input.value='';
     refreshModelSelect();
   });
-
   document.getElementById('custom-model-list')?.addEventListener('click', (e)=>{
     const b = e.target.closest('button[data-del]');
     if(!b) return;
@@ -626,51 +590,16 @@ function initCustomModelUI(){
   });
 }
 
-// 起動時
-initRooms();
-setTimeout(initCustomModelUI, 100);
-
 function resetSystemPrompt() {
   systemPromptInput.value = DEFAULT_SYSTEM_PROMPT;
   saveSystemPrompt();
   promptStatus.textContent = "デフォルトに戻しました。";
 }
 
+// ===== エンジン周りは engine-manager に委譲 =====
 async function loadModel(key, isReload = false) {
-  let MODEL_ID = MODELS[key];
-  if (!MODEL_ID) return;
+  const isFirstPhase = !hasChatted && !isReload;
 
-  // mlc-ai/ を含むフルID → 短いIDに変換
-  const shortId = MODEL_ID.includes('/')? MODEL_ID.split('/').pop() : MODEL_ID;
-  const isFullHF = MODEL_ID.includes('/');
-
-  const appConfig = webllm.prebuiltAppConfig;
-
-  // まだ登録されてないカスタムモデルなら appConfig に追加
-  const exists = appConfig.model_list.some(m => m.model_id === shortId || m.model_id === MODEL_ID);
-  if (!exists && isFullHF) {
-    // 適当な wasm を流用 (mlc-aiのq4f16系はほぼ共通で動く)
-    const fallbackLib = appConfig.model_list.find(m => m.model_id.includes('Qwen2'))?.model_lib
-                     || appConfig.model_list[0]?.model_lib;
-    appConfig.model_list.push({
-      model_id: shortId,
-      model: `https://huggingface.co/${MODEL_ID}/resolve/main/`,
-      model_lib: fallbackLib,
-    });
-    console.log(`[CustomModel] added ${shortId} -> ${MODEL_ID}`);
-  }
-
-  // 実際に読み込むIDは短い方を使う
-  if (appConfig.model_list.some(m => m.model_id === shortId)) {
-    MODEL_ID = shortId;
-  }
-
-  const isFirstPhase =!hasChatted &&!isReload;
-  if (engine) {
-    if (!isFirstPhase) addMessage("system", `${currentKey} を解放中...`);
-    try { await engine.unload(); } catch {}
-    engine = null;
-  }
   dlBtn.disabled = true;
   dlBtn.textContent = isReload? "再読込中..." : "読込中...";
   statusEl.className = "loading";
@@ -679,6 +608,7 @@ async function loadModel(key, isReload = false) {
   progressBar.style.background = "#4FD1C5";
   inputEl.disabled = true;
   sendEl.disabled = true;
+
   if (isFirstPhase) {
     showFirstLoadingUI(`${key} 準備中...`);
   } else if (isReload) {
@@ -690,18 +620,16 @@ async function loadModel(key, isReload = false) {
     updateLoadingText("準備中...");
   }
   if (!isFirstPhase) addMessage("system", isReload? `${key} 再読込開始` : `${key} を読み込み開始。`);
+
   try {
-    engine = await webllm.CreateMLCEngine(MODEL_ID, {
-      appConfig: appConfig,
-      initProgressCallback: (p) => {
-        const pct = Math.round(p.progress * 100);
-        const txt = isReload? `積み直し ${pct}% ${p.text}` : `${pct}% ${p.text}`;
-        updateLoadingText(txt);
-        progressBar.style.width = `${pct}%`;
-      }
+    await engineManager.load(key, (pct, text) => {
+      const txt = isReload? `積み直し ${pct}% ${text}` : `${pct}% ${text}`;
+      updateLoadingText(txt);
+      progressBar.style.width = `${pct}%`;
     });
+
     currentKey = key;
-    statusEl.textContent = isReload? `再起動完了 ${key}` : `Ready ${key}`;
+    statusEl.textContent = isReload? `再起動完了 ${key}` : `Ready ${key} [${engineManager.getCurrentId()}]`;
     statusEl.className = "ready";
     progressBar.style.width = "100%";
     setTimeout(() => progressBar.style.opacity = "0", 800);
@@ -713,7 +641,7 @@ async function loadModel(key, isReload = false) {
     inputEl.placeholder = `${key}で入力...`;
     hideFirstLoadingUI();
     addMessage("assistant", isReload? `${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
-    dbg(`model ${key} loaded as ${MODEL_ID}`);
+    dbg(`model ${key} loaded via ${engineManager.getCurrentId()}`);
   } catch (e) {
     dbg(`model load ERROR ${e.message}`);
     console.error(e);
@@ -726,45 +654,38 @@ async function loadModel(key, isReload = false) {
     addMessage("assistant", "エラー: " + e.message);
   }
 }
+
 async function sendMessageWithText(forcedText) {
   const text = (forcedText || inputEl.value).trim();
-  if (!text || isGenerating) return; // ← !engine をここではチェックしない
+  if (!text || isGenerating) return;
   const isVoiceMode = lastInputWasVoice;
   lastInputWasVoice = false;
   if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
 
-  // ★★★ 時間キーワードならAI停止、JS即答 ★★★
   if (isTimeQuery(text)) {
-      addMessage("user", text);
-
-  messages.push({ role: "user", content: text });
-  saveCurrentRoomHistory(); // ユーザー発言を即保存 & タイトル自動生成
-  inputEl.value = "";
-  voicePreview.textContent = '';
-
+    addMessage("user", text);
+    messages.push({ role: "user", content: text });
+    saveCurrentRoomHistory();
+    inputEl.value = "";
+    voicePreview.textContent = '';
     const nowStr = getCurrentTimeString();
     const reply = `${nowStr}です`;
-
-       addMessage("assistant", reply);
+    addMessage("assistant", reply);
     messages.push({ role: "assistant", content: reply });
     saveCurrentRoomHistory(); 
-
     dbg(`[TimeQuery] matched "${text}" -> ${reply}`);
-
-      // マイクの時だけ喋る
-  if (isVoiceMode && voice) {
-    voice.speak(reply);
-  }
-  return; // ← ここで終了、engine.chat.completions.create には行かない
+    if (isVoiceMode && voice) voice.speak(reply);
+    return;
   }
 
-  if (!engine) {
+  if (!engineManager.isReady()) {
     addMessage("system", "モデルをダウンロードしてください");
     return;
   }
-  addMessage("user", text);
 
+  addMessage("user", text);
   messages.push({ role: "user", content: text });
+  saveCurrentRoomHistory();
   inputEl.value = "";
   voicePreview.textContent = '';
 
@@ -783,7 +704,7 @@ async function sendMessageWithText(forcedText) {
     isKilled = true;
     killBtn.textContent = "停止→再読込中...";
     killBtn.disabled = true;
-    try { await engine.interruptGenerate(); } catch {}
+    try { await engineManager.interrupt(); } catch {}
     if (voice) voice.clearQueue(true);
     assistantDiv.innerHTML = renderMarkdown(assistantDiv.textContent + "\n\n[停止→積み直し]");
     const keyToReload = currentKey;
@@ -797,33 +718,22 @@ async function sendMessageWithText(forcedText) {
   let speakBuffer = "";
   const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
   try {
+    const temp = parseFloat(localStorage.getItem('cronygo_temp') || 0.7);
+    const max_tokens = parseInt(localStorage.getItem('cronygo_max_tokens') || 1024);
     
-      const temp = parseFloat(localStorage.getItem('cronygo_temp') || 0.7);
-  const max_tokens = parseInt(localStorage.getItem('cronygo_max_tokens') || 1024);
-  
-  const chunks = await engine.chat.completions.create({
-    messages,
-    temperature: temp,
-    max_tokens: max_tokens,
-    stream: true
-  });
-    
-    for await (const chunk of chunks) {
+    for await (const delta of engineManager.chat(messages, { temperature: temp, max_tokens })) {
       if (abortFlag) break;
-      const delta = chunk.choices[0]?.delta?.content || "";
       full += delta;
-
       if (full.length >= MAX_CHARS) {
         full = full.slice(0, MAX_CHARS).trim() + "\n\n[1500文字制限→自動で積み直し]";
         assistantDiv.innerHTML = renderMarkdown(full);
-        try { await engine.interruptGenerate(); } catch {}
+        try { await engineManager.interrupt(); } catch {}
         if (voice) voice.clearQueue(true);
         const keyToReload = currentKey;
         messages = [{ role: "system", content: loadStoredPrompt() }];
         await loadModel(keyToReload, true);
         break;
       }
-      // ★重要: ストリーミング中も太字レンダーする
       assistantDiv.innerHTML = renderMarkdown(full);
       chatEl.scrollTop = chatEl.scrollHeight;
 
@@ -841,16 +751,14 @@ async function sendMessageWithText(forcedText) {
         }
       }
     }
-    // 最後の謎空白を除去
     full = full.trim();
-    // 単独 ** 行が末尾に残るのを除去
     full = full.replace(/^\s*\*\*\s*$/gm, '').trim();
     full = full.replace(/\n{3,}/g, '\n\n').trim();
 
-        if (!isKilled) {
+    if (!isKilled) {
       assistantDiv.innerHTML = renderMarkdown(full);
       messages.push({ role: "assistant", content: full });
-      saveCurrentRoomHistory(); // ★追加③ AI回答を保存
+      saveCurrentRoomHistory();
       if (voice && full && isVoiceMode) {
         const remaining = speakBuffer.trim();
         if (remaining) voice.enqueueSpeak(remaining);
@@ -912,13 +820,13 @@ inputEl.addEventListener("keydown", (e) => {
 });
 selectEl.addEventListener("change", () => {
   const key = selectEl.value;
-  if (currentKey === key && engine) {
+  if (currentKey === key && engineManager.isReady()) {
     dlBtn.textContent = "起動済み"; statusEl.textContent = `Ready ${key}`; statusEl.className = "ready";
   } else {
     dlBtn.textContent = "ダウンロード"; dlBtn.classList.remove("ready"); statusEl.textContent = "未DL"; statusEl.className = ""; inputEl.placeholder = `${key} をダウンロードしてください`;
   }
 });
-dlBtn.addEventListener("click", () => { const key = selectEl.value; if (currentKey === key && engine) return; loadModel(key); });
+dlBtn.addEventListener("click", () => { const key = selectEl.value; if (currentKey === key && engineManager.isReady()) return; loadModel(key); });
 statusEl.textContent = "未DL";
 
 function openSettings() { settingsPanel.classList.add("show"); settingsOverlay.classList.add("show"); }
@@ -930,9 +838,7 @@ document.querySelectorAll('.settings-group-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const group = btn.closest('.settings-group');
     const isOpen = group.classList.contains('open');
-    // 全部閉じる
     document.querySelectorAll('.settings-group').forEach(g=>g.classList.remove('open'));
-    // 閉じてたなら開く
     if(!isOpen) group.classList.add('open');
   });
 });
@@ -944,9 +850,6 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => { console.log('[PWA] SW registered', reg.scope); }).catch(err => console.error('[PWA] SW failed', err));
 }
 
-
-
-// ハンバーガーメニュー開閉
 const menuBtn = document.getElementById('menu-btn');
 const roomDrawer = document.getElementById('room-drawer');
 const roomOverlay = document.getElementById('room-overlay');
@@ -956,9 +859,9 @@ menuBtn?.addEventListener('click', openDrawer);
 roomOverlay?.addEventListener('click', closeDrawer);
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeDrawer(); });
 
-// ルーム初期化とイベント
 initRooms();
-initCustomModelUI(); 
+setTimeout(initCustomModelUI, 100);
+
 newRoomBtn?.addEventListener('click', createRoom);
 roomListEl?.addEventListener('click', (e)=>{
   const delBtn = e.target.closest('.room-del-btn');

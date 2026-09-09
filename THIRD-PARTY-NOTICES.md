@@ -13,83 +13,91 @@ Copyright: MLC-AI and contributors
 
 WebLLM is used as the browser-side inference engine for running supported language models with WebGPU.
 
-The WebLLM source code and its license are available from the official project repository.
+---
 
-License: Apache License 2.0
+2. wllama
+
+Package: "@wllama/wllama"
+Version: "3.5.1"
+License: MIT License
+Copyright: ngxson and contributors (wllama), ggerganov and contributors (llama.cpp)
+
+wllama is used as the browser-side GGUF inference engine (WebAssembly port of llama.cpp) for running gguf models.
+
+The wllama source code and its license are available from https://github.com/ngxson/wllama
+The underlying llama.cpp is licensed under MIT License.
+
+wllama.wasm is a WebAssembly build of llama.cpp.
 
 ---
 
-2. Qwen2.5
+3. Qwen2.5
 
-Models used by CronyGO:
-
+Models:
 - Qwen2.5-0.5B-Instruct
 - Qwen2.5-1.5B-Instruct
 - Qwen2.5-3B-Instruct
 - Qwen2.5-7B-Instruct
 
 License: Apache License 2.0
-Copyright: Alibaba Cloud / Qwen team and contributors
+Copyright: Alibaba Cloud / Qwen team
 
-These models are used by CronyGO for local, browser-based AI inference.
-
-The Qwen2.5 models are distributed under the Apache License 2.0.
+Used for local browser-based inference (MLC-compiled).
 
 ---
 
-3. Gemma
+4. Serow
 
-Models used by CronyGO:
+Model: Serow-Qwen2.5-0.5B-Instruct-gguf (Serow-0.5B.Q4_K_M.gguf)
+Base model: Qwen2.5-0.5B-Instruct
+License: Apache License 2.0 (inherited from Qwen2.5)
+Copyright: WebAIPocket (fine-tune), Alibaba Cloud / Qwen team (base model)
 
-- Gemma-2-2B-it (gemma-2-2b-it-q4f16_1-MLC,gemma-2-2b-it-q4f32_1-MLC)
-- Gemma-2-2B-JPN-it (gemma-2-2b-jpn-it-q4f16_1-MLC / q4f32_1-MLC) - Japanese fine-tuned variant
+Serow is a Japanese fine-tuned variant of Qwen2.5-0.5B, created by CronyGO author.
+Distributed as GGUF and used via wllama for local browser-based inference.
+Base model license (Apache 2.0) remains applicable.
+
+---
+
+5. Gemma
+
+Models:
+- Gemma-2-2B-it (gemma-2-2b-it-q4f16_1-MLC, q4f32_1-MLC)
+- Gemma-2-2B-JPN-it (gemma-2-2b-jpn-it-q4f16_1-MLC / q4f32_1-MLC)
 
 License: Gemma Terms of Use
 Copyright: Google LLC
 Source: https://ai.google.dev/gemma/terms
 
-Gemma models are used by CronyGO for local, browser-based AI inference.
-
-The Gemma models are distributed under the Gemma Terms of Use, which permits commercial use and redistribution with attribution, subject to the Gemma Prohibited Use Policy.
-
-CronyGO includes MLC-compiled versions of these models (HF: mlc-ai/gemma-2-2b-jpn-it-q0f32-MLC, mlc-ai/gemma-2-2b-jpn-it-q4f16_1-MLC), which remain subject to the original Gemma Terms.
+MLC-compiled versions (mlc-ai/...) remain subject to Gemma Terms.
 
 ---
 
-4. Inter
+6. Inter
 
 Font: Inter
 License: SIL Open Font License 1.1 (OFL-1.1)
 
-Inter is used as a user-interface font in CronyGO.
-
-The font is distributed under the SIL Open Font License 1.1 and is not covered by the MIT License of CronyGO.
+UI font.
 
 ---
 
-5. JetBrains Mono
+7. JetBrains Mono
 
 Font: JetBrains Mono
 License: SIL Open Font License 1.1 (OFL-1.1)
 
-JetBrains Mono is used for monospace text in CronyGO.
-
-The font is distributed under the SIL Open Font License 1.1 and is not covered by the MIT License of CronyGO.
+Monospace font.
 
 ---
 
 License Separation
 
 The original source code of CronyGO is licensed under the MIT License.
-
-The third-party components listed above are separately licensed and are not relicensed under the MIT License. Their respective copyright notices and license terms remain applicable.
-
-For the complete license terms, please refer to the original license files provided by the respective third-party projects.
+The third-party components listed above are separately licensed and are not relicensed under the MIT License.
 
 ---
 
 Important Note
 
 CronyGO does not claim ownership of the third-party software, models, or fonts listed above.
-
-Their respective names, copyrights, trademarks, and licenses remain with their respective owners.

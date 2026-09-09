@@ -230,17 +230,25 @@
         </div>
         <span style="font-size:11px; opacity:0.6;">状態: <span id="dev-console-label">OFF</span></span>
       </div>
+
+      
+
     </div>
   </div>
 
 </div>
 
     <div class="settings-desc" style="text-align:center; opacity:0.6; font-size:11px; margin-top:10px;">
-      CronyGO v.0.8.9<br>Engine:WebLLM/Qwen＆Gemma
+      CronyGO v.0.9.0<br>Engine:WebLLM＆Wllama/Qwen＆Gemma
     </div>
 
   </div>
 </div>
 
-  <script type="module" src="./app.js"></script>
+  <script type="importmap">
+{ "imports": { 
+  "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm@0.2.79" 
+} }
+</script>
+<script type="module" src="./app.js"></script>
 </html>

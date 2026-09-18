@@ -22,233 +22,167 @@
   font-family: "Optimistic Mono", ui-monospace, monospace;
 }
 </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0a0a0a">
+<title>CronyGO v0.1α</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
-<style>
-:where(html) {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-}
-:where(code, pre, kbd, samp) {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-}
-</style>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#0a0a0a">
-    <title>CronyGO</title>
-  <link rel="stylesheet" href="./style.css" />
-  <script type="importmap">
-  { "imports": { "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm@0.2.79" } }
-  </script>
+<link rel="stylesheet" href="./style.css" />
+<script type="importmap">
+{ "imports": { "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm@0.2.79" } }
+</script>
 </head>
 <body>
 
-  <div id="room-overlay"></div>
+<div id="room-overlay"></div>
 <div id="room-drawer">
-  <div style="padding:16px; font-weight:600; border-bottom:1px solid #222;">ルーム</div>
-  <button id="new-room-btn" class="secondary-btn" style="margin:12px; width:calc(100% - 24px);">+ 新しいチャット</button>
+  <div class="drawer-header">
+    <span>ルーム</span>
+    <button id="room-close" class="icon-btn">×</button>
+  </div>
+  <button id="new-room-btn" class="secondary-btn">+ 新しいチャット</button>
   <div id="room-list"></div>
 </div>
-  
+
 <header>
-  
-<div class="header-left" style="display:flex; align-items:center; gap:10px;">
-  <button id="menu-btn" aria-label="メニュー">☰</button>
-  <select id="model-select">
-    
-  <option value="Q0.5B">Qwen0.5B</option>
-<option value="Q1.5B">Qwen1.5B</option>
-<option value="Q3B">Qwen3B</option>
-<option value="Q7B">Qwen7B</option>
-<option value="G2B-jpn">GemmaJP2B</option>
-<option value="G2B-jpnHv">GemmaJP2BHv</option>
- </select>
+  <div class="header-left">
+    <button id="home-btn" aria-label="ホーム" title="ホーム">🏠</button>
+    <button id="menu-btn" aria-label="ルーム一覧" title="ルーム一覧">💬</button>
+  </div>
+  <div class="header-center">
+    <select id="mode-select" aria-label="防災モード選択">
+      <option value="normal">通常相談</option>
+      <option value="prepare">避難準備</option>
+      <option value="shelter">避難所・経路</option>
+      <option value="stock">備蓄リスト</option>
+      <option value="emergency">緊急対応</option>
+      <option value="safety">安否確認</option>
+    </select>
   </div>
   <div class="header-right">
-    <button id="download-btn">ダウンロード</button>
-    <div id="status">未DL</div>
+    <button id="settings-btn" aria-label="設定">⚙</button>
   </div>
 </header>
-  
-  <div id="progress-wrap"><div id="progress-bar"></div></div>
 
-  <div id="chat">
-    <div class="msg assistant">こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。</div>
+<div id="progress-wrap"><div id="progress-bar"></div></div>
 
-    <div id="loading-view">
-      <img id="loading-icon-dark" class="loading-icon" src="./assets/CronyGOicon.jpg" alt="CronyGO dark" />
-      <img id="loading-icon-light" class="loading-icon" src="./assets/CronyGOicon_Light.jpg" alt="CronyGO light" />
-      <div id="loading-text">準備中...</div>
-    </div>
+<div id="chat">
+  <div id="loading-view">
+    <img id="loading-icon" class="loading-icon" src="./assets/CronyGOicon.jpg" alt="CronyGO" />
+    <div id="loading-text">準備中...</div>
   </div>
+</div>
 
-<div id="voice-preview" style="font-size:11px;color:#888;text-align:center;padding:2px 12px;min-height:14px"></div>
+<div id="voice-preview"></div>
+<div class="hint">防災に関する情報は自治体の最新情報もご確認ください</div>
 
-  
-  <div class="hint">エンジン: WebLLM CreateMLCEngine / 個別DL方式 / iPhoneはメモリ制限注意</div>
-
-  <div id="composer">
-    <button id="settings-btn" aria-label="設定">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"></circle>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-      </svg>
-    </button>
-<input id="input" type="text" placeholder="モデルをダウンロードしてください" autocomplete="off" disabled />
-    
-    <button id="mic-btn" aria-label="マイク" title="マイク">●</button>
-    
-    <button id="send" disabled aria-label="送信">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m22 2-7 20-4-9-9-4Z"></path>
-        <path d="M22 2 11 13"></path>
-      </svg>
-    </button>
+<div id="composer">
+  <div class="composer-inner">
+    <button id="mic-btn" aria-label="マイク">●</button>
+    <input id="input" type="text" placeholder="メッセージを入力..." autocomplete="off" disabled />
+    <button id="send" disabled aria-label="送信">➤</button>
   </div>
+</div>
 
-  <div id="settings-overlay"></div>
+<div id="settings-overlay"></div>
 <div id="settings-panel">
   <div class="settings-header">
-    <h2>設定</h2>
-    <button id="settings-close" aria-label="閉じる">×</button>
+    <h2>CronyGO 設定</h2>
+    <button id="settings-close">×</button>
   </div>
-
   <div class="settings-body">
-
-<div class="settings-group" id="group-system">
-    
-    <button class="settings-group-btn" data-target="system">
-      <span>システム</span><span class="arrow">›</span>
-    </button>
-    
-<div class="settings-group-content">
-  <!-- 既存のシステムプロンプト -->
-  <div class="settings-section">
-    <label class="settings-label">システムプロンプト</label>
-    <textarea id="system-prompt-input"></textarea>
-    <div class="settings-row">
-      <button id="save-prompt-btn" class="primary-btn">保存</button>
-      <button id="reset-prompt-btn" class="secondary-btn">リセット</button>
-    </div>
-    <div id="prompt-status" class="settings-desc"></div>
-  </div>
-
-  <!-- 追加: 生成パラメータ -->
-  <div class="settings-section">
-    <label class="settings-label">生成パラメータ</label>
-    
-    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-      <span style="font-size:12px;">Temperature</span>
-      <span id="temp-value" style="font-size:12px; opacity:0.7;">0.7</span>
-    </div>
-    <input type="range" id="temp-slider" min="0" max="2" step="0.1" value="0.7" style="width:100%">
-    <div class="settings-desc">低い=正確、高い=創造的</div>
-
-    <div style="margin-top:12px; display:flex; justify-content:space-between; margin-bottom:6px;">
-      <span style="font-size:12px;">Max Tokens</span>
-    </div>
-    <input type="number" id="max-tokens-input" min="128" max="4096" step="128" value="1024" style="width:100%; background:var(--input-bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px;">
-    <div class="settings-desc">1回の返答の長さ</div>
-  </div>
-
-  <!-- 追加: キャッシュ管理 -->
-  <div class="settings-section">
-    <label class="settings-label">モデルキャッシュ</label>
-    <div style="font-size:12px; opacity:0.7; margin-bottom:8px;">
-      使用量: <span id="cache-usage">計算中...</span><br>
-      モデル: <span id="cache-model-name">-</span>
-    </div>
-    <div class="settings-row">
-      <button id="cache-clear-btn" class="secondary-btn" style="color:#ff6b6b;">キャッシュを削除</button>
-      <button id="cache-refresh-btn" class="secondary-btn">更新</button>
-    </div>
-    <div class="settings-desc">消すと再DLが必要になります</div>
- 
-<div style="margin-top:14px; border-top:1px solid #222; padding-top:12px;">
-  <div style="font-size:12px; font-weight:600; margin-bottom:6px;">🧩 カスタムモデル追加</div>
-  <p style="font-size:11px; opacity:0.6; line-height:1.4; margin-bottom:8px;">
-    HuggingFaceのMLCモデルIDを入れるとモデルリストに追加されます<br>
-    例: mlc-ai/Mistral-7B-Instruct-v0.3-q4f16_1-MLC
-  </p>
-  <div style="display:flex; gap:6px;">
-    <input id="custom-model-id-input" placeholder="mlc-ai/..." style="flex:1; padding:7px 10px; border-radius:8px; border:1px solid #333; background:#111; color:#fff; font-size:12px;">
-    <button id="custom-model-add-btn" style="padding:7px 14px; border-radius:8px; background:#4FD1C5; color:#000; border:0; font-weight:700; white-space:nowrap;">追加</button>
-  </div>
-  <div id="custom-model-list" style="margin-top:10px;"></div>
-  </div>
-  </div>
-</div>
-</div>
-
-  <div class="settings-group" id="group-custom">
-    <button class="settings-group-btn" data-target="custom">
-      <span>カスタム</span><span class="arrow">›</span>
-    </button>
-    <div class="settings-group-content">
-      <div class="settings-section">
-        <label class="settings-label">テーマ</label>
-        <div class="theme-options">
-          <button class="theme-opt" data-theme="dark">ダーク</button>
-          <button class="theme-opt" data-theme="light">ライト</button>
-        </div>
-      </div>
-      <div class="settings-section">
-        <label class="settings-label">読み上げ音声</label>
-        <select id="tts-voice-select"></select>
-        <div class="settings-row" style="margin-top:8px;">
-          <button id="tts-test-btn" class="secondary-btn">試聴</button>
-          <button id="tts-reload-voices-btn" class="secondary-btn">再読込</button>
-        </div>
-      </div>
-      <div class="settings-section">
-        <label class="settings-label">チャット背景</label>
-        <input type="file" id="bg-upload" accept="image/*" style="display:none">
-        <div class="settings-row">
-          <button id="bg-upload-btn" class="secondary-btn">写真を選ぶ</button>
-          <button id="bg-clear-btn" class="secondary-btn">消す</button>
-        </div>
-  
+    <div class="settings-group open">
+      <button class="settings-group-btn"><span>防災モード</span><span class="arrow">›</span></button>
+      <div class="settings-group-content">
+        <div class="settings-desc">上部中央でモードを切り替えできます。現在はUIのみ実装、v0.2でプロンプト連携予定です。</div>
       </div>
     </div>
-  </div>
-
-  <div class="settings-group" id="group-dev">
-    <button class="settings-group-btn" data-target="dev">
-      <span>開発者オプション</span><span class="arrow">›</span>
-    </button>
-    <div class="settings-group-content">
-      <div class="settings-section">
-        <div class="settings-row" style="justify-content:space-between; align-items:center;">
-          <span style="font-size:13px;">開発者コンソール</span>
-          <label style="position:relative; width:44px; height:24px;">
-            <input type="checkbox" id="dev-console-toggle" style="opacity:0; width:0; height:0;">
-            <span id="dev-toggle-bg" style="position:absolute; inset:0; background:#333; border-radius:24px;"></span>
-            <span id="dev-toggle-dot" style="position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.2s;"></span>
-          </label>
+    <div class="settings-group">
+      <button class="settings-group-btn"><span>システム</span><span class="arrow">›</span></button>
+      <div class="settings-group-content">
+        <div class="settings-section">
+          <label class="settings-label">システムプロンプト</label>
+          <textarea id="system-prompt-input"></textarea>
+          <div class="settings-row">
+            <button id="save-prompt-btn" class="primary-btn">保存</button>
+            <button id="reset-prompt-btn" class="secondary-btn">リセット</button>
+          </div>
+          <div id="prompt-status" class="settings-desc"></div>
         </div>
-        <span style="font-size:11px; opacity:0.6;">状態: <span id="dev-console-label">OFF</span></span>
+        <div class="settings-section">
+          <label class="settings-label">生成パラメータ</label>
+          <div class="param-row"><span>Temperature</span><span id="temp-value">0.7</span></div>
+          <input type="range" id="temp-slider" min="0" max="2" step="0.1" value="0.7">
+          <div class="param-row" style="margin-top:12px;"><span>Max Tokens</span></div>
+          <input type="number" id="max-tokens-input" min="128" max="4096" step="128" value="1024">
+        </div>
       </div>
-
-      
-
     </div>
-  </div>
-
-</div>
-
-    <div class="settings-desc" style="text-align:center; opacity:0.6; font-size:11px; margin-top:10px;">
-      CronyGO v.0.9.0<br>Engine:WebLLM＆Wllama/Qwen＆Gemma
+    <div class="settings-group">
+      <button class="settings-group-btn"><span>カスタム</span><span class="arrow">›</span></button>
+      <div class="settings-group-content">
+        <div class="settings-section">
+          <label class="settings-label">テーマ</label>
+          <div class="theme-options">
+            <button class="theme-opt" data-theme="dark">ダーク</button>
+            <button class="theme-opt" data-theme="light">ライト</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <label class="settings-label">読み上げ音声</label>
+          <select id="tts-voice-select"></select>
+          <div class="settings-row" style="margin-top:8px;">
+            <button id="tts-test-btn" class="secondary-btn">試聴</button>
+            <button id="tts-reload-voices-btn" class="secondary-btn">再読込</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <label class="settings-label">チャット背景</label>
+          <input type="file" id="bg-upload" accept="image/*" style="display:none">
+          <div class="settings-row">
+            <button id="bg-upload-btn" class="secondary-btn">写真を選ぶ</button>
+            <button id="bg-clear-btn" class="secondary-btn">消す</button>
+          </div>
+        </div>
+      </div>
     </div>
-
+    <div class="settings-group">
+      <button class="settings-group-btn"><span>詳細情報</span><span class="arrow">›</span></button>
+      <div class="settings-group-content">
+        <div class="settings-section">
+          <label class="settings-label">モデル情報 (非表示領域)</label>
+          <div class="settings-desc" style="line-height:1.6;">
+            Engine: WebLLM 0.2.79 固定<br>
+            Model: Gemma-2-2B-JPN-IT q4f16_1-MLC<br>
+            v0.1α - 防災AI<br>
+            <span id="cache-usage">使用量: 計算中...</span><br>
+            <span id="cache-model-name">Gemma2B-JPN</span>
+          </div>
+          <div class="settings-row" style="margin-top:8px;">
+            <button id="cache-clear-btn" class="secondary-btn" style="color:#ff6b6b;">キャッシュ削除</button>
+            <button id="cache-refresh-btn" class="secondary-btn">更新</button>
+            <button id="force-dl-btn" class="secondary-btn">再DL</button>
+          </div>
+          <div id="dl-status" class="settings-desc" style="margin-top:8px;"></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-row" style="justify-content:space-between;">
+            <span style="font-size:12px;">開発者コンソール</span>
+            <label style="position:relative; width:44px; height:24px;">
+              <input type="checkbox" id="dev-console-toggle" style="opacity:0; width:0; height:0;">
+              <span id="dev-toggle-bg" style="position:absolute; inset:0; background:#333; border-radius:24px;"></span>
+              <span id="dev-toggle-dot" style="position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.2s;"></span>
+            </label>
+          </div>
+          <span style="font-size:11px; opacity:0.6;">状態: <span id="dev-console-label">OFF</span></span>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-  <script type="importmap">
-{ "imports": { 
-  "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm@0.2.79" 
-} }
-</script>
 <script type="module" src="./app.js"></script>
 </html>

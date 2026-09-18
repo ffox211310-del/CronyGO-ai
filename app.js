@@ -2,238 +2,63 @@ import { VoiceManager } from "./voice.js";
 import { MODELS } from "./models.js";
 import { engineManager } from "./engine-manager.js";
 
-const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";
+const FIXED_MODEL_KEY = "G2B-jpn";
+const FIXED_MODEL_ID = MODELS[FIXED_MODEL_KEY];
+
+const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGO、防災AIアシスタントです。日本語で簡素かつ的確に答えてください。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
 const LS_DEV_CONSOLE_KEY = "cronygo_dev_console";
-const LS_CUSTOM_MODELS = "cronygo_custom_models";
-function loadCustomModels(){
-  try{ return JSON.parse(localStorage.getItem(LS_CUSTOM_MODELS) || "[]"); }catch{ return []; }
-}
-function saveCustomModels(list){
-  try{ localStorage.setItem(LS_CUSTOM_MODELS, JSON.stringify(list)); }catch{}
-}
-const MAX_CHARS = 1500;
+const LS_MODE_KEY = "cronygo_mode_v01a";
+const LS_TEMP_KEY = "cronygo_temp";
+const LS_MAX_TOKENS_KEY = "cronygo_max_tokens";
 
 const LS_ROOMS = "cronygo_rooms";
 const LS_CURRENT = "cronygo_current_room";
 const LS_ROOM_PREFIX = "cronygo_room_";
+
 let rooms = [];
 let currentRoomId = null;
-
-function getCurrentTimeString() {
-  const now = new Date();
-  const weekdays = ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"];
-  const y = now.getFullYear();
-  const m = now.getMonth()+1;
-  const d = now.getDate();
-  const wd = weekdays[now.getDay()];
-  const h = now.getHours();
-  const mm = String(now.getMinutes()).padStart(2,'0');
-  return `${y}年${m}月${d}日 ${wd} ${h}時${mm}分`;
-}
-function isTimeQuery(text) {
-  const t = text.trim().toLowerCase();
-  if (/(今日は何日|今日何日|きょうは何日|今日の日付|何曜日|今何時|いまなんじ|現在時刻|今の時間|いまのじかん)/.test(t)) return true;
-  if (t === "何日" || t === "何日?" || t === "何時" || t === "何時?" || t === "何日？" || t === "何時？") return true;
-  if (t.includes("何日ですか") || t.includes("何時ですか") || t.includes("何曜日ですか")) return true;
-  if (t.includes("今日") && (t.includes("何日") || t.includes("何曜日") || t.includes("日付") || t.includes("曜日"))) return true;
-  if ((t.includes("今") || t.includes("現在")) && (t.includes("何時") || t.includes("時間") || t.includes("じかん"))) return true;
-  return false;
-}
-
 let voice = null;
 let currentKey = null;
 let isGenerating = false;
 let hasChatted = false;
 let lastInputWasVoice = false;
 
-// DEV CONSOLE
 let devConsoleEnabled = false;
 let debugOverlayEl = null;
-let debugClearBtn = null;
-let debugTestBtn = null;
 
-function loadStoredPrompt() {
-  try { return localStorage.getItem(LS_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT; }
-  catch { return DEFAULT_SYSTEM_PROMPT; }
-}
+const MAX_CHARS = 1500;
 
-const DEFAULT_TEMP = 0.7;
-const DEFAULT_MAX_TOKENS = 1024;
-function loadStoredTemp(){ return parseFloat(localStorage.getItem('cronygo_temp') || DEFAULT_TEMP); }
-function loadStoredMaxTokens(){ return parseInt(localStorage.getItem('cronygo_max_tokens') || DEFAULT_MAX_TOKENS); }
+function loadStoredPrompt(){
+  try{ return localStorage.getItem(LS_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT; }catch{ return DEFAULT_SYSTEM_PROMPT; }
+}
+function loadStoredTemp(){ return parseFloat(localStorage.getItem(LS_TEMP_KEY) || "0.7"); }
+function loadStoredMaxTokens(){ return parseInt(localStorage.getItem(LS_MAX_TOKENS_KEY) || "1024"); }
+function loadStoredTheme(){ try{ return localStorage.getItem(LS_THEME_KEY) || "dark"; }catch{ return "dark"; } }
+function loadDevConsoleEnabled(){ try{ return localStorage.getItem(LS_DEV_CONSOLE_KEY)==="true"; }catch{ return false; } }
+function saveDevConsoleEnabled(v){ try{ localStorage.setItem(LS_DEV_CONSOLE_KEY, v?"true":"false"); }catch{} }
 
-const tempSlider = document.getElementById('temp-slider');
-const tempValue = document.getElementById('temp-value');
-const maxTokensInput = document.getElementById('max-tokens-input');
+function dbg(msg){ if(!devConsoleEnabled) return; console.log("[CronyGO]", msg); }
 
-if(tempSlider){
-  tempSlider.value = loadStoredTemp();
-  if(tempValue) tempValue.textContent = tempSlider.value;
-  tempSlider.addEventListener('input', (e)=>{
-    if(tempValue) tempValue.textContent = e.target.value;
-    localStorage.setItem('cronygo_temp', e.target.value);
-  });
-}
-if(maxTokensInput){
-  maxTokensInput.value = loadStoredMaxTokens();
-  maxTokensInput.addEventListener('change', (e)=>{
-    localStorage.setItem('cronygo_max_tokens', e.target.value);
-  });
-}
-
-async function refreshCacheInfo(){
-  const usageEl = document.getElementById('cache-usage');
-  const modelEl = document.getElementById('cache-model-name');
-  try{
-    const estimate = await navigator.storage.estimate();
-    const mb = ((estimate.usage||0)/1024/1024).toFixed(1);
-    if(usageEl) usageEl.textContent = `${mb} MB`;
-  }catch{ if(usageEl) usageEl.textContent = '取得失敗'; }
-  if(modelEl) modelEl.textContent = localStorage.getItem('webllm_model_id') || selectEl?.value || '未取得';
-}
-document.getElementById('cache-refresh-btn')?.addEventListener('click', refreshCacheInfo);
-document.getElementById('cache-clear-btn')?.addEventListener('click', async ()=>{
-  if(!confirm('モデルキャッシュを削除しますか？次回は再ダウンロードが必要です')) return;
-  localStorage.removeItem('webllm_model_id');
-  if('caches' in window){
-    const keys = await caches.keys();
-    for(const k of keys) await caches.delete(k);
-  }
-  alert('キャッシュ削除しました');
-  refreshCacheInfo();
-});
-refreshCacheInfo();
-
-function loadStoredTheme() {
-  try { return localStorage.getItem(LS_THEME_KEY) || "dark"; }
-  catch { return "dark"; }
-}
-function loadDevConsoleEnabled() {
-  try { return localStorage.getItem(LS_DEV_CONSOLE_KEY) === "true"; }
-  catch { return false; }
-}
-function saveDevConsoleEnabled(v) {
-  try { localStorage.setItem(LS_DEV_CONSOLE_KEY, v ? "true" : "false"); } catch {}
-}
-function createDebugOverlay() {
-  if (debugOverlayEl) return debugOverlayEl;
-  const el = document.createElement('div');
-  el.id = 'debug-overlay';
-  el.style.cssText = 'position:fixed;bottom:80px;left:6px;right:6px;max-height:38vh;overflow:auto;background:rgba(0,0,0,0.88);color:#0f8;font-size:11px;line-height:1.35;padding:8px;border-radius:8px;z-index:99999;white-space:pre-wrap;font-family:monospace;border:1px solid #0f0;';
-  document.body.appendChild(el);
-  debugOverlayEl = el;
-  const clearBtn = document.createElement('button');
-  clearBtn.textContent = 'クリア';
-  clearBtn.style.cssText = 'position:fixed;bottom:48px;right:10px;z-index:100000;background:#0f0;color:#000;border:0;border-radius:12px;padding:5px 12px;font-size:11px;font-weight:600;';
-  clearBtn.onclick = () => { if(debugOverlayEl) debugOverlayEl.textContent=''; };
-  document.body.appendChild(clearBtn);
-  debugClearBtn = clearBtn;
-  const testBtn = document.createElement('button');
-  testBtn.textContent = 'TTSテスト';
-  testBtn.style.cssText = 'position:fixed;bottom:48px;left:10px;z-index:100000;background:#ff0;color:#000;border:0;border-radius:12px;padding:5px 12px;font-size:11px;font-weight:600;';
-  testBtn.onclick = () => {
-    dbg('--- TTSテスト ---');
-    if (voice) voice.speak('テストです。**太字**は声では読まないはず。聞こえますか？');
-    else dbg('voice null');
-  };
-  document.body.appendChild(testBtn);
-  debugTestBtn = testBtn;
-  return el;
-}
-function removeDebugOverlay() {
-  if (debugOverlayEl) { try { debugOverlayEl.remove(); } catch {} debugOverlayEl=null; }
-  if (debugClearBtn) { try { debugClearBtn.remove(); } catch {} debugClearBtn=null; }
-  if (debugTestBtn) { try { debugTestBtn.remove(); } catch {} debugTestBtn=null; }
-}
-function dbg(msg) {
-  if (!devConsoleEnabled) return;
-  try {
-    const el = createDebugOverlay();
-    const time = new Date().toLocaleTimeString();
-    el.textContent += `[${time}] ${msg}\n`;
-    el.scrollTop = el.scrollHeight;
-  } catch {}
-  console.log(msg);
-}
-window.__cronyDbg = (msg) => dbg(msg);
-function setDevConsoleEnabled(enabled) {
-  devConsoleEnabled = enabled;
-  saveDevConsoleEnabled(enabled);
-  const toggle = document.getElementById('dev-console-toggle');
-  const label = document.getElementById('dev-console-label');
-  const bg = document.getElementById('dev-toggle-bg');
-  const dot = document.getElementById('dev-toggle-dot');
-  if (toggle) toggle.checked = enabled;
-  if (label) { label.textContent = enabled ? 'ON' : 'OFF'; label.style.color = enabled ? '#4FD1C5' : '#888'; }
-  if (bg) bg.style.background = enabled ? '#4FD1C5' : '#333';
-  if (dot) dot.style.transform = enabled ? 'translateX(20px)' : 'translateX(0)';
-  if (enabled) {
-    createDebugOverlay();
-    dbg('dev console ON');
-    dbg(`voices=${window.speechSynthesis ? window.speechSynthesis.getVoices().length : 0}`);
-  } else {
-    dbg('dev console OFF');
-    setTimeout(()=>removeDebugOverlay(), 300);
-  }
-}
-
-let messages = [{ role: "system", content: loadStoredPrompt() }];
-
+// DOM
 const chatEl = document.getElementById("chat");
 const micBtn = document.getElementById("mic-btn");
 const voicePreview = document.getElementById("voice-preview");
 const inputEl = document.getElementById("input");
 const sendEl = document.getElementById("send");
-const statusEl = document.getElementById("status");
 const progressBar = document.getElementById("progress-bar");
-const selectEl = document.getElementById("model-select");
-
-function refreshModelSelect(){
-  // base MODELS をセレクトに自動追加 (Serow等)
-  Object.keys(MODELS).forEach(key=>{
-    if ([...selectEl.options].some(op=>op.value===key)) return;
-    const opt = document.createElement('option');
-    opt.value = key;
-    // Serowは目立つように
-    opt.textContent = key.includes('Serow') ? `${key}` : key;
-    selectEl.appendChild(opt);
-  });
-  const custom = loadCustomModels();
-  [...selectEl.options].forEach(o=>{ if(o.dataset.custom) o.remove(); });
-  custom.forEach(fullId=>{
-    const base = fullId.split('/').pop().replace(/-MLC$/,'').slice(0,28);
-    let key = base; let n=1;
-    while(MODELS[key] && MODELS[key]!==fullId) key = `${base}_${n++}`;
-    MODELS[key] = fullId;
-    if(![...selectEl.options].some(op=>op.value===key)){
-      const opt = document.createElement('option');
-      opt.value = key;
-      opt.textContent = `★ ${key}`;
-      opt.dataset.custom = "1";
-      selectEl.appendChild(opt);
-    }
-  });
-  renderCustomModelList();
-}
-function renderCustomModelList(){
-  const el = document.getElementById('custom-model-list');
-  if(!el) return;
-  const list = loadCustomModels();
-  if(!list.length){ el.innerHTML = '<span style="font-size:11px; opacity:.5;">まだ登録なし</span>'; return; }
-  el.innerHTML = list.map(id=>`
-    <div style="display:flex; justify-content:space-between; align-items:center; background:#1a1a1a; padding:6px 8px; border-radius:6px; font-size:11px; margin-bottom:4px;">
-      <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${id}</span>
-      <button data-del="${id}" style="margin-left:8px; border:1px solid #444; background:transparent; color:#f55; border-radius:4px; padding:2px 6px;">削除</button>
-    </div>
-  `).join('');
-}
-const dlBtn = document.getElementById("download-btn");
+const progressWrap = document.getElementById("progress-wrap");
 const loadingView = document.getElementById("loading-view");
 const loadingText = document.getElementById("loading-text");
-const newRoomBtn = document.getElementById('new-room-btn');
-const roomListEl = document.getElementById('room-list');
+const newRoomBtn = document.getElementById("new-room-btn");
+const roomListEl = document.getElementById("room-list");
+const modeSelect = document.getElementById("mode-select");
+const homeBtn = document.getElementById("home-btn");
+const menuBtn = document.getElementById("menu-btn");
+const roomDrawer = document.getElementById("room-drawer");
+const roomOverlay = document.getElementById("room-overlay");
+const roomClose = document.getElementById("room-close");
 
 const settingsBtn = document.getElementById("settings-btn");
 const settingsPanel = document.getElementById("settings-panel");
@@ -244,636 +69,442 @@ const savePromptBtn = document.getElementById("save-prompt-btn");
 const resetPromptBtn = document.getElementById("reset-prompt-btn");
 const promptStatus = document.getElementById("prompt-status");
 const themeOpts = document.querySelectorAll(".theme-opt");
+const tempSlider = document.getElementById("temp-slider");
+const tempValue = document.getElementById("temp-value");
+const maxTokensInput = document.getElementById("max-tokens-input");
 const devConsoleToggle = document.getElementById("dev-console-toggle");
-const ttsVoiceSelect = document.getElementById('tts-voice-select');
-const ttsVoiceDesc = document.getElementById('tts-voice-desc');
-const ttsTestBtn = document.getElementById('tts-test-btn');
-const ttsReloadBtn = document.getElementById('tts-reload-voices-btn');
+const ttsVoiceSelect = document.getElementById("tts-voice-select");
+const ttsTestBtn = document.getElementById("tts-test-btn");
+const ttsReloadBtn = document.getElementById("tts-reload-voices-btn");
+const bgUpload = document.getElementById("bg-upload");
+const bgUploadBtn = document.getElementById("bg-upload-btn");
+const bgClearBtn = document.getElementById("bg-clear-btn");
 
+// init controls
 systemPromptInput.value = loadStoredPrompt();
-applyTheme(loadStoredTheme(), false);
-devConsoleEnabled = loadDevConsoleEnabled();
-setDevConsoleEnabled(devConsoleEnabled);
+if(tempSlider){ tempSlider.value = loadStoredTemp(); if(tempValue) tempValue.textContent = tempSlider.value; }
+if(maxTokensInput){ maxTokensInput.value = loadStoredMaxTokens(); }
 
-// Chat BG
-const bgUpload = document.getElementById('bg-upload');
-const bgUploadBtn = document.getElementById('bg-upload-btn');
-const bgClearBtn = document.getElementById('bg-clear-btn');
-const bgOpacity = document.getElementById('bg-opacity');
-const LS_BG = "cronygo_chat_bg";
-const LS_BG_OP = "cronygo_chat_bg_op";
-function applyBg(dataUrl){
-  if(dataUrl){
-    chatEl.style.backgroundImage = `url("${dataUrl}")`;
-    chatEl.classList.add('has-custom-bg');
-  }else{
-    chatEl.style.backgroundImage = '';
-    chatEl.classList.remove('has-custom-bg');
-  }
-}
-function applyOpacity(v){
-  document.documentElement.style.setProperty('--chat-bg-overlay', v/100);
-  try{ localStorage.setItem(LS_BG_OP, String(v)); }catch{}
-}
-try{
-  const savedBg = localStorage.getItem(LS_BG);
-  const savedOp = localStorage.getItem(LS_BG_OP);
-  if(savedBg) applyBg(savedBg);
-  if(savedOp){
-    if(bgOpacity) bgOpacity.value = savedOp;
-    applyOpacity(savedOp);
-  } else if(bgOpacity){
-    applyOpacity(bgOpacity.value);
-  }
-}catch{}
-bgUploadBtn?.addEventListener('click', ()=> bgUpload?.click());
-bgClearBtn?.addEventListener('click', ()=>{
-  localStorage.removeItem(LS_BG);
-  applyBg(null);
-});
-bgOpacity?.addEventListener('input', (e)=> applyOpacity(e.target.value));
-bgUpload?.addEventListener('change', async (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const dataUrl = await new Promise((res)=>{
-    const img = new Image();
-    img.onload = ()=>{
-      const c = document.createElement('canvas');
-      const max = 1024;
-      let w = img.width, h = img.height;
-      if(w>max || h>max){ const r = Math.min(max/w, max/h); w*=r; h*=r; }
-      c.width=w; c.height=h;
-      c.getContext('2d').drawImage(img,0,0,w,h);
-      res(c.toDataURL('image/jpeg', 0.7));
-    };
-    img.src = URL.createObjectURL(file);
-  });
-  try{
-    localStorage.setItem(LS_BG, dataUrl);
-    applyBg(dataUrl);
-  }catch(err){
-    alert('画像が大きすぎます。もっと小さい画像で試して');
-  }
-});
+let messages = [{ role: "system", content: loadStoredPrompt() }];
 
-// TTS
-function refreshVoiceList() {
-  if (!ttsVoiceSelect ||!window.speechSynthesis) return;
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices.length) {
-    ttsVoiceSelect.innerHTML = '<option>読み込み中... 少し待つか再読込押して</option>';
-    return;
-  }
-  const ja = voices.filter(v => v.lang.toLowerCase().startsWith('ja'));
-  const other = voices.filter(v =>!v.lang.toLowerCase().startsWith('ja'));
-  const sorted = [...ja.sort((a,b)=>a.name.localeCompare(b.name)),...other.sort((a,b)=>a.name.localeCompare(b.name))];
-  const saved = localStorage.getItem("cronygo_tts_voice");
-  ttsVoiceSelect.innerHTML = '';
-  sorted.forEach(v => {
-    const opt = document.createElement('option');
-    opt.value = v.voiceURI;
-    opt.textContent = `${v.name} (${v.lang})${ja.includes(v)?' ★':''}`;
-    ttsVoiceSelect.appendChild(opt);
-  });
-  if (saved) ttsVoiceSelect.value = saved;
-  else if (ja[0]) ttsVoiceSelect.value = ja[0].voiceURI;
-  updateVoiceDesc();
+function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function renderMarkdown(t){
+  if(!t) return "";
+  let html = escapeHtml(t.trim());
+  html = html.replace(/\*\*([\s\S]+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/\n/g, "<br>");
+  return html;
 }
-function updateVoiceDesc() {
-  if (!ttsVoiceDesc ||!ttsVoiceSelect) return;
-  const v = window.speechSynthesis.getVoices().find(x => x.voiceURI === ttsVoiceSelect.value);
-  if (v) ttsVoiceDesc.textContent = `選択中: ${v.name} / ${v.lang}`;
-}
-if (ttsVoiceSelect) {
-  ttsVoiceSelect.addEventListener('change', () => {
-    const uri = ttsVoiceSelect.value;
-    if (voice) voice.setPreferredVoice(uri);
-    try { localStorage.setItem("cronygo_tts_voice", uri); } catch {}
-    updateVoiceDesc();
-  });
-}
-if (ttsTestBtn) {
-  ttsTestBtn.addEventListener('click', () => {
-    const txt = "こんにちは、クロニーゴーです。この声はいかがですか？";
-    if (voice) voice.speak(txt);
-  });
-}
-if (ttsReloadBtn) {
-  ttsReloadBtn.addEventListener('click', refreshVoiceList);
-}
-if (window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => {
-    dbg(`voiceschanged ${window.speechSynthesis.getVoices().length}`);
-    refreshVoiceList();
-  };
-  setTimeout(refreshVoiceList, 400);
-  setTimeout(refreshVoiceList, 1500);
-}
-
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-function renderMarkdown(text) {
-  if (!text) return '';
-  let t = text.trim();
-  t = t.replace(/^\s*\*\*\s*$/gm, '');
-  t = t.replace(/\*\*\s*\n\s*([\s\S]+?)\s*\n\s*\*\*/g, '**$1**');
-  t = t.replace(/\*\*\s+([\s\S]+?)\s+\*\*/g, '**$1**');
-  t = t.split('\n').map(line => {
-    const m = line.match(/^\s*([\*\-・])\s+(.+)$/);
-    if (m) return `• ${m[2]}`;
-    return line;
-  }).join('\n');
-  let html = escapeHtml(t);
-  html = html.replace(/\*\*\*([\s\S]+?)\*\*\*/g, (m,p1)=>{ const inner=p1.trim(); return inner ? `<strong><em>${inner}</em></strong>` : ''; });
-  html = html.replace(/\*\*([\s\S]+?)\*\*/g, (m,p1)=>{
-    const inner = p1.trim();
-    if (!inner || inner === ':' ) return '';
-    return `<strong>${inner}</strong>`;
-  });
-  html = html.replace(/(^|[^•\*\n])\*([^*\n•]+?)\*(?!\*)/g, (m, pre, inner)=>{
-    if (pre.includes('•')) return m;
-    return `${pre}<em>${inner}</em>`;
-  });
-  html = html.replace(/\n{3,}/g, '\n\n');
-  html = html.replace(/\n/g, '<br>');
-  html = html.replace(/(<br>\s*)+$/g, '');
-  return html.trim();
-}
-
-function addMessage(role, content) {
+function addMessage(role, content){
   const div = document.createElement("div");
   div.className = `msg ${role}`;
-  if (role === 'assistant') {
-    div.innerHTML = renderMarkdown(content);
-  } else {
-    div.textContent = content;
-  }
+  div.innerHTML = role==="assistant" ? renderMarkdown(content) : escapeHtml(content);
   chatEl.appendChild(div);
   chatEl.scrollTop = chatEl.scrollHeight;
   return div;
 }
-function showFirstLoadingUI(initialText) {
-  if (hasChatted) return false;
-  loadingText.textContent = initialText || "準備中...";
+function showLoading(text){
+  loadingText.textContent = text || "準備中...";
   loadingView.classList.add("show");
   chatEl.classList.add("is-first-loading");
-  return true;
 }
-function hideFirstLoadingUI() {
+function hideLoading(){
   loadingView.classList.remove("show");
   chatEl.classList.remove("is-first-loading");
 }
-function updateLoadingText(text) {
-  statusEl.textContent = text;
-  if (loadingView.classList.contains("show")) loadingText.textContent = text;
+function updateProgress(pct, text){
+  progressBar.classList.add("show");
+  progressBar.style.width = `${pct}%`;
+  if(text) loadingText.textContent = text;
+  if(pct>=100) setTimeout(()=>{ progressBar.classList.remove("show"); progressBar.style.width="0%"; }, 800);
 }
-function applyTheme(theme, save = true) {
-  if (theme === "light") document.body.classList.add("light");
-  else document.body.classList.remove("light");
-  themeOpts.forEach(btn => { btn.classList.toggle("active", btn.dataset.theme === theme); });
-  if (save) { try { localStorage.setItem(LS_THEME_KEY, theme); } catch {} }
+function applyTheme(theme, save=true){
+  if(theme==="light") document.body.classList.add("light"); else document.body.classList.remove("light");
+  themeOpts.forEach(b=>b.classList.toggle("active", b.dataset.theme===theme));
+  if(save) try{ localStorage.setItem(LS_THEME_KEY, theme); }catch{}
 }
-function saveSystemPrompt() {
-  const newPrompt = systemPromptInput.value.trim() || DEFAULT_SYSTEM_PROMPT;
-  try { localStorage.setItem(LS_PROMPT_KEY, newPrompt); } catch {}
-  messages[0].content = newPrompt;
-  promptStatus.textContent = "保存しました。次の会話から反映されます。";
-  promptStatus.style.color = "#4FD1C5";
-  setTimeout(() => { promptStatus.textContent = ""; }, 2500);
-}
+applyTheme(loadStoredTheme(), false);
+devConsoleEnabled = loadDevConsoleEnabled();
 
-// ROOMS
-function loadRooms(){
-  try{ const r = localStorage.getItem(LS_ROOMS); return r? JSON.parse(r) : []; }catch{ return []; }
+function saveSystemPrompt(){
+  const v = systemPromptInput.value.trim() || DEFAULT_SYSTEM_PROMPT;
+  try{ localStorage.setItem(LS_PROMPT_KEY, v); }catch{}
+  messages[0].content = v;
+  promptStatus.textContent = "保存しました";
+  setTimeout(()=>promptStatus.textContent="", 2000);
 }
-function saveRooms(){
-  try{ localStorage.setItem(LS_ROOMS, JSON.stringify(rooms)); }catch{}
-}
-function loadRoomMessages(id){
-  try{ const r = localStorage.getItem(LS_ROOM_PREFIX+id); return r? JSON.parse(r) : []; }catch{ return []; }
-}
-function saveRoomMessages(id, msgs){
-  try{ localStorage.setItem(LS_ROOM_PREFIX+id, JSON.stringify(msgs)); }catch(e){ console.warn(e); }
-}
+function resetSystemPrompt(){ systemPromptInput.value = DEFAULT_SYSTEM_PROMPT; saveSystemPrompt(); }
+
+// Rooms
+function loadRooms(){ try{ const r=localStorage.getItem(LS_ROOMS); return r?JSON.parse(r):[]; }catch{ return []; } }
+function saveRooms(){ try{ localStorage.setItem(LS_ROOMS, JSON.stringify(rooms)); }catch{} }
+function loadRoomMessages(id){ try{ const r=localStorage.getItem(LS_ROOM_PREFIX+id); return r?JSON.parse(r):[]; }catch{ return []; } }
+function saveRoomMessages(id, msgs){ try{ localStorage.setItem(LS_ROOM_PREFIX+id, JSON.stringify(msgs)); }catch{} }
 function getHistory(){ return messages.slice(1); }
 function saveCurrentRoomHistory(){
   if(!currentRoomId) return;
   saveRoomMessages(currentRoomId, getHistory());
   const room = rooms.find(r=>r.id===currentRoomId);
   if(room && room.title==="新しいチャット" && getHistory().length>0){
-    const firstUser = getHistory().find(m=>m.role==="user");
-    if(firstUser){
-      room.title = firstUser.content.slice(0,20) + (firstUser.content.length>20?"…":"");
-      saveRooms(); renderRoomList();
-    }
+    const first = getHistory().find(m=>m.role==="user");
+    if(first){ room.title = first.content.slice(0,20); saveRooms(); renderRoomList(); }
   }
 }
 function renderRoomList(){
   if(!roomListEl) return;
   roomListEl.innerHTML = rooms.map(r=>`
-    <div class="room-item ${r.id===currentRoomId?'active':''}" data-id="${r.id}" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-      <div style="min-width:0; flex:1;">
-        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">${r.title}</span>
-        <span style="font-size:10px; opacity:0.5;">${new Date(parseInt(r.id)).toLocaleDateString()}</span>
-      </div>
-      <button class="room-del-btn" data-del-id="${r.id}" aria-label="削除" style="width:24px; height:24px; border-radius:50%; border:1px solid #333; background:transparent; color:#888; cursor:pointer; flex-shrink:0;">×</button>
+    <div class="room-item ${r.id===currentRoomId?'active':''}" data-id="${r.id}">
+      <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(r.title)}</span>
+      <button class="room-del-btn" data-del-id="${r.id}">×</button>
     </div>
   `).join('');
 }
-const WELCOME_TEXT = "こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。";
-function clearChatUI(){
-  chatEl.querySelectorAll('.msg').forEach(el=>el.remove());
-  if(!chatEl.contains(loadingView)){
-    chatEl.appendChild(loadingView);
-  }
-}
+function clearChatUI(){ chatEl.querySelectorAll('.msg').forEach(el=>el.remove()); }
 function renderChatFromHistory(history){
   clearChatUI();
-  if(history.length === 0){
+  if(history.length===0){
     const div = document.createElement("div");
     div.className = "msg assistant";
-    div.textContent = WELCOME_TEXT;
+    div.textContent = "こんにちは、CronyGOです。防災について何でも聞いてください。";
     chatEl.insertBefore(div, loadingView);
-    hasChatted = false;
-    hideFirstLoadingUI();
+    hasChatted=false;
+    hideLoading();
     return;
   }
-  history.forEach(m=>{ addMessage(m.role, m.content); });
-  hasChatted = true;
-  hideFirstLoadingUI();
+  history.forEach(m=>addMessage(m.role, m.content));
+  hasChatted=true;
+  hideLoading();
 }
 function switchRoom(id){
   if(!id || id===currentRoomId){ closeDrawer(); return; }
   saveCurrentRoomHistory();
-  currentRoomId = id;
+  currentRoomId=id;
   localStorage.setItem(LS_CURRENT, id);
-  const history = loadRoomMessages(id);
-  messages = [{ role: "system", content: loadStoredPrompt() },...history];
+  const history=loadRoomMessages(id);
+  messages=[{role:"system", content:loadStoredPrompt()}, ...history];
   renderChatFromHistory(history);
   renderRoomList();
   closeDrawer();
 }
 function createRoom(){
   saveCurrentRoomHistory();
-  const id = Date.now().toString();
-  const newRoom = { id, title:"新しいチャット", createdAt: Date.now(), model: currentKey || selectEl.value };
+  const id=Date.now().toString();
+  const newRoom={ id, title:"新しいチャット", createdAt:Date.now() };
   rooms.unshift(newRoom);
   saveRooms();
-  currentRoomId = id;
+  currentRoomId=id;
   localStorage.setItem(LS_CURRENT, id);
-  messages = [{ role: "system", content: loadStoredPrompt() }];
-  hasChatted = false;
+  messages=[{role:"system", content:loadStoredPrompt()}];
+  hasChatted=false;
   renderChatFromHistory([]);
   renderRoomList();
   closeDrawer();
   saveRoomMessages(id, []);
 }
 function deleteRoom(id){
-  if(rooms.length <= 1){
+  if(rooms.length<=1){
     saveRoomMessages(id, []);
-    messages = [{ role: "system", content: loadStoredPrompt() }];
-    const room = rooms.find(r=>r.id===id);
-    if(room) room.title = "新しいチャット";
-    saveRooms();
+    messages=[{role:"system", content:loadStoredPrompt()}];
     renderChatFromHistory([]);
     renderRoomList();
     return;
   }
-  rooms = rooms.filter(r=>r.id!== id);
+  rooms=rooms.filter(r=>r.id!==id);
   saveRooms();
   try{ localStorage.removeItem(LS_ROOM_PREFIX+id); }catch{}
-  if(id === currentRoomId){
-    currentRoomId = rooms[0].id;
+  if(id===currentRoomId){
+    currentRoomId=rooms[0].id;
     localStorage.setItem(LS_CURRENT, currentRoomId);
-    const history = loadRoomMessages(currentRoomId);
-    messages = [{ role: "system", content: loadStoredPrompt() },...history];
+    const history=loadRoomMessages(currentRoomId);
+    messages=[{role:"system", content:loadStoredPrompt()}, ...history];
     renderChatFromHistory(history);
   }
   renderRoomList();
 }
 function initRooms(){
-  rooms = loadRooms();
-  if(rooms.length===0){
-    createRoom();
-    return;
-  }
-  currentRoomId = localStorage.getItem(LS_CURRENT) || rooms[0].id;
-  const history = loadRoomMessages(currentRoomId);
-  messages = [{ role: "system", content: loadStoredPrompt() },...history];
+  rooms=loadRooms();
+  if(rooms.length===0){ createRoom(); return; }
+  currentRoomId=localStorage.getItem(LS_CURRENT) || rooms[0].id;
+  const history=loadRoomMessages(currentRoomId);
+  messages=[{role:"system", content:loadStoredPrompt()}, ...history];
   renderChatFromHistory(history);
   renderRoomList();
 }
-function initCustomModelUI(){
-  refreshModelSelect();
-  document.getElementById('custom-model-add-btn')?.addEventListener('click', ()=>{
-    const input = document.getElementById('custom-model-id-input');
-    const id = input?.value.trim();
-    if(!id ||!id.includes('/')){
-      alert('HF ID形式で\n例: mlc-ai/Mistral-7B-Instruct-v0.3-q4f16_1-MLC');
-      return;
-    }
-    const list = loadCustomModels();
-    if(list.includes(id)){ alert('登録済み'); return; }
-    list.unshift(id);
-    saveCustomModels(list);
-    if(input) input.value='';
-    refreshModelSelect();
-  });
-  document.getElementById('custom-model-list')?.addEventListener('click', (e)=>{
-    const b = e.target.closest('button[data-del]');
-    if(!b) return;
-    const id = b.dataset.del;
-    saveCustomModels(loadCustomModels().filter(x=>x!==id));
-    Object.keys(MODELS).forEach(k=>{ if(MODELS[k]===id) delete MODELS[k]; });
-    refreshModelSelect();
+
+// Mode - UI only but store
+if(modeSelect){
+  const saved = localStorage.getItem(LS_MODE_KEY) || "normal";
+  modeSelect.value=saved;
+  modeSelect.addEventListener("change", (e)=>{
+    const v=e.target.value;
+    localStorage.setItem(LS_MODE_KEY, v);
+    const label=modeSelect.options[modeSelect.selectedIndex].textContent;
+    addMessage("system", `防災モードを「${label}」に切り替えました。※v0.1αではUIのみ`);
   });
 }
 
-function resetSystemPrompt() {
-  systemPromptInput.value = DEFAULT_SYSTEM_PROMPT;
-  saveSystemPrompt();
-  promptStatus.textContent = "デフォルトに戻しました。";
-}
-
-// ===== エンジン周りは engine-manager に委譲 =====
-async function loadModel(key, isReload = false) {
-  const isFirstPhase = !hasChatted && !isReload;
-
-  dlBtn.disabled = true;
-  dlBtn.textContent = isReload? "再読込中..." : "読込中...";
-  statusEl.className = "loading";
-  progressBar.style.opacity = "1";
-  progressBar.style.width = "0%";
-  progressBar.style.background = "#4FD1C5";
-  inputEl.disabled = true;
-  sendEl.disabled = true;
-
-  if (isFirstPhase) {
-    showFirstLoadingUI(`${key} 準備中...`);
-  } else if (isReload) {
-    loadingText.textContent = `${key} 積み直し中...`;
-    loadingView.classList.add("show");
-    chatEl.classList.add("is-first-loading");
-    updateLoadingText(`${key} 積み直し中...`);
-  } else {
-    updateLoadingText("準備中...");
-  }
-  if (!isFirstPhase) addMessage("system", isReload? `${key} 再読込開始` : `${key} を読み込み開始。`);
-
-  try {
-    await engineManager.load(key, (pct, text) => {
-      const txt = isReload? `積み直し ${pct}% ${text}` : `${pct}% ${text}`;
-      updateLoadingText(txt);
-      progressBar.style.width = `${pct}%`;
+// Engine - WebLLM Gemma2B-JPN fixed, auto download
+async function loadFixedModel(isReload=false){
+  const key=FIXED_MODEL_KEY;
+  inputEl.disabled=true; sendEl.disabled=true;
+  showLoading(isReload? `${key} 再読込中...` : `${key} 準備中...`);
+  try{
+    await engineManager.load(key, (pct, text)=>{
+      updateProgress(pct, `${pct}% ${text}`);
     });
-
-    currentKey = key;
-    statusEl.textContent = isReload? `再起動完了 ${key}` : `Ready ${key} [${engineManager.getCurrentId()}]`;
-    statusEl.className = "ready";
-    progressBar.style.width = "100%";
-    setTimeout(() => progressBar.style.opacity = "0", 800);
-    dlBtn.textContent = "起動済み";
-    dlBtn.classList.add("ready");
-    dlBtn.disabled = false;
-    inputEl.disabled = false;
-    sendEl.disabled = false;
-    inputEl.placeholder = `${key}で入力...`;
-    hideFirstLoadingUI();
-    addMessage("assistant", isReload? `${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
-    dbg(`model ${key} loaded via ${engineManager.getCurrentId()}`);
-  } catch (e) {
-    dbg(`model load ERROR ${e.message}`);
+    currentKey=key;
+    hideLoading();
+    inputEl.disabled=false; sendEl.disabled=false;
+    inputEl.placeholder="メッセージを入力...";
+    inputEl.focus();
+    if(!hasChatted){
+      addMessage("assistant", "準備完了しました。防災について何でも聞いてください。");
+    }else{
+      addMessage("assistant", "モデルの再読込が完了しました。");
+    }
+    dbg(`loaded ${key}`);
+  }catch(e){
     console.error(e);
-    statusEl.textContent = "エラー";
-    statusEl.className = "";
-    progressBar.style.background = "#ff4444";
-    dlBtn.textContent = "再試行";
-    dlBtn.disabled = false;
-    hideFirstLoadingUI();
-    addMessage("assistant", "エラー: " + e.message);
+    hideLoading();
+    addMessage("assistant", "モデルの読み込みに失敗しました: "+e.message);
+    document.getElementById("dl-status").textContent="エラー: "+e.message;
   }
 }
 
-async function sendMessageWithText(forcedText) {
-  const text = (forcedText || inputEl.value).trim();
-  if (!text || isGenerating) return;
-  const isVoiceMode = lastInputWasVoice;
-  lastInputWasVoice = false;
-  if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
-
-  if (isTimeQuery(text)) {
-    addMessage("user", text);
-    messages.push({ role: "user", content: text });
-    saveCurrentRoomHistory();
-    inputEl.value = "";
-    voicePreview.textContent = '';
-    const nowStr = getCurrentTimeString();
-    const reply = `${nowStr}です`;
-    addMessage("assistant", reply);
-    messages.push({ role: "assistant", content: reply });
-    saveCurrentRoomHistory(); 
-    dbg(`[TimeQuery] matched "${text}" -> ${reply}`);
-    if (isVoiceMode && voice) voice.speak(reply);
+// Chat
+async function sendMessageWithText(forcedText){
+  const text=(forcedText || inputEl.value).trim();
+  if(!text || isGenerating) return;
+  const isVoiceMode=lastInputWasVoice;
+  lastInputWasVoice=false;
+  if(!hasChatted){ hasChatted=true; hideLoading(); }
+  if(!engineManager.isReady()){
+    addMessage("system", "モデルを読み込み中です。しばらくお待ちください。");
     return;
   }
-
-  if (!engineManager.isReady()) {
-    addMessage("system", "モデルをダウンロードしてください");
-    return;
-  }
-
   addMessage("user", text);
-  messages.push({ role: "user", content: text });
+  messages.push({ role:"user", content:text });
   saveCurrentRoomHistory();
-  inputEl.value = "";
-  voicePreview.textContent = '';
-
-  const assistantDiv = addMessage("assistant", "");
-  const killBtn = document.createElement("button");
-  killBtn.textContent = "■ 生成を停止";
-  killBtn.className = "kill-switch";
-  killBtn.style.cssText = "margin:6px 0 10px 0;background:#ff3b3b;color:#fff;border:0;border-radius:18px;padding:6px 14px;font-size:12px;cursor:pointer;align-self:flex-start;";
-  assistantDiv.after(killBtn);
-
-  let abortFlag = false;
-  let isKilled = false;
-  killBtn.onclick = async () => {
-    if (abortFlag) return;
-    abortFlag = true;
-    isKilled = true;
-    killBtn.textContent = "停止→再読込中...";
-    killBtn.disabled = true;
-    try { await engineManager.interrupt(); } catch {}
-    if (voice) voice.clearQueue(true);
-    assistantDiv.innerHTML = renderMarkdown(assistantDiv.textContent + "\n\n[停止→積み直し]");
-    const keyToReload = currentKey;
-    messages = [{ role: "system", content: loadStoredPrompt() }];
-    try { killBtn.remove(); } catch {}
-    await loadModel(keyToReload, true);
-  };
-
-  isGenerating = true; sendEl.disabled = true;
-  let full = "";
-  let speakBuffer = "";
-  const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
-  try {
-    const temp = parseFloat(localStorage.getItem('cronygo_temp') || 0.7);
-    const max_tokens = parseInt(localStorage.getItem('cronygo_max_tokens') || 1024);
-    
-    for await (const delta of engineManager.chat(messages, { temperature: temp, max_tokens })) {
-      if (abortFlag) break;
-      full += delta;
-      if (full.length >= MAX_CHARS) {
-        full = full.slice(0, MAX_CHARS).trim() + "\n\n[1500文字制限→自動で積み直し]";
-        assistantDiv.innerHTML = renderMarkdown(full);
-        try { await engineManager.interrupt(); } catch {}
-        if (voice) voice.clearQueue(true);
-        const keyToReload = currentKey;
-        messages = [{ role: "system", content: loadStoredPrompt() }];
-        await loadModel(keyToReload, true);
+  inputEl.value="";
+  voicePreview.textContent="";
+  const assistantDiv=addMessage("assistant", "");
+  isGenerating=true; sendEl.disabled=true;
+  let full="";
+  try{
+    const temp=parseFloat(localStorage.getItem(LS_TEMP_KEY)||"0.7");
+    const max_tokens=parseInt(localStorage.getItem(LS_MAX_TOKENS_KEY)||"1024");
+    for await (const delta of engineManager.chat(messages, { temperature: temp, max_tokens })){
+      full+=delta;
+      if(full.length>=MAX_CHARS){
+        full=full.slice(0, MAX_CHARS)+"\n\n[文字数制限]";
+        assistantDiv.innerHTML=renderMarkdown(full);
         break;
       }
-      assistantDiv.innerHTML = renderMarkdown(full);
-      chatEl.scrollTop = chatEl.scrollHeight;
-
-      if (isVoiceMode && voice && delta) {
-        speakBuffer += delta;
-        const matches = speakBuffer.match(sentenceSplitRegex);
-        if (matches) {
-          let consumed = 0;
-          for (const sent of matches) {
-            const s = sent.trim();
-            if (s) voice.enqueueSpeak(s);
-            consumed += sent.length;
-          }
-          speakBuffer = speakBuffer.slice(consumed);
-        }
+      assistantDiv.innerHTML=renderMarkdown(full);
+      chatEl.scrollTop=chatEl.scrollHeight;
+      if(isVoiceMode && voice && delta){
+        // speak streaming is handled via enqueue in voice manager if needed
       }
     }
-    full = full.trim();
-    full = full.replace(/^\s*\*\*\s*$/gm, '').trim();
-    full = full.replace(/\n{3,}/g, '\n\n').trim();
-
-    if (!isKilled) {
-      assistantDiv.innerHTML = renderMarkdown(full);
-      messages.push({ role: "assistant", content: full });
-      saveCurrentRoomHistory();
-      if (voice && full && isVoiceMode) {
-        const remaining = speakBuffer.trim();
-        if (remaining) voice.enqueueSpeak(remaining);
-        voice.clearBuffer();
-      }
-    }
-  } catch (e) {
-    dbg(`generation ERROR ${e.message}`);
-    if (!abortFlag) assistantDiv.innerHTML = renderMarkdown("生成エラー: " + e.message);
-  } finally {
-    isGenerating = false;
-    sendEl.disabled = false;
-    inputEl.readOnly = false;
-    inputEl.focus();
-    try { killBtn.remove(); } catch {}
+    messages.push({ role:"assistant", content:full });
+    saveCurrentRoomHistory();
+    if(voice && isVoiceMode && full){ voice.speak(full); }
+  }catch(e){
+    assistantDiv.innerHTML=renderMarkdown("生成エラー: "+e.message);
+  }finally{
+    isGenerating=false; sendEl.disabled=false; inputEl.focus();
   }
 }
 
-async function sendMessage() { return sendMessageWithText(); }
-
+// Voice
 voice = new VoiceManager({
-  lang: 'ja-JP',
-  autoSendDelay: 1200,
-  onFinal: (text) => { inputEl.value = text; voicePreview.textContent = text; },
-  onInterim: (full, interim, finalPart) => { inputEl.value = full; voicePreview.textContent = interim ? `聞き取り: ${interim}` : finalPart; },
-  onAutoSend: (text) => {
-    const t = text.trim(); if (!t) return;
-    dbg(`[AutoSend] "${t.slice(0,40)}"`);
-    voicePreview.textContent = '';
-    lastInputWasVoice = true;
+  lang:'ja-JP',
+  autoSendDelay:1200,
+  onFinal:(text)=>{ inputEl.value=text; voicePreview.textContent=text; },
+  onInterim:(full, interim, finalPart)=>{ inputEl.value=full; voicePreview.textContent=interim?`聞き取り: ${interim}`:finalPart; },
+  onAutoSend:(text)=>{
+    const t=text.trim(); if(!t) return;
+    voicePreview.textContent="";
+    lastInputWasVoice=true;
     sendMessageWithText(t);
     voice.clearBuffer();
   },
-  onStatus: (msg, state) => { dbg(`[Status] ${msg} ${state}`); }
+  onStatus:(msg, state)=>{ dbg(`[Voice] ${msg} ${state}`); }
 });
 
-micBtn.addEventListener('click', () => {
-  if (voice.isListening) {
+micBtn.addEventListener("click", ()=>{
+  if(voice.isListening){
     voice.stop();
-    micBtn.classList.remove('on', 'muted');
-    inputEl.readOnly = false;
-    inputEl.placeholder = `${currentKey || 'モデル'}で入力...`;
-  } else {
-    if (voice.isSpeaking) voice.clearQueue(false);
+    micBtn.classList.remove("on");
+    inputEl.placeholder="メッセージを入力...";
+  }else{
+    if(voice.isSpeaking) voice.clearQueue(false);
     inputEl.blur();
-    inputEl.readOnly = true;
-    inputEl.placeholder = "聞き取り中...";
-    voice.start().then(ok => {
-      dbg(`voice.start ${ok}`);
-      if(ok) micBtn.classList.add('on');
-      else { inputEl.readOnly = false; inputEl.placeholder = `${currentKey || 'モデル'}で入力...`; }
+    voice.start().then(ok=>{
+      if(ok) micBtn.classList.add("on");
     });
   }
 });
 
-sendEl.addEventListener("click", () => { lastInputWasVoice = false; sendMessage(); });
-inputEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); lastInputWasVoice = false; sendMessage(); }
-});
-selectEl.addEventListener("change", () => {
-  const key = selectEl.value;
-  if (currentKey === key && engineManager.isReady()) {
-    dlBtn.textContent = "起動済み"; statusEl.textContent = `Ready ${key}`; statusEl.className = "ready";
-  } else {
-    dlBtn.textContent = "ダウンロード"; dlBtn.classList.remove("ready"); statusEl.textContent = "未DL"; statusEl.className = ""; inputEl.placeholder = `${key} をダウンロードしてください`;
-  }
-});
-dlBtn.addEventListener("click", () => { const key = selectEl.value; if (currentKey === key && engineManager.isReady()) return; loadModel(key); });
-statusEl.textContent = "未DL";
+sendEl.addEventListener("click", ()=>{ lastInputWasVoice=false; sendMessageWithText(); });
+inputEl.addEventListener("keydown", (e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); lastInputWasVoice=false; sendMessageWithText(); } });
 
-function openSettings() { settingsPanel.classList.add("show"); settingsOverlay.classList.add("show"); }
-function closeSettings() { settingsPanel.classList.remove("show"); settingsOverlay.classList.remove("show"); }
+// Drawer
+const openDrawer=()=>{ roomDrawer?.classList.add("open"); roomOverlay?.classList.add("open"); };
+const closeDrawer=()=>{ roomDrawer?.classList.remove("open"); roomOverlay?.classList.remove("open"); };
+menuBtn?.addEventListener("click", openDrawer);
+roomOverlay?.addEventListener("click", closeDrawer);
+roomClose?.addEventListener("click", closeDrawer);
+homeBtn?.addEventListener("click", ()=>{ createRoom(); });
+
+// Settings
+function openSettings(){ settingsPanel.classList.add("show"); settingsOverlay.classList.add("show"); }
+function closeSettings(){ settingsPanel.classList.remove("show"); settingsOverlay.classList.remove("show"); }
 settingsBtn.addEventListener("click", openSettings);
 settingsClose.addEventListener("click", closeSettings);
 settingsOverlay.addEventListener("click", closeSettings);
-document.querySelectorAll('.settings-group-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const group = btn.closest('.settings-group');
-    const isOpen = group.classList.contains('open');
-    document.querySelectorAll('.settings-group').forEach(g=>g.classList.remove('open'));
-    if(!isOpen) group.classList.add('open');
+document.querySelectorAll(".settings-group-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const group=btn.closest(".settings-group");
+    const isOpen=group.classList.contains("open");
+    document.querySelectorAll(".settings-group").forEach(g=>g.classList.remove("open"));
+    if(!isOpen) group.classList.add("open");
   });
 });
 savePromptBtn.addEventListener("click", saveSystemPrompt);
 resetPromptBtn.addEventListener("click", resetSystemPrompt);
-themeOpts.forEach(btn => { btn.addEventListener("click", () => { applyTheme(btn.dataset.theme, true); }); });
-if (devConsoleToggle) { devConsoleToggle.addEventListener('change', (e)=>{ setDevConsoleEnabled(e.target.checked); }); }
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(reg => { console.log('[PWA] SW registered', reg.scope); }).catch(err => console.error('[PWA] SW failed', err));
+themeOpts.forEach(btn=>{ btn.addEventListener("click", ()=>applyTheme(btn.dataset.theme, true)); });
+if(devConsoleToggle){
+  devConsoleToggle.checked=devConsoleEnabled;
+  devConsoleToggle.addEventListener("change", (e)=>{
+    devConsoleEnabled=e.target.checked;
+    saveDevConsoleEnabled(devConsoleEnabled);
+    document.getElementById("dev-console-label").textContent=devConsoleEnabled?"ON":"OFF";
+  });
+}
+document.getElementById("dev-console-label").textContent=devConsoleEnabled?"ON":"OFF";
+
+// TTS
+function refreshVoiceList(){
+  if(!ttsVoiceSelect || !window.speechSynthesis) return;
+  const voices=window.speechSynthesis.getVoices();
+  if(!voices.length){ ttsVoiceSelect.innerHTML="<option>読み込み中...</option>"; return; }
+  const ja=voices.filter(v=>v.lang.toLowerCase().startsWith("ja"));
+  const other=voices.filter(v=>!v.lang.toLowerCase().startsWith("ja"));
+  const sorted=[...ja, ...other];
+  const saved=localStorage.getItem("cronygo_tts_voice");
+  ttsVoiceSelect.innerHTML="";
+  sorted.forEach(v=>{
+    const opt=document.createElement("option");
+    opt.value=v.voiceURI;
+    opt.textContent=`${v.name} (${v.lang})`;
+    ttsVoiceSelect.appendChild(opt);
+  });
+  if(saved) ttsVoiceSelect.value=saved;
+  else if(ja[0]) ttsVoiceSelect.value=ja[0].voiceURI;
+}
+if(ttsVoiceSelect){
+  ttsVoiceSelect.addEventListener("change", ()=>{
+    voice?.setPreferredVoice(ttsVoiceSelect.value);
+  });
+}
+if(document.getElementById("tts-test-btn")){
+  document.getElementById("tts-test-btn").addEventListener("click", ()=>{ voice?.speak("こんにちは、クロニーゴーです。"); });
+}
+if(document.getElementById("tts-reload-voices-btn")){
+  document.getElementById("tts-reload-voices-btn").addEventListener("click", refreshVoiceList);
+}
+if(window.speechSynthesis){
+  window.speechSynthesis.onvoiceschanged=refreshVoiceList;
+  setTimeout(refreshVoiceList, 500);
 }
 
-const menuBtn = document.getElementById('menu-btn');
-const roomDrawer = document.getElementById('room-drawer');
-const roomOverlay = document.getElementById('room-overlay');
-const openDrawer = () => { roomDrawer?.classList.add('open'); roomOverlay?.classList.add('open'); };
-const closeDrawer = () => { roomDrawer?.classList.remove('open'); roomOverlay?.classList.remove('open'); };
-menuBtn?.addEventListener('click', openDrawer);
-roomOverlay?.addEventListener('click', closeDrawer);
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeDrawer(); });
-
-initRooms();
-setTimeout(initCustomModelUI, 100);
-
-newRoomBtn?.addEventListener('click', createRoom);
-roomListEl?.addEventListener('click', (e)=>{
-  const delBtn = e.target.closest('.room-del-btn');
-  if(delBtn){
-    e.stopPropagation();
-    const delId = delBtn.dataset.delId;
-    if(confirm('このルームを削除しますか？')){
-      deleteRoom(delId);
-    }
-    return;
+// Cache & DL
+async function refreshCacheInfo(){
+  const usageEl=document.getElementById("cache-usage");
+  try{
+    const est=await navigator.storage.estimate();
+    const mb=((est.usage||0)/1024/1024).toFixed(1);
+    if(usageEl) usageEl.textContent=`使用量: ${mb} MB`;
+  }catch{ if(usageEl) usageEl.textContent="取得失敗"; }
+}
+document.getElementById("cache-refresh-btn")?.addEventListener("click", refreshCacheInfo);
+document.getElementById("cache-clear-btn")?.addEventListener("click", async ()=>{
+  if(!confirm("キャッシュを削除しますか？")) return;
+  localStorage.removeItem("webllm_model_id");
+  if("caches" in window){
+    const keys=await caches.keys();
+    for(const k of keys) await caches.delete(k);
   }
-  const item = e.target.closest('.room-item');
+  alert("削除しました");
+  refreshCacheInfo();
+});
+document.getElementById("force-dl-btn")?.addEventListener("click", ()=>{ loadFixedModel(true); });
+refreshCacheInfo();
+
+// BG
+const bgUpload=document.getElementById("bg-upload");
+const bgUploadBtn=document.getElementById("bg-upload-btn");
+const bgClearBtn=document.getElementById("bg-clear-btn");
+const LS_BG="cronygo_chat_bg";
+function applyBg(dataUrl){
+  if(dataUrl){ chatEl.style.backgroundImage=`url("${dataUrl}")`; chatEl.classList.add("has-custom-bg"); }
+  else{ chatEl.style.backgroundImage=""; chatEl.classList.remove("has-custom-bg"); }
+}
+try{
+  const savedBg=localStorage.getItem(LS_BG);
+  if(savedBg) applyBg(savedBg);
+}catch{}
+bgUploadBtn?.addEventListener("click", ()=>bgUpload?.click());
+bgClearBtn?.addEventListener("click", ()=>{ localStorage.removeItem(LS_BG); applyBg(null); });
+bgUpload?.addEventListener("change", async (e)=>{
+  const file=e.target.files[0]; if(!file) return;
+  const dataUrl=await new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement("canvas");
+      const max=1024; let w=img.width, h=img.height;
+      if(w>max||h>max){ const r=Math.min(max/w, max/h); w*=r; h*=r; }
+      c.width=w; c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      res(c.toDataURL("image/jpeg", 0.7));
+    };
+    img.src=URL.createObjectURL(file);
+  });
+  try{ localStorage.setItem(LS_BG, dataUrl); applyBg(dataUrl); }catch{ alert("画像が大きすぎます"); }
+});
+
+// Params
+if(tempSlider){
+  tempSlider.addEventListener("input", (e)=>{
+    const v=e.target.value;
+    if(document.getElementById("temp-value")) document.getElementById("temp-value").textContent=v;
+    localStorage.setItem(LS_TEMP_KEY, v);
+  });
+}
+if(maxTokensInput){
+  maxTokensInput.addEventListener("change", (e)=>{ localStorage.setItem(LS_MAX_TOKENS_KEY, e.target.value); });
+}
+
+// Rooms events
+newRoomBtn?.addEventListener("click", createRoom);
+roomListEl?.addEventListener("click", (e)=>{
+  const del=e.target.closest(".room-del-btn");
+  if(del){ e.stopPropagation(); if(confirm("削除しますか？")) deleteRoom(del.dataset.delId); return; }
+  const item=e.target.closest(".room-item");
   if(!item) return;
   switchRoom(item.dataset.id);
 });
+
+// Init
+initRooms();
+
+// Auto download fixed model
+if(!engineManager.isReady()){
+  loadFixedModel();
+}
+
+document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ closeDrawer(); closeSettings(); } });
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
+}

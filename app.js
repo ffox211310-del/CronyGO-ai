@@ -15,7 +15,7 @@ function saveCustomModels(list){
 }
 const MAX_CHARS = 1500;
 
-const MAX_HISTORY_MESSAGES = 6;
+const MAX_HISTORY_MESSAGES = 4;
 
 const LS_ROOMS = "cronygo_rooms";
 const LS_CURRENT = "cronygo_current_room";

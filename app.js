@@ -15,6 +15,8 @@ function saveCustomModels(list){
 }
 const MAX_CHARS = 1500;
 
+const MAX_HISTORY_MESSAGES = 6;
+
 const LS_ROOMS = "cronygo_rooms";
 const LS_CURRENT = "cronygo_current_room";
 const LS_ROOM_PREFIX = "cronygo_room_";
@@ -720,8 +722,18 @@ async function sendMessageWithText(forcedText) {
   try {
     const temp = parseFloat(localStorage.getItem('cronygo_temp') || 0.7);
     const max_tokens = parseInt(localStorage.getItem('cronygo_max_tokens') || 1024);
-    
-    for await (const delta of engineManager.chat(messages, { temperature: temp, max_tokens })) {
+
+    // 同じルーム内での記憶できる会話量
+const contextMessages = [
+  messages[0],
+  ...messages.slice(-MAX_HISTORY_MESSAGES)
+];
+
+for await (const delta of engineManager.chat(contextMessages, {
+  temperature: temp,
+  max_tokens
+})) {
+  
       if (abortFlag) break;
       full += delta;
       if (full.length >= MAX_CHARS) {

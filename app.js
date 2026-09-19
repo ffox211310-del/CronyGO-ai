@@ -726,7 +726,7 @@ async function sendMessageWithText(forcedText) {
     // 同じルーム内での記憶できる会話量
 const contextMessages = [
   messages[0],
-  ...messages.slice(-MAX_HISTORY_MESSAGES)
+  ...messages.slice(1).slice(-MAX_HISTORY_MESSAGES)
 ];
 
 for await (const delta of engineManager.chat(contextMessages, {

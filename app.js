@@ -891,7 +891,8 @@ const MP_INFO = {
   "Q7B":        { name: "Qwen 7B",        desc: "大型・メモリ多め" },
   "G2B-jpn":    { name: "Gemma JP 2B",    desc: "日本語向け" },
   "G2B-jpnHv":  { name: "Gemma JP 2B Hv", desc: "日本語向け・q4f32版" },
-  "Serow-0.5B": { name: "Serow 0.5B",     desc: "Wllama用モデル" },
+  "Qwen-0.5B":  { name: "Qwen 0.5B",      desc: "GGUFのQwen0.5" },
+  "Serow-0.5B": { name: "Serow 0.5B",     desc: "β試験型" },
 };
 
 (() => {

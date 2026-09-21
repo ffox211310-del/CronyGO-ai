@@ -64,14 +64,15 @@ export class WllamaEngine {
     console.log(`[WllamaEngine] n_threads=${n_threads} hc=${navigator.hardwareConcurrency}`);
 
     await this.wllama.loadModelFromUrl(modelUrl, {
-      ...this.LOAD_OPTS,
-      n_threads,
-      progressCallback: ({ loaded, total }) => {
-        if (!total) return;
-        const pct = Math.round((loaded / total) * 100);
-        onProgress?.(pct, `${(loaded / 1024 / 1024).toFixed(1)}MB / ${(total / 1024 / 1024).toFixed(1)}MB`);
-      },
-    });
+  n_ctx: 4096,
+  n_gpu_layers: 0,
+  n_threads: 4,
+  progressCallback: ({ loaded, total }) => {
+    if (!total) return;
+    const pct = Math.round((loaded / total) * 100);
+    onProgress?.(pct, `${(loaded/1024/1024).toFixed(1)}MB / ${(total/1024/1024).toFixed(1)}MB`);
+  }
+});
   }
 
   async *chat(messages, opts = {}) {

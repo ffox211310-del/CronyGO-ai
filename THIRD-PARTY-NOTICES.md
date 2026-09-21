@@ -59,7 +59,23 @@ Base model license (Apache 2.0) remains applicable.
 
 ---
 
-5. Gemma
+5. llm-jp-3-1.8B
+
+Model: llm-jp-3-1.8b-instruct3-Q4_K_M.gguf
+Base model: llm-jp/llm-jp-3-1.8b-instruct3
+GGUF conversion: mmnga/llm-jp-3-1.8b-instruct3-gguf
+License: Apache License 2.0
+Copyright: LLM-jp and contributors; mmnga (GGUF conversion)
+Source: https://huggingface.co/llm-jp/llm-jp-3-1.8b-instruct3
+GGUF: https://huggingface.co/mmnga/llm-jp-3-1.8b-instruct3-gguf
+Direct file: https://huggingface.co/mmnga/llm-jp-3-1.8b-instruct3-gguf/resolve/main/llm-jp-3-1.8b-instruct3-Q4_K_M.gguf
+
+llm-jp-3-1.8B is a Japanese-capable GGUF model used via wllama for local browser-based inference.
+The base model is licensed under the Apache License 2.0.
+
+---
+
+6. Gemma
 
 Models:
 - Gemma-2-2B-it (gemma-2-2b-it-q4f16_1-MLC, q4f32_1-MLC)
@@ -73,7 +89,7 @@ MLC-compiled versions (mlc-ai/...) remain subject to Gemma Terms.
 
 ---
 
-6. Inter
+7. Inter
 
 Font: Inter
 License: SIL Open Font License 1.1 (OFL-1.1)
@@ -82,7 +98,7 @@ UI font.
 
 ---
 
-7. JetBrains Mono
+8. JetBrains Mono
 
 Font: JetBrains Mono
 License: SIL Open Font License 1.1 (OFL-1.1)

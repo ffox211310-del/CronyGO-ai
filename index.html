@@ -58,15 +58,19 @@
   
 <div class="header-left" style="display:flex; align-items:center; gap:10px;">
   <button id="menu-btn" aria-label="メニュー">☰</button>
-  <select id="model-select">
-    
-  <option value="Q0.5B">Qwen0.5B</option>
+
+ <select id="model-select" hidden>
+<option value="Q0.5B">Qwen0.5B</option>
 <option value="Q1.5B">Qwen1.5B</option>
 <option value="Q3B">Qwen3B</option>
 <option value="Q7B">Qwen7B</option>
 <option value="G2B-jpn">GemmaJP2B</option>
 <option value="G2B-jpnHv">GemmaJP2BHv</option>
  </select>
+ <button id="mp-trigger" type="button" aria-haspopup="dialog" aria-label="モデルを選択">
+  <span id="mp-trigger-label">-</span>
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+</button>
   </div>
   <div class="header-right">
     <button id="download-btn">ダウンロード</button>
@@ -110,6 +114,16 @@
     </button>
   </div>
 
+<div id="mp-overlay"></div>
+<div id="mp-sheet" role="dialog" aria-label="モデル選択">
+  <div class="mp-head">
+    <span class="mp-title">モデルを選ぶ</span>
+    <button id="mp-close" type="button" aria-label="閉じる">×</button>
+  </div>
+  <div id="mp-list"></div>
+  <div class="mp-foot">選んだあと「ダウンロード」で読み込みます</div>
+</div>
+ 
   <div id="settings-overlay"></div>
 <div id="settings-panel">
   <div class="settings-header">

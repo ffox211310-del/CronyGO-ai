@@ -1,3 +1,4 @@
+alert('app.js 新版');
 import { VoiceManager } from "./voice.js";
 import { MODELS } from "./models.js";
 import { engineManager } from "./engine-manager.js";

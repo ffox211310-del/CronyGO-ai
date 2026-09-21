@@ -1,4 +1,3 @@
-alert('app.js 新版');
 import { VoiceManager } from "./voice.js";
 import { MODELS } from "./models.js";
 import { engineManager } from "./engine-manager.js";
@@ -881,8 +880,6 @@ roomListEl?.addEventListener('click', (e)=>{
 
 
 // ===== モデル選択UI (mp-) =====
-
-alert('mp-A');
 
 const MP_INFO = {
   "Q0.5B":      { name: "Qwen 0.5B",      desc: "超軽量" },

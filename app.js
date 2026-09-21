@@ -880,6 +880,9 @@ roomListEl?.addEventListener('click', (e)=>{
 
 
 // ===== モデル選択UI (mp-) =====
+
+alert('mp-A');
+
 const MP_INFO = {
   "Q0.5B":      { name: "Qwen 0.5B",      desc: "超軽量" },
   "Q1.5B":      { name: "Qwen 1.5B",      desc: "軽量" },
@@ -897,7 +900,8 @@ const MP_INFO = {
   const sheet   = document.getElementById('mp-sheet');
   const listEl  = document.getElementById('mp-list');
   const closeBtn = document.getElementById('mp-close');
-  if (!trigger || !sheet || !selectEl) return;
+const missing = ['mp-trigger','mp-trigger-label','mp-overlay','mp-sheet','mp-list','mp-close'].filter(id => !document.getElementById(id));
+if (missing.length || !selectEl) { alert('mp: 見つからない → ' + missing.join(', ')); return; }
 
   const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const isGguf = key => { const id = MODELS[key] || ''; return /\.gguf/i.test(id) || id.startsWith('http'); };

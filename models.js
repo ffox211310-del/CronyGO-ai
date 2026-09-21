@@ -5,6 +5,7 @@ export const MODELS = {
   "Q7B": "Qwen2.5-7B-Instruct-q4f16_1-MLC",
   "G2B-jpn": "gemma-2-2b-jpn-it-q4f16_1-MLC",
   "G2B-jpnHv": "gemma-2-2b-jpn-it-q4f32_1-MLC",
+  "Qwen-0.5B": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf",
   "Serow-0.5B": "https://huggingface.co/WebAIPocket/Serow-Qwen2.5-0.5B-Instruct-gguf/resolve/main/Serow-0.5B.Q4_K_M.gguf",
 };
 

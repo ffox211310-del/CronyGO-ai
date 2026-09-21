@@ -877,3 +877,83 @@ roomListEl?.addEventListener('click', (e)=>{
   if(!item) return;
   switchRoom(item.dataset.id);
 });
+
+
+// ===== モデル選択UI (mp-) =====
+const MP_INFO = {
+  "Q0.5B":      { name: "Qwen 0.5B",      desc: "超軽量" },
+  "Q1.5B":      { name: "Qwen 1.5B",      desc: "軽量" },
+  "Q3B":        { name: "Qwen 3B",        desc: "中量級" },
+  "Q7B":        { name: "Qwen 7B",        desc: "大型・メモリ多め" },
+  "G2B-jpn":    { name: "Gemma JP 2B",    desc: "日本語向け" },
+  "G2B-jpnHv":  { name: "Gemma JP 2B Hv", desc: "日本語向け・q4f32版" },
+  "Serow-0.5B": { name: "Serow 0.5B",     desc: "Wllama用モデル" },
+};
+
+(() => {
+  const trigger = document.getElementById('mp-trigger');
+  const label   = document.getElementById('mp-trigger-label');
+  const overlay = document.getElementById('mp-overlay');
+  const sheet   = document.getElementById('mp-sheet');
+  const listEl  = document.getElementById('mp-list');
+  const closeBtn = document.getElementById('mp-close');
+  if (!trigger || !sheet || !selectEl) return;
+
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const isGguf = key => { const id = MODELS[key] || ''; return /\.gguf/i.test(id) || id.startsWith('http'); };
+  const info = key => MP_INFO[key] || { name: key, desc: '' };
+
+  function updateLabel(){
+    label.textContent = info(selectEl.value).name;
+  }
+
+  function render(){
+    listEl.innerHTML = [...selectEl.options].map(o => {
+      const key = o.value;
+      const custom = !!o.dataset.custom;
+      const i = info(key);
+      const name = custom ? key : i.name;
+      const desc = custom ? (MODELS[key] || '') : i.desc;
+      const selected = key === selectEl.value;
+      const live = key === currentKey && engineManager.isReady();
+      return `
+        <button type="button" class="mp-item${selected ? ' selected' : ''}" data-key="${esc(key)}">
+          <div class="mp-item-main">
+            <span class="mp-item-name">${esc(name)}</span>
+            <span class="mp-item-desc">${esc(desc)}</span>
+          </div>
+          <div class="mp-badges">
+            ${live ? '<span class="mp-badge live">起動中</span>' : ''}
+            ${custom ? '<span class="mp-badge">★ カスタム</span>' : ''}
+            <span class="mp-badge">${isGguf(key) ? 'GGUF' : 'MLC'}</span>
+          </div>
+          <span class="mp-check"></span>
+        </button>`;
+    }).join('');
+  }
+
+  const open  = () => { render(); overlay.classList.add('open'); sheet.classList.add('open'); };
+  const close = () => { overlay.classList.remove('open'); sheet.classList.remove('open'); };
+
+  trigger.addEventListener('click', open);
+  overlay.addEventListener('click', close);
+  closeBtn.addEventListener('click', close);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+  listEl.addEventListener('click', e => {
+    const b = e.target.closest('.mp-item');
+    if (!b) return;
+    selectEl.value = b.dataset.key;
+    selectEl.dispatchEvent(new Event('change'));  // 既存のchange処理をそのまま動かす
+    updateLabel();
+    close();
+  });
+
+  // カスタムモデルの追加/削除、Serow自動追加でoptionが変わったら追従
+  new MutationObserver(() => {
+    updateLabel();
+    if (sheet.classList.contains('open')) render();
+  }).observe(selectEl, { childList: true });
+
+  updateLabel();
+})();

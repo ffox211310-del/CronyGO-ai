@@ -34,7 +34,7 @@ export class WllamaEngine {
     await this.wllama.loadModelFromUrl(modelUrl, {
       n_ctx: 4096,
       n_gpu_layers: 0,
-      n_threads: 2,
+      n_threads: 1,
       progressCallback: ({ loaded, total }) => {
         if (!total) return;
         const pct = Math.round((loaded / total) * 100);

@@ -263,27 +263,27 @@
 
     <div class="settings-section" style="text-align:center;">
       <img src="./assets/CronyGOicon.jpg" alt="CronyGO" style="width:96px;height:96px;border-radius:20px;margin:4px auto 10px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.4);">
-      <div style="font-size:16px;font-weight:700;letter-spacing:.5px;">CronyGO AI</div>
-      <div class="settings-desc" style="margin-top:8px;">
+      <div style="font-size:20px;font-weight:700;letter-spacing:.5px;">CronyGO AI</div>
+      <div class="settings-desc" style="margin-top:8px;font-size:15px;line-height:1.7;">
         モデルをダウンロードすることで、完全オフラインで動作するAIプラットフォーム。<br>
         たとえ宇宙でも、端末が動く限りあなたのそばに居続けます。
       </div>
     </div>
 
     <div class="settings-section">
-      <label class="settings-label">特徴</label>
-      <div class="settings-desc">
+      <label class="settings-label" style="font-size:15px;">特徴</label>
+      <div class="settings-desc" style="font-size:15px;line-height:1.7;">
         HTML・CSS・JSのみで構築。Web上で完結するため、余計なアプリのダウンロードは不要です。ブラウザを使用しますが、サイト自体はオフラインで動作します。URL経由で簡単に共有でき、スマホでもPCでもどの環境でも動作します。
       </div>
-      <div class="settings-desc" style="margin-top:8px;">
+      <div class="settings-desc" style="margin-top:8px;font-size:15px;line-height:1.7;">
         プロンプトはどこにも送信されません。プライバシー重視です。<br>
         ダウンロードしたモデルは、いくら使っても料金はかかりません。
       </div>
     </div>
 
     <div class="settings-section">
-      <label class="settings-label">動作テスト済みブラウザ</label>
-      <div class="settings-desc">
+      <label class="settings-label" style="font-size:15px;">動作テスト済みブラウザ</label>
+      <div class="settings-desc" style="font-size:15px;line-height:1.7;">
         ・Chrome（最新版）<br>
         ・Safari<br>
         （FireFoxはまだ不安定です）<br>
@@ -292,27 +292,28 @@
     </div>
 
     <div class="settings-section">
-      <label class="settings-label">基本仕様</label>
-      <div class="settings-desc">
-        ・推論エンジン: WebLLM / MLC-AI<br>
-        ・MLCに対応したエンジン各種。<br>
+      <label class="settings-label" style="font-size:15px;">基本仕様</label>
+      <div class="settings-desc" style="font-size:15px;line-height:1.7;">
+        ・推論エンジン: <strong>WebLLM / wllama のツインエンジン構成</strong><br>
+        ・WebLLM（WebGPUベース）とwllama（llama.cppのWASM実装）を状況に応じて使い分け。<br>
+        ・MLC・GGUFに対応した各種モデルをロード可能。<br>
         （基本的にはQwenなどの日本語に強いモデルを選定）
       </div>
     </div>
 
     <div class="settings-section">
-      <label class="settings-label">制作概要</label>
-      <div class="settings-desc">
+      <label class="settings-label" style="font-size:15px;">制作概要</label>
+      <div class="settings-desc" style="font-size:15px;line-height:1.7;">
         GitHub Pages で動作確認<br>
         Vercel でデプロイ＆正式なURLを発行<br>
-        ※mainブランチは試験型です。動作確認済み安定版URLを、ProductionブランチからVercelにデプロイしています。<br>
+        ※<strong>NewMain</strong>ブランチは試験型です。動作確認済み安定版URLを、<strong>Release</strong>ブランチからVercelにデプロイしています。<br>
         制作にはAIを使用しています。
       </div>
     </div>
 
     <div class="settings-section">
-      <label class="settings-label">STATUS</label>
-      <div class="settings-desc">
+      <label class="settings-label" style="font-size:15px;">STATUS</label>
+      <div class="settings-desc" style="font-size:15px;line-height:1.7;">
         <strong>CodeName</strong><br>
         v.0.1〜 : Legendary Monkey<br>
         2026年8月23日 v.0.2 完成<br>
@@ -325,6 +326,30 @@
         （ここらへんから更新スピード遅くなるかも）
       </div>
     </div>
+
+    <div class="settings-section" style="text-align:center;">
+      <a href="https://github.com/ffox211310-del/CronyGO-ai" target="_blank" rel="noopener noreferrer"
+         style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:12px;
+                background:linear-gradient(135deg,#24292e,#40464e);color:#fff;text-decoration:none;
+                font-size:15px;font-weight:700;letter-spacing:.3px;box-shadow:0 4px 14px rgba(0,0,0,.35);
+                transition:transform .15s ease, box-shadow .15s ease;">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+                   0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
+                   -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66
+                   .07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15
+                   -.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27
+                   .68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12
+                   .51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48
+                   0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        GitHub リポジトリを見る
+      </a>
+      <div class="settings-desc" style="margin-top:8px;font-size:13px;opacity:.75;">
+        ffox211310-del / CronyGO-ai
+      </div>
+    </div>
+
    </div>
 </div>
  

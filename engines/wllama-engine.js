@@ -5,7 +5,7 @@ export class WllamaEngine {
   id = "wllama";
   supportsHotStop = true;
   wllama = null;
-  WASM_URL = "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.5.1/esm/wasm/wllama.wasm";
+  WASM_URL = "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.2.3/esm/wasm/wllama.wasm";
   _abortFn = null;
   _stopRequested = false;
 

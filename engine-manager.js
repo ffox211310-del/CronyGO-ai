@@ -1,5 +1,5 @@
 import { WebLLMEngine } from "./engines/webllm-engine.js";
-import { WllamaEngine } from "./engines/wllama-engine.js";
+//import { WllamaEngine } from "./engines/wllama-engine.js";
 import { MODELS, isGGUFModel } from "./models.js";
 
 class EngineManager {

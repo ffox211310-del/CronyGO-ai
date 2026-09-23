@@ -8,9 +8,38 @@ export class WllamaEngine {
   isReady() { return !!this.wllama; }
 
   async load(modelKeyOrUrl, onProgress) {
-    // ここは変更なし(既存のURL解決ロジックそのまま)
-    ...
+    // Serow-0.5B みたいなキー名が来てもURLに直す
+    let modelUrl = MODELS[modelKeyOrUrl] || modelKeyOrUrl;
+
+    if (!modelUrl.toLowerCase().includes('.gguf')) {
+      if (modelKeyOrUrl.includes('Serow')) {
+        modelUrl = "https://huggingface.co/WebAIPocket/Serow-Qwen2.5-0.5B-Instruct-gguf/resolve/main/Serow-0.5B.Q4_K_M.gguf";
+      }
+    }
+
+    console.log(`[WllamaEngine] loading: ${modelKeyOrUrl} -> ${modelUrl}`);
+
+    if (!modelUrl.toLowerCase().includes('.gguf')) {
+      throw new Error(`Invalid model URL: ${modelUrl}`);
+    }
+
+    if (this.wllama) {
+      try { await this.wllama.exit(); } catch {}
+    }
+    this.wllama = new Wllama({ default: this.WASM_URL });
+
+    await this.wllama.loadModelFromUrl(modelUrl, {
+      n_ctx: 4096,
+      n_gpu_layers: 0,
+      n_threads: 6,
+      progressCallback: ({ loaded, total }) => {
+        if (!total) return;
+        const pct = Math.round((loaded / total) * 100);
+        onProgress?.(pct, `${(loaded/1024/1024).toFixed(1)}MB / ${(total/1024/1024).toFixed(1)}MB`);
+      }
+    });
   }
+
 
   async *chat(messages, opts = {}) {
     if (!this.wllama) throw new Error("wllama not loaded");

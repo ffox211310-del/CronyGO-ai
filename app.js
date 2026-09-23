@@ -901,6 +901,7 @@ const MP_INFO = {
   "Q1.5B":      { name: "Qwen 1.5B",      desc: "軽量" },
   "Q3B":        { name: "Qwen 3B",        desc: "中量級" },
   "Q7B":        { name: "Qwen 7B",        desc: "大型・メモリ多め" },
+  "Sm135B":     { name: "Smollm 135B",    desc: "とりあえずの動作テスト" },
   "G2B-jpn":    { name: "Gemma JP 2B",    desc: "日本語向け" },
   "G2B-jpnHv":  { name: "Gemma JP 2B Hv", desc: "日本語向け・q4f32版" },
   "Qwen-0.5B":  { name: "Qwen 0.5B",      desc: "GGUFのQwen0.5" },

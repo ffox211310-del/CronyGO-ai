@@ -699,26 +699,27 @@ async function sendMessageWithText(forcedText) {
   //Wllamaのみ停止のアプローチを変える
   let abortFlag = false;
   let isKilled = false;
-  killBtn.onclick = async () => {
-    if (abortFlag) return;
-    abortFlag = true;
-    isKilled = true;
-    const hotStop = engineManager.supportsHotStop();
-    killBtn.textContent = hotStop ? "停止中..." : "停止→再読込中...";
-    killBtn.disabled = true;
-    try { await engineManager.interrupt(); } catch {}
-    if (voice) voice.clearQueue(true);
-    assistantDiv.innerHTML = renderMarkdown(
-      assistantDiv.textContent + (hotStop ? "\n\n[停止]" : "\n\n[停止→積み直し]")
-    );
-    try { killBtn.remove(); } catch {}
+killBtn.onclick = async () => {
+  if (abortFlag) return;
+  abortFlag = true;
+  isKilled = true;
+  killBtn.textContent = "停止→再読込中...";
+  killBtn.disabled = true;
+  try { await engineManager.interrupt(); } catch {}
+  if (voice) voice.clearQueue(true);
+  assistantDiv.innerHTML = renderMarkdown(assistantDiv.textContent + "\n\n[停止→積み直し]");
+  const keyToReload = currentKey;
+  messages = [{ role: "system", content: loadStoredPrompt() }];
+  try { killBtn.remove(); } catch {}
 
-    if (!hotStop) {
-      const keyToReload = currentKey;
-      messages = [{ role: "system", content: loadStoredPrompt() }];
-      await loadModel(keyToReload, true);
-    }
-  };
+  await loadModel(keyToReload, true);
+
+  // ← 追加: メインループのfinallyが来なくても確実にUIを復帰させる
+  isGenerating = false;
+  sendEl.disabled = false;
+  inputEl.readOnly = false;
+  inputEl.focus();
+};
 //ここまで
   isGenerating = true; sendEl.disabled = true;
   let full = "";

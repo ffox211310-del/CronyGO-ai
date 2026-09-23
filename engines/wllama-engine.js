@@ -48,65 +48,34 @@ export class WllamaEngine {
 async *chat(messages, opts = {}) {
   if (!this.wllama) throw new Error("wllama not loaded");
   this._stopRequested = false;
-  this._abortFn = null;
+  this._stream = null;
 
-  const queue = [];
-  let wake = null;
-  let done = false;
-  let error = null;
-  let streamed = false;      // ← onNewTokenが1回でも呼ばれたか
-  let finalText = null;      // ← resolve値を保持
-
-  const push = (piece) => {
-    streamed = true;
-    queue.push(piece);
-    if (wake) { const w = wake; wake = null; w(); }
-  };
-
-  const completion = this.wllama.createChatCompletion({
+  const stream = await this.wllama.createChatCompletion({
     messages,
     max_tokens: opts.max_tokens ?? 1024,
     temperature: opts.temperature ?? 0.7,
     top_p: 0.9,
     top_k: 40,
-    onNewToken: (token, piece, currentText, { abortSignal }) => {
-      this._abortFn = abortSignal;
-      if (this._stopRequested) { abortSignal(); return; }
-      push(piece);
-    },
-  }).then((res) => {
-    finalText = res?.choices?.[0]?.message?.content ?? null;
-  }).catch((e) => {
-    error = e;
-  }).finally(() => {
-    done = true;
-    if (wake) { const w = wake; wake = null; w(); }
+    stream: true,
   });
+  this._stream = stream;
 
-  while (true) {
-    while (queue.length) yield queue.shift();
-    if (done) break;
-    await new Promise((r) => { wake = r; });
-  }
-  await completion;
-  if (error && !this._stopRequested) throw error;
-
-  // onNewTokenが一度も呼ばれていなければ、非ストリーミングとして最後に一括で出す
-  if (!streamed && finalText) {
-    yield finalText;
+  for await (const chunk of stream) {
+    if (this._stopRequested) break;
+    const delta = chunk?.choices?.[0]?.delta?.content || "";
+    if (delta) yield delta;
   }
 }
-  
-  // 本物の停止。モデルは解放しない。
-  async interrupt() {
-    this._stopRequested = true;
-    if (this._abortFn) { try { this._abortFn(); } catch {} }
-  }
 
-  async unload() {
-    if (this.wllama) {
-      try { await this.wllama.exit(); } catch {}
-      this.wllama = null;
-    }
+async interrupt() {
+  this._stopRequested = true;
+  // OAI互換のstreamオブジェクトなら controller.abort() を持つことがある(OpenAI SDK方式)
+  try { this._stream?.controller?.abort?.(); } catch {}
+}
+
+async unload() {
+  if (this.wllama) {
+    try { await this.wllama.exit(); } catch {}
+    this.wllama = null;
   }
 }

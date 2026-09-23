@@ -11,7 +11,7 @@ export const MODELS = {
   "llm-jp-3-1.8B": "https://huggingface.co/mmnga/llm-jp-3-1.8b-instruct3-gguf/resolve/main/llm-jp-3-1.8b-instruct3-Q4_K_M.gguf",
   "Serow-0.5B": "https://huggingface.co/WebAIPocket/Serow-Qwen2.5-0.5B-Instruct-gguf/resolve/main/Serow-0.5B.Q4_K_M.gguf",
 };
-https://huggingface.[STRIPPED 83 bytes].gguf
+
 export function isGGUFModel(modelId) {
   if (!modelId) return false;
   const s = modelId.toLowerCase();

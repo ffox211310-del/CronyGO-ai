@@ -89,7 +89,22 @@ MLC-compiled versions (mlc-ai/...) remain subject to Gemma Terms.
 
 ---
 
-7. Inter
+7. SmolLM2
+Model: SmolLM2-135M-Instruct (SmolLM2-135M-Instruct-Q4_K_M.gguf / smollm2-135m-instruct-q4_k_m.gguf)
+Base model: HuggingFaceTB/SmolLM2-135M-Instruct
+GGUF conversion: HuggingFaceTB/SmolLM2-135M-Instruct-GGUF (official), bartowski/SmolLM2-135M-Instruct-GGUF, Mungert/SmolLM2-135M-Instruct-GGUF
+License: Apache License 2.0
+Copyright: HuggingFaceTB and contributors; GGUF conversions by respective converters
+Source: https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct
+GGUF: https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct-GGUF
+Direct file: https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct-GGUF/resolve/main/smollm2-135m-instruct-q4_k_m.gguf
+
+SmolLM2-135M-Instruct is a tiny 135M instruct model used via wllama for local browser-based inference and for Wllama engine operation check.
+The base model and its GGUF variants are licensed under the Apache License 2.0.
+
+---
+
+8. Inter
 
 Font: Inter
 License: SIL Open Font License 1.1 (OFL-1.1)
@@ -98,7 +113,7 @@ UI font.
 
 ---
 
-8. JetBrains Mono
+9. JetBrains Mono
 
 Font: JetBrains Mono
 License: SIL Open Font License 1.1 (OFL-1.1)

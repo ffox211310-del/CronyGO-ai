@@ -897,16 +897,18 @@ roomListEl?.addEventListener('click', (e)=>{
 // ===== モデル選択UI (mp-) =====
 
 const MP_INFO = {
-  "Q0.5B":      { name: "Qwen 0.5B",      desc: "超軽量" },
-  "Q1.5B":      { name: "Qwen 1.5B",      desc: "軽量" },
-  "Q3B":        { name: "Qwen 3B",        desc: "中量級" },
-  "Q7B":        { name: "Qwen 7B",        desc: "大型・メモリ多め" },
-  "Sm135B":     { name: "Smollm 135B",    desc: "とりあえずの動作テスト" },
-  "G2B-jpn":    { name: "Gemma JP 2B",    desc: "日本語向け" },
-  "G2B-jpnHv":  { name: "Gemma JP 2B Hv", desc: "日本語向け・q4f32版" },
-  "Qwen-0.5B":  { name: "Qwen 0.5B",      desc: "GGUFのQwen0.5" },
-  "llm-jp-3-1.8B": { name: "llm.jp 1.8B", desc: "日本語に強い" },
-  "Serow-0.5B": { name: "Serow 0.5B",     desc: "β試験型" },
+  "Q0.5B":      { name: "Qwen 0.5B",      desc: "WebLLMで動く最軽量枠" },
+  "Q1.5B":      { name: "Qwen 1.5B",      desc: "標準。会話になる" },
+  "Q3B":        { name: "Qwen 3B",        desc: "端末によっては厳しい" },
+  "Q7B":        { name: "Qwen 7B",        desc: "PC推奨。スマホは快適ではないかも" },
+  "Sm135M":     { name: "Smollm 135B",    desc: "WebLLMの動作テスト" },
+  "G2B-jpn":    { name: "Gemma JP 2B",    desc: "日本語に強い。重さはQwen1.5Bクラス" },
+  "G2B-jpnHv":  { name: "Gemma JP 2B Hv", desc: "上記のq4f32版。少し重い" },
+  //ここからGGUF
+  "Smollm-135M":  { name: "Smollm 135M",  desc: "Wllamaの動作確認用" },
+  "Qwen-0.5B":  { name: "Qwen 0.5B",      desc: "GGUFのQwen0.5。MLCと比較してみよう" },
+  "llm-jp-3-1.8B": { name: "llm.jp 1.8B", desc: "国立情報学研究所(NII)によって作成。" },
+  "Serow-0.5B": { name: "Serow 0.5B",     desc: "WebAIPocket製のβ試験型" },
 };
 
 (() => {

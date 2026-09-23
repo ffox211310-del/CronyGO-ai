@@ -79,3 +79,4 @@ async unload() {
     this.wllama = null;
   }
 }
+}

@@ -696,23 +696,30 @@ async function sendMessageWithText(forcedText) {
   killBtn.style.cssText = "margin:6px 0 10px 0;background:#ff3b3b;color:#fff;border:0;border-radius:18px;padding:6px 14px;font-size:12px;cursor:pointer;align-self:flex-start;";
   assistantDiv.after(killBtn);
 
+  //Wllamaのみ停止のアプローチを変える
   let abortFlag = false;
   let isKilled = false;
   killBtn.onclick = async () => {
     if (abortFlag) return;
     abortFlag = true;
     isKilled = true;
-    killBtn.textContent = "停止→再読込中...";
+    const hotStop = engineManager.supportsHotStop();
+    killBtn.textContent = hotStop ? "停止中..." : "停止→再読込中...";
     killBtn.disabled = true;
     try { await engineManager.interrupt(); } catch {}
     if (voice) voice.clearQueue(true);
-    assistantDiv.innerHTML = renderMarkdown(assistantDiv.textContent + "\n\n[停止→積み直し]");
-    const keyToReload = currentKey;
-    messages = [{ role: "system", content: loadStoredPrompt() }];
+    assistantDiv.innerHTML = renderMarkdown(
+      assistantDiv.textContent + (hotStop ? "\n\n[停止]" : "\n\n[停止→積み直し]")
+    );
     try { killBtn.remove(); } catch {}
-    await loadModel(keyToReload, true);
-  };
 
+    if (!hotStop) {
+      const keyToReload = currentKey;
+      messages = [{ role: "system", content: loadStoredPrompt() }];
+      await loadModel(keyToReload, true);
+    }
+  };
+//ここまで
   isGenerating = true; sendEl.disabled = true;
   let full = "";
   let speakBuffer = "";
@@ -720,20 +727,27 @@ async function sendMessageWithText(forcedText) {
   try {
     const temp = parseFloat(localStorage.getItem('cronygo_temp') || 0.7);
     const max_tokens = parseInt(localStorage.getItem('cronygo_max_tokens') || 1024);
-    
+
+    //Wllama打ち切りバグ修整用
     for await (const delta of engineManager.chat(messages, { temperature: temp, max_tokens })) {
       if (abortFlag) break;
       full += delta;
       if (full.length >= MAX_CHARS) {
-        full = full.slice(0, MAX_CHARS).trim() + "\n\n[1500文字制限→自動で積み直し]";
+        const hotStop = engineManager.supportsHotStop();
+        full = full.slice(0, MAX_CHARS).trim() +
+          (hotStop ? "\n\n[1500文字制限→打ち切り]" : "\n\n[1500文字制限→自動で積み直し]");
         assistantDiv.innerHTML = renderMarkdown(full);
         try { await engineManager.interrupt(); } catch {}
         if (voice) voice.clearQueue(true);
-        const keyToReload = currentKey;
-        messages = [{ role: "system", content: loadStoredPrompt() }];
-        await loadModel(keyToReload, true);
+
+        if (!hotStop) {
+          const keyToReload = currentKey;
+          messages = [{ role: "system", content: loadStoredPrompt() }];
+          await loadModel(keyToReload, true);
+        }
         break;
       }
+      //↑ここまで
       assistantDiv.innerHTML = renderMarkdown(full);
       chatEl.scrollTop = chatEl.scrollHeight;
 

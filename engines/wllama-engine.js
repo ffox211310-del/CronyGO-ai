@@ -54,14 +54,17 @@ async *chat(messages, opts = {}) {
   let wake = null;
   let done = false;
   let error = null;
+  let streamed = false;      // ← onNewTokenが1回でも呼ばれたか
+  let finalText = null;      // ← resolve値を保持
 
   const push = (piece) => {
+    streamed = true;
     queue.push(piece);
     if (wake) { const w = wake; wake = null; w(); }
   };
 
   const completion = this.wllama.createChatCompletion({
-    messages,                              // ← ここをオブジェクトの中に入れる
+    messages,
     max_tokens: opts.max_tokens ?? 1024,
     temperature: opts.temperature ?? 0.7,
     top_p: 0.9,
@@ -71,8 +74,14 @@ async *chat(messages, opts = {}) {
       if (this._stopRequested) { abortSignal(); return; }
       push(piece);
     },
-  }).catch((e) => { error = e; })
-    .finally(() => { done = true; if (wake) { const w = wake; wake = null; w(); } });
+  }).then((res) => {
+    finalText = res?.choices?.[0]?.message?.content ?? null;
+  }).catch((e) => {
+    error = e;
+  }).finally(() => {
+    done = true;
+    if (wake) { const w = wake; wake = null; w(); }
+  });
 
   while (true) {
     while (queue.length) yield queue.shift();
@@ -81,6 +90,11 @@ async *chat(messages, opts = {}) {
   }
   await completion;
   if (error && !this._stopRequested) throw error;
+
+  // onNewTokenが一度も呼ばれていなければ、非ストリーミングとして最後に一括で出す
+  if (!streamed && finalText) {
+    yield finalText;
+  }
 }
   
   // 本物の停止。モデルは解放しない。

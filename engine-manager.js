@@ -36,7 +36,11 @@ class EngineManager {
   isReady() {
     return !!this.current?.isReady();
   }
-
+//停止
+  supportsHotStop() {
+    return !!this.current?.supportsHotStop;
+  }
+//↑ここまで停止関係
   async *chat(messages, opts) {
     if (!this.current) throw new Error("No engine loaded");
     yield* this.current.chat(messages, opts);

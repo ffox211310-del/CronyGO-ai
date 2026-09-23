@@ -1,3 +1,7 @@
+import { MODELS } from "../models.js";
+
+import { Wllama } from "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.5.1/esm/index.js";
+
 export class WllamaEngine {
   id = "wllama";
   supportsHotStop = true;

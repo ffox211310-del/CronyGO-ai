@@ -44,44 +44,45 @@ export class WllamaEngine {
     });
   }
 
+//生成エラー:1163217991の修整
+async *chat(messages, opts = {}) {
+  if (!this.wllama) throw new Error("wllama not loaded");
+  this._stopRequested = false;
+  this._abortFn = null;
 
-  async *chat(messages, opts = {}) {
-    if (!this.wllama) throw new Error("wllama not loaded");
-    this._stopRequested = false;
-    this._abortFn = null;
+  const queue = [];
+  let wake = null;
+  let done = false;
+  let error = null;
 
-    const queue = [];
-    let wake = null;
-    let done = false;
-    let error = null;
+  const push = (piece) => {
+    queue.push(piece);
+    if (wake) { const w = wake; wake = null; w(); }
+  };
 
-    const push = (piece) => {
-      queue.push(piece);
-      if (wake) { const w = wake; wake = null; w(); }
-    };
+  const completion = this.wllama.createChatCompletion({
+    messages,                              // ← ここをオブジェクトの中に入れる
+    max_tokens: opts.max_tokens ?? 1024,
+    temperature: opts.temperature ?? 0.7,
+    top_p: 0.9,
+    top_k: 40,
+    onNewToken: (token, piece, currentText, { abortSignal }) => {
+      this._abortFn = abortSignal;
+      if (this._stopRequested) { abortSignal(); return; }
+      push(piece);
+    },
+  }).catch((e) => { error = e; })
+    .finally(() => { done = true; if (wake) { const w = wake; wake = null; w(); } });
 
-    const completion = this.wllama.createChatCompletion(messages, {
-      max_tokens: opts.max_tokens ?? 1024,
-      temperature: opts.temperature ?? 0.7,
-      top_p: 0.9,
-      top_k: 40,
-      onNewToken: (token, piece, currentText, { abortSignal }) => {
-        this._abortFn = abortSignal;          // 停止用に握っておく
-        if (this._stopRequested) { abortSignal(); return; }
-        push(piece);
-      },
-    }).catch((e) => { error = e; })
-      .finally(() => { done = true; if (wake) { const w = wake; wake = null; w(); } });
-
-    while (true) {
-      while (queue.length) yield queue.shift();
-      if (done) break;
-      await new Promise((r) => { wake = r; });
-    }
-    await completion;
-    if (error && !this._stopRequested) throw error; // 停止による中断はエラー扱いしない
+  while (true) {
+    while (queue.length) yield queue.shift();
+    if (done) break;
+    await new Promise((r) => { wake = r; });
   }
-
+  await completion;
+  if (error && !this._stopRequested) throw error;
+}
+  
   // 本物の停止。モデルは解放しない。
   async interrupt() {
     this._stopRequested = true;

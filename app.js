@@ -734,20 +734,20 @@ killBtn.onclick = async () => {
       if (abortFlag) break;
       full += delta;
       if (full.length >= MAX_CHARS) {
-        const hotStop = engineManager.supportsHotStop();
-        full = full.slice(0, MAX_CHARS).trim() +
-          (hotStop ? "\n\n[1500文字制限→打ち切り]" : "\n\n[1500文字制限→自動で積み直し]");
-        assistantDiv.innerHTML = renderMarkdown(full);
-        try { await engineManager.interrupt(); } catch {}
-        if (voice) voice.clearQueue(true);
+  full = full.slice(0, MAX_CHARS).trim() + "\n\n[1500文字制限→自動で積み直し]";
+  assistantDiv.innerHTML = renderMarkdown(full);
+  try { await engineManager.interrupt(); } catch {}
+  if (voice) voice.clearQueue(true);
+  const keyToReload = currentKey;
+  messages = [{ role: "system", content: loadStoredPrompt() }];
+  await loadModel(keyToReload, true);
 
-        if (!hotStop) {
-          const keyToReload = currentKey;
-          messages = [{ role: "system", content: loadStoredPrompt() }];
-          await loadModel(keyToReload, true);
-        }
-        break;
-      }
+  isGenerating = false;
+  sendEl.disabled = false;
+  inputEl.readOnly = false;
+
+  break;
+}
       //↑ここまで
       assistantDiv.innerHTML = renderMarkdown(full);
       chatEl.scrollTop = chatEl.scrollHeight;

@@ -90,17 +90,18 @@ MLC-compiled versions (mlc-ai/...) remain subject to Gemma Terms.
 ---
 
 7. SmolLM2
-Model: SmolLM2-135M-Instruct (SmolLM2-135M-Instruct-Q4_K_M.gguf / smollm2-135m-instruct-q4_k_m.gguf)
-Base model: HuggingFaceTB/SmolLM2-135M-Instruct
-GGUF conversion: HuggingFaceTB/SmolLM2-135M-Instruct-GGUF (official), bartowski/SmolLM2-135M-Instruct-GGUF, Mungert/SmolLM2-135M-Instruct-GGUF
+Models:
+• SmolLM2-135M-Instruct (base model) • SmolLM2-135M-Instruct-q0f16-MLC / q0f32-MLC / q4f16_1-MLC (MLC-compiled) • SmolLM2-135M-Instruct GGUF variants (e.g., smollm2-135m-instruct-q4_k_m.gguf, Q4_K_M, Q4_0, f16) 
 License: Apache License 2.0
-Copyright: HuggingFaceTB and contributors; GGUF conversions by respective converters
+Copyright: HuggingFaceTB and contributors; MLC compilation by mlc-ai; GGUF conversions by HuggingFaceTB / community converters (bartowski, Mungert, etc.)
 Source: https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct
+MLC: https://huggingface.co/mlc-ai/SmolLM2-135M-Instruct-q0f16-MLC
 GGUF: https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct-GGUF
-Direct file: https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct-GGUF/resolve/main/smollm2-135m-instruct-q4_k_m.gguf
-
-SmolLM2-135M-Instruct is a tiny 135M instruct model used via wllama for local browser-based inference and for Wllama engine operation check.
-The base model and its GGUF variants are licensed under the Apache License 2.0.
+Direct files:
+• MLC: https://huggingface.co/mlc-ai/SmolLM2-135M-Instruct-q0f16-MLC/resolve/main/ • GGUF: https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct-GGUF/resolve/main/smollm2-135m-instruct-q4_k_m.gguf 
+SmolLM2-135M-Instruct is a tiny 135M instruct model used for local browser-based inference.
+MLC-compiled versions are used via WebLLM for WebGPU inference, GGUF variants are used via wllama for WebAssembly (llama.cpp) inference and engine operation check.
+Both base model and MLC/GGUF variants are licensed under the Apache License 2.0.
 
 ---
 

@@ -477,7 +477,25 @@ function renderRoomList(){
         <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">${r.title}</span>
         <span style="font-size:10px; opacity:0.5;">${new Date(parseInt(r.id)).toLocaleDateString()}</span>
       </div>
-      <button class="room-del-btn" data-del-id="${r.id}" aria-label="削除" style="width:24px; height:24px; border-radius:50%; border:1px solid #333; background:transparent; color:#888; cursor:pointer; flex-shrink:0;">×</button>
+
+      <div style="display:flex; gap:4px; flex-shrink:0;">
+  <button class="room-rename-btn"
+    data-rename-id="${r.id}"
+    aria-label="名前変更"
+    title="名前変更"
+    style="width:24px; height:24px; border-radius:50%; border:1px solid #333; background:transparent; color:#888; cursor:pointer;">
+    ✎
+  </button>
+
+  <button class="room-del-btn"
+    data-del-id="${r.id}"
+    aria-label="削除"
+    title="削除"
+    style="width:24px; height:24px; border-radius:50%; border:1px solid #333; background:transparent; color:#888; cursor:pointer;">
+    ×
+  </button>
+</div>
+      
     </div>
   `).join('');
 }
@@ -529,6 +547,28 @@ function createRoom(){
   closeDrawer();
   saveRoomMessages(id, []);
 }
+
+function renameRoom(id){
+  const room = rooms.find(r => r.id === id);
+  if(!room) return;
+
+  const newName = prompt('ルーム名を入力してください', room.title);
+
+  if(newName === null) return;
+
+  const title = newName.trim();
+
+  if(!title){
+    alert('ルーム名を入力してください');
+    return;
+  }
+
+  room.title = title.slice(0, 50);
+
+  saveRooms();
+  renderRoomList();
+}
+
 function deleteRoom(id){
   if(rooms.length <= 1){
     saveRoomMessages(id, []);
@@ -878,21 +918,40 @@ initRooms();
 setTimeout(initCustomModelUI, 100);
 
 newRoomBtn?.addEventListener('click', createRoom);
+
 roomListEl?.addEventListener('click', (e)=>{
+
+  // 名前変更
+  const renameBtn = e.target.closest('.room-rename-btn');
+  if(renameBtn){
+    e.stopPropagation();
+
+    const renameId = renameBtn.dataset.renameId;
+    renameRoom(renameId);
+
+    return;
+  }
+
+  // 削除
   const delBtn = e.target.closest('.room-del-btn');
   if(delBtn){
     e.stopPropagation();
+
     const delId = delBtn.dataset.delId;
+
     if(confirm('このルームを削除しますか？')){
       deleteRoom(delId);
     }
+
     return;
   }
+
+  // ルーム選択
   const item = e.target.closest('.room-item');
   if(!item) return;
+
   switchRoom(item.dataset.id);
 });
-
 
 // ===== モデル選択UI (mp-) =====
 

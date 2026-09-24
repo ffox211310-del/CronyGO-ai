@@ -966,6 +966,7 @@ const MP_INFO = {
   //ここからGGUF
   "Smollm-135M":  { name: "Smollm 135M",  desc: "Wllamaの動作確認用" },
   "Qwen-0.5B":  { name: "Qwen 0.5B",      desc: "GGUFのQwen0.5。MLCと比較してみよう" },
+  "DeepSeek-1.5B":  { name: "DeepSeek 1.5B",  desc: "DeepSeekR1で蒸留したQwen" },
   "llm-jp-3-1.8B": { name: "llm.jp 1.8B", desc: "国立情報学研究所(NII)によって作成。" },
   "Serow-0.5B": { name: "Serow 0.5B",     desc: "WebAIPocket製のβ試験型" },
 };

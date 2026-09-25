@@ -169,6 +169,20 @@
     <div class="settings-desc">1回の返答の長さ</div>
   </div>
 
+ <div class="setting-item">
+  <label for="contextSize">コンテキスト</label>
+  <select id="contextSize">
+    <option value="1024">1024</option>
+    <option value="2048">2048</option>
+    <option value="4096" selected>4096</option>
+    <option value="8192">8192</option>
+  </select>
+</div>
+
+<p class="setting-note">
+  コンテキストサイズはモデル・エンジンによって利用できる範囲が異なります。
+</p>
+ 
   <!-- 追加: キャッシュ管理 -->
   <div class="settings-section">
     <label class="settings-label">モデルキャッシュ</label>

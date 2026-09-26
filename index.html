@@ -181,6 +181,28 @@
 
   <div class="settings-desc">会話に保持できる情報量</div>
 </div>
+
+<div class="settings-section">
+  <div class="settings-label">リピートペナルティ</div>
+
+  <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+    <span style="font-size:12px;">繰り返し抑制</span>
+    <span id="repeat-penalty-value" style="font-size:12px; opacity:0.7;">1.1</span>
+  </div>
+
+  <input
+    type="range"
+    id="repeat-penalty-slider"
+    min="1"
+    max="1.5"
+    step="0.05"
+    value="1.1"
+  >
+
+  <div class="settings-desc">
+    高いほど同じ単語や表現の繰り返しを抑えます
+  </div>
+</div>
  
   <!-- 追加: キャッシュ管理 -->
   <div class="settings-section">

@@ -1044,6 +1044,7 @@ const MP_INFO = {
   "Qwen-0.5B":  { name: "Qwen 0.5B",      desc: "GGUFのQwen0.5。MLCと比較してみよう" },
   "DeepSeek-1.5B":  { name: "DeepSeek 1.5B",  desc: "DeepSeekR1で蒸留したQwen" },
   "llm-jp-3-1.8B": { name: "llm.jp 1.8B", desc: "国立情報学研究所(NII)によって作成。" },
+  "Qwen-0.5BJP":  { name: "Qwen 0.5BJP",  desc: "軽量日本語特化" },
   "LFM-1.2BJP":  { name: "LFM 1.2BJP",  desc: "日本語ヨシ、スピードヨシ" },
   "Serow-0.5B": { name: "Serow 0.5B",     desc: "WebAIPocket製のβ試験型" },
 };

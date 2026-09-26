@@ -691,15 +691,15 @@ async function loadModel(key, isReload = false) {
 await engineManager.load(
   key,
   (pct, text) => {
-    // 今ある進捗処理
+    const txt = isReload
+      ? `積み直し ${pct}% ${text}`
+      : `${pct}% ${text}`;
+
+    updateLoadingText(txt);
+    progressBar.style.width = `${pct}%`;
   },
   { context_size }
 );
-     
-      const txt = isReload? `積み直し ${pct}% ${text}` : `${pct}% ${text}`;
-      updateLoadingText(txt);
-      progressBar.style.width = `${pct}%`;
-    });
 
     currentKey = key;
     statusEl.textContent = isReload? `再起動完了 ${key}` : `Ready ${key} [${engineManager.getCurrentId()}]`;

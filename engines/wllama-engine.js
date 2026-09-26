@@ -56,17 +56,20 @@ async *chat(messages, opts = {}) {
   console.log("[Wllama] generation settings:", {
   temperature: opts.temperature,
   max_tokens: opts.max_tokens,
+  repeat_penalty: opts.repeat_penalty,
   context_size: "load-time"
 });
   
   const stream = await this.wllama.createChatCompletion({
-    messages,
-    max_tokens: opts.max_tokens ?? 1024,
-    temperature: opts.temperature ?? 0.7,
-    top_p: 0.9,
-    top_k: 40,
-    stream: true,
-  });
+  messages,
+  max_tokens: opts.max_tokens ?? 1024,
+  temperature: opts.temperature ?? 0.7,
+  repeat_penalty: opts.repeat_penalty ?? 1.1,
+  top_p: 0.9,
+  top_k: 40,
+  stream: true,
+});
+  
   this._stream = stream;
 
   for await (const chunk of stream) {

@@ -62,6 +62,7 @@ function loadStoredPrompt() {
 const DEFAULT_TEMP = 0.7;
 const DEFAULT_MAX_TOKENS = 1024;
 const DEFAULT_CONTEXT_SIZE = 4096;
+const DEFAULT_REPEAT_PENALTY = 1.1;
 
 function loadStoredTemp(){
   return parseFloat(localStorage.getItem('cronygo_temp') || DEFAULT_TEMP);
@@ -75,9 +76,37 @@ function loadStoredContextSize(){
   return parseInt(localStorage.getItem('cronygo_context_size') || DEFAULT_CONTEXT_SIZE);
 }
 
+function loadStoredRepeatPenalty(){
+  return parseFloat(
+    localStorage.getItem('cronygo_repeat_penalty') || DEFAULT_REPEAT_PENALTY
+  );
+}
+
 const tempSlider = document.getElementById('temp-slider');
 const tempValue = document.getElementById('temp-value');
 const maxTokensInput = document.getElementById('max-tokens-input');
+
+const repeatPenaltySlider = document.getElementById('repeat-penalty-slider');
+const repeatPenaltyValue = document.getElementById('repeat-penalty-value');
+
+if(repeatPenaltySlider){
+  repeatPenaltySlider.value = loadStoredRepeatPenalty();
+
+  if(repeatPenaltyValue){
+    repeatPenaltyValue.textContent = repeatPenaltySlider.value;
+  }
+
+  repeatPenaltySlider.addEventListener('input', (e)=>{
+    if(repeatPenaltyValue){
+      repeatPenaltyValue.textContent = e.target.value;
+    }
+
+    localStorage.setItem(
+      'cronygo_repeat_penalty',
+      e.target.value
+    );
+  });
+}
 
 const contextSizeSelect = document.getElementById('context-size');
 
@@ -799,11 +828,25 @@ killBtn.onclick = async () => {
   let speakBuffer = "";
   const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
   try {
-    const temp = parseFloat(localStorage.getItem('cronygo_temp') || 0.7);
-    const max_tokens = parseInt(localStorage.getItem('cronygo_max_tokens') || 1024);
+    
+    const temp = parseFloat(
+  localStorage.getItem('cronygo_temp') || 0.7
+);
 
-    //Wllama打ち切りバグ修整用
-    for await (const delta of engineManager.chat(messages, { temperature: temp, max_tokens })) {
+const max_tokens = parseInt(
+  localStorage.getItem('cronygo_max_tokens') || 1024
+);
+
+const repeat_penalty = parseFloat(
+  localStorage.getItem('cronygo_repeat_penalty') || 1.1
+);
+
+for await (const delta of engineManager.chat(messages, {
+  temperature: temp,
+  max_tokens,
+  repeat_penalty
+})) {
+      
       if (abortFlag) break;
       full += delta;
       if (full.length >= MAX_CHARS) {

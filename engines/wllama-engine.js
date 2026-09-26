@@ -32,8 +32,11 @@ export class WllamaEngine {
     }
     this.wllama = new Wllama({ default: this.WASM_URL });
 
+    const contextSize = opts.context_size ?? 4096;
+    console.log("[Wllama] context:", contextSize);
+   
     await this.wllama.loadModelFromUrl(modelUrl, {
-      n_ctx: opts.context_size ?? 4096,
+      n_ctx: contextSize,
       n_gpu_layers: 0,
       n_threads: 6,
       progressCallback: ({ loaded, total }) => {
@@ -50,6 +53,12 @@ async *chat(messages, opts = {}) {
   this._stopRequested = false;
   this._stream = null;
 
+  console.log("[Wllama] generation settings:", {
+  temperature: opts.temperature,
+  max_tokens: opts.max_tokens,
+  context_size: "load-time"
+});
+  
   const stream = await this.wllama.createChatCompletion({
     messages,
     max_tokens: opts.max_tokens ?? 1024,

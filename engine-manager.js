@@ -17,7 +17,7 @@ class EngineManager {
     return this.engines.mlc;
   }
 
-  async load(modelKey, onProgress) {
+  async load(modelKey, onProgress, opts = {}) {
     if (this.current) {
       console.log(`[EngineManager] unloading ${this.current.id}`);
       await this.current.unload();
@@ -29,7 +29,9 @@ class EngineManager {
     console.log(`[EngineManager] loading ${modelKey} -> ${engine.id} : ${modelId}`);
 
     this.current = engine;
-    await this.current.load(modelKey, onProgress);
+    
+    await this.current.load(modelKey, onProgress, opts);
+   
     this.currentKey = modelKey;
   }
 

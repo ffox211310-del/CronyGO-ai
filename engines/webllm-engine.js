@@ -37,10 +37,6 @@ const contextSize = opts.context_size ?? 4096;
 
 console.log("[WebLLM] context:", contextSize);
     
-    const contextSize = opts.context_size ?? 4096;
-
-console.log("[WebLLM] context:", contextSize);
-
 this.engine = await webllm.CreateMLCEngine(
   MODEL_ID,
   {

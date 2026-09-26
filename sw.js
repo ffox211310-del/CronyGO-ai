@@ -1,4 +1,4 @@
-const CACHE_NAME = "cronygo-v70";
+const CACHE_NAME = "cronygo-v71";
 
 const urlsToCache = [
   "./",

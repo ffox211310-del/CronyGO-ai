@@ -61,12 +61,33 @@ function loadStoredPrompt() {
 
 const DEFAULT_TEMP = 0.7;
 const DEFAULT_MAX_TOKENS = 1024;
-function loadStoredTemp(){ return parseFloat(localStorage.getItem('cronygo_temp') || DEFAULT_TEMP); }
-function loadStoredMaxTokens(){ return parseInt(localStorage.getItem('cronygo_max_tokens') || DEFAULT_MAX_TOKENS); }
+const DEFAULT_CONTEXT_SIZE = 4096;
+
+function loadStoredTemp(){
+  return parseFloat(localStorage.getItem('cronygo_temp') || DEFAULT_TEMP);
+}
+
+function loadStoredMaxTokens(){
+  return parseInt(localStorage.getItem('cronygo_max_tokens') || DEFAULT_MAX_TOKENS);
+}
+
+function loadStoredContextSize(){
+  return parseInt(localStorage.getItem('cronygo_context_size') || DEFAULT_CONTEXT_SIZE);
+}
 
 const tempSlider = document.getElementById('temp-slider');
 const tempValue = document.getElementById('temp-value');
 const maxTokensInput = document.getElementById('max-tokens-input');
+
+if(contextSizeSelect){
+  contextSizeSelect.value = loadStoredContextSize();
+
+  contextSizeSelect.addEventListener('change', (e)=>{
+    localStorage.setItem('cronygo_context_size', e.target.value);
+  });
+}
+
+const contextSizeSelect = document.getElementById('context-size');
 
 if(tempSlider){
   tempSlider.value = loadStoredTemp();

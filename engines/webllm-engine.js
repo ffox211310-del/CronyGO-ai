@@ -59,15 +59,18 @@ this.engine = await webllm.CreateMLCEngine(
     console.log("[WebLLM] generation settings:", {
   temperature: opts.temperature,
   max_tokens: opts.max_tokens,
+  repetition_penalty: opts.repeat_penalty,
   context_size: "load-time"
 });
     
     const chunks = await this.engine.chat.completions.create({
-      messages,
-      temperature: opts.temperature ?? 0.7,
-      max_tokens: opts.max_tokens ?? 1024,
-      stream: true
-    });
+  messages,
+  temperature: opts.temperature ?? 0.7,
+  max_tokens: opts.max_tokens ?? 1024,
+  repetition_penalty: opts.repeat_penalty ?? 1.1,
+  stream: true
+});
+    
     for await (const chunk of chunks) {
       const delta = chunk.choices[0]?.delta?.content || "";
       if (delta) yield delta;

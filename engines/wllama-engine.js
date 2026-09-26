@@ -11,7 +11,7 @@ export class WllamaEngine {
 
   isReady() { return !!this.wllama; }
 
-  async load(modelKeyOrUrl, onProgress) {
+ async load(modelKeyOrUrl, onProgress, opts = {}) {
     // Serow-0.5B みたいなキー名が来てもURLに直す
     let modelUrl = MODELS[modelKeyOrUrl] || modelKeyOrUrl;
 
@@ -33,7 +33,7 @@ export class WllamaEngine {
     this.wllama = new Wllama({ default: this.WASM_URL });
 
     await this.wllama.loadModelFromUrl(modelUrl, {
-      n_ctx: 4096,
+      n_ctx: opts.context_size ?? 4096,
       n_gpu_layers: 0,
       n_threads: 6,
       progressCallback: ({ loaded, total }) => {

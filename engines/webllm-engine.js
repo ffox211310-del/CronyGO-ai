@@ -9,7 +9,7 @@ export class WebLLMEngine {
     return !!this.engine;
   }
 
-  async load(modelKey, onProgress) {
+  async load(modelKey, onProgress, opts = {}) {
     // modelKeyが "Q0.5B" でも "Qwen2.5-0.5B-...-MLC" でも動くように
     let MODEL_ID = MODELS[modelKey] || modelKey;
     if (!MODEL_ID) throw new Error(`Unknown model key: ${modelKey}`);
@@ -33,17 +33,39 @@ export class WebLLMEngine {
       MODEL_ID = shortId;
     }
 
-    this.engine = await webllm.CreateMLCEngine(MODEL_ID, {
-      appConfig: appConfig,
-      initProgressCallback: (p) => {
-        const pct = Math.round(p.progress * 100);
-        onProgress?.(pct, p.text);
-      }
-    });
+const contextSize = opts.context_size ?? 4096;
+
+console.log("[WebLLM] context:", contextSize);
+    
+    const contextSize = opts.context_size ?? 4096;
+
+console.log("[WebLLM] context:", contextSize);
+
+this.engine = await webllm.CreateMLCEngine(
+  MODEL_ID,
+  {
+    appConfig: appConfig,
+    initProgressCallback: (p) => {
+      const pct = Math.round(p.progress * 100);
+      onProgress?.(pct, p.text);
+    }
+  },
+  {
+    context_window_size: contextSize
+  }
+);
+ 
   }
 
   async *chat(messages, opts = {}) {
     if (!this.engine) throw new Error("Engine not loaded");
+
+    console.log("[WebLLM] generation settings:", {
+  temperature: opts.temperature,
+  max_tokens: opts.max_tokens,
+  context_size: "load-time"
+});
+    
     const chunks = await this.engine.chat.completions.create({
       messages,
       temperature: opts.temperature ?? 0.7,

@@ -683,7 +683,19 @@ async function loadModel(key, isReload = false) {
   if (!isFirstPhase) addMessage("system", isReload? `${key} 再読込開始` : `${key} を読み込み開始。`);
 
   try {
-    await engineManager.load(key, (pct, text) => {
+    
+    const context_size = parseInt(
+  localStorage.getItem('cronygo_context_size') || 4096
+);
+
+await engineManager.load(
+  key,
+  (pct, text) => {
+    // 今ある進捗処理
+  },
+  { context_size }
+);
+     
       const txt = isReload? `積み直し ${pct}% ${text}` : `${pct}% ${text}`;
       updateLoadingText(txt);
       progressBar.style.width = `${pct}%`;

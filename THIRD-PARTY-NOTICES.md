@@ -153,7 +153,7 @@ UI font.
 
 ---
 
-9. JetBrains Mono
+11. JetBrains Mono
 
 Font: JetBrains Mono
 License: SIL Open Font License 1.1 (OFL-1.1)

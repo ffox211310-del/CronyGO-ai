@@ -111,7 +111,40 @@ Both base model and MLC/GGUF variants are licensed under the Apache License 2.0.
 
 ---
 
-8. Inter
+8. LFM2.5-1.2B-JP
+
+Model: LFM2.5-1.2B-JP-Q4_K_M.gguf
+Base model: LiquidAI/LFM2.5-1.2B-JP
+License: LFM Open License v1.0
+Copyright: Liquid AI, Inc.
+Source: https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP
+GGUF: https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-GGUF
+Direct file: https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-GGUF/resolve/main/LFM2.5-1.2B-JP-Q4_K_M.gguf
+
+LFM2.5-1.2B-JP is a Japanese-specialized compact language model developed by Liquid AI.
+Used via wllama for local browser-based inference.
+The model is distributed under the LFM Open License v1.0, which includes a commercial use limitation (free for entities with annual revenue under $10 million).
+
+---
+
+9. DeepSeek-R1-Distill-Qwen-1.5B
+
+Model: DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf
+Base model: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+GGUF conversion: unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF
+License: MIT License
+Copyright: DeepSeek and contributors; Unsloth (GGUF conversion)
+Source: https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+GGUF: https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF
+Direct file: https://huggingface.co/unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf
+
+DeepSeek-R1-Distill-Qwen-1.5B is a distilled reasoning model derived from DeepSeek-R1 and Qwen2.5-Math-1.5B.
+Used via wllama for local browser-based inference.
+Licensed under the MIT License.
+
+---
+
+10. Inter
 
 Font: Inter
 License: SIL Open Font License 1.1 (OFL-1.1)

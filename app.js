@@ -1112,24 +1112,38 @@ if (missing.length || !selectEl) { alert('mp: 見つからない → ' + missing
 // チュートリアル 初回表示
 // ==============================
 
+// ==============================
+// チュートリアル 初回表示
+// ==============================
+
 const TUTORIAL_SEEN_KEY = "cronygo_tutorial_seen";
 
-function showTutorialIfFirstVisit() {
-  const tutorialSeen = localStorage.getItem(TUTORIAL_SEEN_KEY);
+const tutorialOverlay = document.getElementById("tutorial-overlay");
+const tutorialPanel = document.getElementById("tutorial-panel");
+const tutorialStartBtn = document.getElementById("tutorial-start-btn");
 
-  // すでに見ていたら何もしない
-  if (tutorialSeen === "true") return;
-
-  // チュートリアルを開く
-  const tutorialPanel = document.getElementById("tutorial-panel");
-
-  if (tutorialPanel) {
-    tutorialPanel.classList.add("open");
-  }
-
-  // 「一度表示した」と記録
-  localStorage.setItem(TUTORIAL_SEEN_KEY, "true");
+function openTutorial() {
+  tutorialOverlay?.classList.add("open");
+  tutorialPanel?.classList.add("open");
 }
+
+function closeTutorial() {
+  tutorialOverlay?.classList.remove("open");
+  tutorialPanel?.classList.remove("open");
+}
+
+// 初回だけ自動表示
+function showTutorialIfFirstVisit() {
+  if (localStorage.getItem(TUTORIAL_SEEN_KEY) === "true") return;
+
+  openTutorial();
+}
+
+// 「はじめる」を押したら閉じて、閲覧済みとして保存
+tutorialStartBtn?.addEventListener("click", () => {
+  closeTutorial();
+  localStorage.setItem(TUTORIAL_SEEN_KEY, "true");
+});
 
 showTutorialIfFirstVisit();
   

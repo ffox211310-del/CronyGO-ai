@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>パーソナルAIモード</title>
+
+  <link rel="stylesheet" href="./style.css">
+
+  <script type="importmap">
+  {
+    "imports": {
+      "@mlc-ai/web-llm": "https://esm.run/@mlc-ai/web-llm@0.2.79"
+    }
+  }
+  </script>
+</head>
+
+<body>
+
+<div class="stars" id="stars"></div>
+
+  <!-- 初回案内 -->
+<div class="intro-overlay" id="introOverlay">
+
+  <div class="intro-card">
+
+    <!-- ちょこんとしたアイツ -->
+    <div class="intro-bot">
+      <div class="intro-halo"></div>
+      <div class="intro-face">
+        <div class="intro-eyes">
+          <div class="intro-eye"></div>
+          <div class="intro-eye"></div>
+        </div>
+      </div>
+    </div>
+
+    <h1>パーソナルモードについて</h1>
+
+    <div class="intro-text">
+
+      <p>
+        • あなた専用のAIです。どこにも情報は流れません。
+      </p>
+
+      <p>
+        • モードは「大・中・小」から選べます。<br>
+        あなたの端末に合わせて調整してください。<br>
+        （標準では「中」に設定されています。<br>
+        設定パネルはキャラクターを押してください）
+      </p>
+
+      <p>
+        • 終了するときは必ず「今日はおやすみ」と告げてください。<br>
+        AIが自動で今日のことを記憶します。<br>
+        （記憶後は通常モードに戻ります。）
+      </p>
+
+      <p class="intro-note">
+        ※ 使用されるAI：大・中・小すべてQwenのInstructモデルです。
+      </p>
+
+    </div>
+
+    <button id="introStart">
+      はじめる
+    </button>
+
+  </div>
+
+</div>
+  
+<div class="bot" id="bot">
+  <div class="halo"></div>
+
+  <div class="face">
+    <div class="eyes">
+      <div class="eye"></div>
+      <div class="eye"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 設定パネル -->
+<div class="settings-panel" id="settingsPanel">
+
+<button class="settings-close" id="settingsClose">✕</button>
+  
+  <div class="settings-title">
+    パーソナルAI設定
+  </div>
+
+  <div class="settings-label">
+    AIモデル
+  </div>
+
+  <div class="model-options">
+
+    <button class="model-option" data-model="small">
+      <strong>小</strong>
+      <span>0.5B</span>
+    </button>
+
+    <button class="model-option" data-model="medium">
+      <strong>中</strong>
+      <span>1.5B</span>
+    </button>
+
+    <button class="model-option" data-model="large">
+      <strong>大</strong>
+      <span>3B</span>
+    </button>
+
+  </div>
+
+  <div class="settings-current" id="settingsCurrent">
+    現在：中
+  </div>
+
+  <button
+    class="reload-button"
+    id="reloadButton"
+  >
+    選択を反映して再読み込み
+  </button>
+
+  <div class="settings-divider"></div>
+
+     <div class="settings-section">
+     <div class="settings-label">読み上げ・音声認識</div>
+     <div class="settings-note" id="deviceLangInfo">端末情報取得中...</div>
+
+     <div class="settings-label" style="margin-top:14px">読み上げの声</div>
+     <select id="voiceSelect" class="voice-select">
+     <option>読み込み中...</option>
+    </select>
+   <div class="settings-current" id="voiceCurrent">現在: 日本語 (端末標準)</div>
+  <button class="voice-test-button" id="voiceTestButton">声を試聴する</button>
+</div>
+
+</div>
+
+
+  
+<div class="bubble" id="bubble"></div>
+
+<div class="composer">
+
+  <input
+    id="input"
+    type="text"
+    placeholder="今日はどんな一日だった？"
+    autocomplete="off"
+    disabled
+  >
+
+  <button
+    id="micButton"
+    class="mic-button"
+    type="button"
+  >
+    ●
+  </button>
+
+</div>
+
+<script type="module" src="./app.js"></script>
+
+</body>
+</html>

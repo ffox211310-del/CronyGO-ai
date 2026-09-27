@@ -1,0 +1,617 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background-color: #061413;
+  background: #061413;
+}
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family:
+    "Hiragino Sans",
+    "Yu Gothic",
+    "Meiryo",
+    system-ui,
+    sans-serif;
+
+  color: #d8f5f1;
+
+  background:
+    radial-gradient(
+      circle at 50% 38%,
+      #123a38 0%,
+      #0a2322 45%,
+      #061413 100%
+    );
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 32px 22px;
+  gap: 34px;
+
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ========================================
+   星空
+======================================== */
+
+.stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #bff5ee;
+  animation: twinkle 5s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%,100% { opacity: .08; transform: scale(.7); }
+  50% { opacity: .45; transform: scale(1); }
+}
+
+/* ========================================
+   キャラクター
+======================================== */
+
+.bot {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  z-index: 1;
+  animation: float 5.2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,100% { transform: translateY(4px); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ========================================
+   ハロー
+======================================== */
+
+.halo {
+  position: absolute;
+  inset: -55px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(79,209,197,.32) 0%, rgba(79,209,197,0) 68%);
+  animation: halo 5.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes halo {
+  0%,100% { transform: scale(.92); opacity: .55; }
+  50% { transform: scale(1.08); opacity: .9; }
+}
+
+/* ========================================
+   顔
+======================================== */
+
+.face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 26%, #7ee6db 0%, #4FD1C5 46%, #2f9e94 100%);
+  box-shadow: 0 22px 48px -18px rgba(79,209,197,.7), inset 0 -14px 26px -12px rgba(0,70,64,.5), inset 0 10px 20px -10px rgba(255,255,255,.65);
+}
+
+/* ========================================
+   目
+======================================== */
+
+.eyes {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  display: flex;
+  gap: 20px;
+  transform: translate(-50%, -50%);
+}
+
+.eye {
+  width: 18px;
+  height: 62px;
+  border-radius: 999px;
+  background: #fff;
+  transform-origin: 50% 50%;
+  transition: transform .1s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 0 14px rgba(255,255,255,.55);
+}
+
+/* ========================================
+   瞬き
+======================================== */
+
+.eye.blink {
+  transform: scaleY(.08);
+}
+
+/* ========================================
+   喋っているとき
+======================================== */
+
+.bot.speaking .eye {
+  animation: talk .5s ease-in-out infinite alternate;
+}
+
+.bot.speaking .eye:nth-child(2) {
+  animation-delay: .25s;
+}
+
+@keyframes talk {
+  from { transform: scaleY(.62) scaleX(1); }
+  to { transform: scaleY(1.06) scaleX(.94); }
+}
+
+/* ========================================
+   セリフ
+======================================== */
+
+.bubble {
+  position: relative;
+  z-index: 1;
+  min-height: 3.2em;
+  max-width: 32ch;
+  text-align: center;
+  font-size: 17px;
+  line-height: 2;
+  letter-spacing: .06em;
+  font-weight: 300;
+  color: #d8f5f1;
+  text-shadow: 0 0 22px rgba(79,209,197,.35);
+  transition: opacity .4s ease, filter .4s ease;
+}
+
+.bubble span {
+  display: inline-block;
+  opacity: 0;
+  animation: fadeUp .7s cubic-bezier(.2,.8,.3,1) forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); filter: blur(5px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.bubble.fade-out {
+  opacity: 0;
+  filter: blur(5px);
+}
+
+.bubble.loading {
+  opacity: .75;
+  animation: loadingPulse 2s ease-in-out infinite;
+}
+
+@keyframes loadingPulse {
+  0%,100% { opacity: .45; }
+  50% { opacity: 1; }
+}
+
+/* ========================================
+   入力欄は下で上書き
+======================================== */
+
+.composer input::placeholder {
+  color: rgba(216,245,241,.35);
+  letter-spacing: .1em;
+}
+
+.composer input:focus {
+  background: rgba(79,209,197,.14);
+  border-color: rgba(79,209,197,.7);
+  box-shadow: 0 0 26px -6px rgba(79,209,197,.6);
+}
+
+.composer input:disabled {
+  opacity: .45;
+  cursor: wait;
+}
+
+/* ========================================
+   初回案内
+======================================== */
+
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(3, 15, 15, 0.78);
+  backdrop-filter: blur(10px);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+
+.intro-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.intro-card {
+  position: relative;
+  width: min(520px, 100%);
+  padding: 70px 32px 30px;
+  border: 1px solid rgba(79, 209, 196, 0.25);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(22, 48, 47, 0.97), rgba(9, 27, 26, 0.97));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45), 0 0 40px rgba(79, 209, 196, 0.08);
+  color: #e8f5f3;
+  transform: translateY(0) scale(1);
+  transition: transform 0.45s ease, opacity 0.45s ease;
+}
+
+.intro-bot {
+  position: absolute;
+  top: -35px;
+  left: 50%;
+  width: 75px;
+  height: 75px;
+  transform: translateX(-50%);
+}
+
+.intro-halo {
+  position: absolute;
+  inset: -15px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(79, 209, 196, 0.28), rgba(79, 209, 196, 0) 70%);
+}
+
+.intro-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 26%, #7ee6db 0%, #4FD1C5 46%, #2f9e94 100%);
+  box-shadow: 0 22px 48px -18px rgba(79,209,197,.7), inset 0 -14px 26px -12px rgba(0,70,64,.5), inset 0 10px 20px -10px rgba(255,255,255,.65);
+}
+
+.intro-eyes {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.intro-eye {
+  width: 10px;
+  height: 32px;
+  border-radius: 999px;
+  background: #f4ffff;
+  box-shadow: 0 0 8px rgba(255,255,255,0.35);
+}
+
+.intro-card h1 {
+  margin: 0 0 28px;
+  text-align: center;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.intro-text {
+  font-size: 14px;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+}
+
+.intro-text p {
+  margin: 0 0 18px;
+}
+
+.intro-note {
+  margin-top: 26px !important;
+  font-size: 12px;
+  color: rgba(232, 245, 243, 0.55);
+}
+
+#introStart {
+  display: block;
+  width: 100%;
+  margin-top: 28px;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 999px;
+  background: #4fd1c4;
+  color: #06211f;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+#introStart:hover { transform: translateY(-2px); }
+#introStart:active { transform: scale(0.98); }
+
+/* ========================================
+   設定パネル
+======================================== */
+
+.settings-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(380px, calc(100vw - 32px));
+  max-height: min(82vh, 720px);
+  padding: 32px 26px 26px;
+  transform: translate(-50%, -50%) scale(0.96);
+  border: 1px solid rgba(79, 209, 196, 0.22);
+  border-radius: 24px;
+  background: rgba(9, 27, 26, 0.98);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45), 0 0 40px rgba(79, 209, 196, 0.08);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+  z-index: 900;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.settings-panel.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.settings-title {
+  margin-bottom: 24px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.settings-label {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: rgba(232, 245, 243, 0.6);
+}
+
+.model-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.model-option {
+  padding: 15px 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.035);
+  color: #e8f5f3;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.model-option strong { display: block; font-size: 16px; }
+.model-option span { display: block; margin-top: 4px; font-size: 11px; opacity: 0.55; }
+
+.model-option.selected {
+  border-color: #4fd1c4;
+  background: rgba(79, 209, 196, 0.12);
+  box-shadow: 0 0 18px rgba(79, 209, 196, 0.08);
+}
+
+.settings-current {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(232, 245, 243, 0.55);
+}
+
+.reload-button {
+  width: 100%;
+  margin-top: 22px;
+  padding: 12px;
+  border: none;
+  border-radius: 999px;
+  background: #4fd1c4;
+  color: #06211f;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.reload-button:hover { transform: translateY(-2px); }
+.reload-button:active { transform: scale(0.98); }
+
+/* ========================================
+   マイクボタン
+======================================== */
+
+.mic-button {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border: 1px solid rgba(79, 209, 199, 0.35);
+  border-radius: 50%;
+  background: rgba(15, 45, 45, 0.8);
+  color: #4FD1C5;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.mic-button:active { transform: scale(0.92); }
+
+.mic-button.listening {
+  background: rgba(79, 209, 199, 0.2);
+  box-shadow: 0 0 12px rgba(79, 209, 199, 0.5), 0 0 28px rgba(79, 209, 199, 0.2);
+  color: #ffffff;
+}
+
+
+/* ========================================
+   設定パネル追加分 - 読み上げ
+======================================== */
+
+.settings-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 22px 0;
+}
+
+.settings-section {
+  margin-bottom: 4px;
+}
+
+.settings-note {
+  font-size: 11px;
+  line-height: 1.7;
+  color: rgba(232, 245, 243, 0.5);
+  text-align: center;
+  word-break: break-all;
+}
+
+.voice-select {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(79, 209, 196, 0.28);
+  background: rgba(255,255,255,0.06);
+  color: #e8f5f3;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.voice-select:focus {
+  border-color: rgba(79, 209, 196, 0.7);
+  background: rgba(79, 209, 196, 0.1);
+}
+
+.voice-select option {
+  background: #0a2322;
+  color: #e8f5f3;
+}
+
+.voice-test-button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: 1px solid rgba(79, 209, 196, 0.32);
+  border-radius: 999px;
+  background: rgba(79, 209, 196, 0.09);
+  color: #4fd1c5;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.voice-test-button:hover {
+  background: rgba(79, 209, 196, 0.16);
+}
+
+.voice-test-button:active {
+  transform: scale(0.97);
+}
+
+/* 入力欄 - 正解: テキストボックスの下中央にマイク */
+.composer {
+  position: fixed;
+  left: 50%;
+  bottom: calc(32px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(90vw, 500px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  z-index: 10;
+}
+
+.composer input {
+  width: 100%;
+  padding: 16px 22px;
+  font-size: 15px;
+  font-family: inherit;
+  text-align: center;
+  color: #e6faf7;
+  background: rgba(79,209,197,.08);
+  border: 1px solid rgba(79,209,197,.3);
+  border-radius: 999px;
+  outline: none;
+  transition: background .3s, border-color .3s, box-shadow .3s, opacity .3s;
+}
+
+
+.settings-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  color: rgba(232,245,243,0.7);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  z-index: 2;
+}
+
+.settings-close:hover {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}
+
+.settings-close:active {
+  transform: scale(0.92);
+}
+
+/* パネル内のスクロールバーを目立たなく */
+.settings-panel::-webkit-scrollbar {
+  width: 4px;
+}
+.settings-panel::-webkit-scrollbar-thumb {
+  background: rgba(79,209,196,0.2);
+  border-radius: 999px;
+}
+
+/* 設定パネルが開いている時は後ろの入力欄とセリフを隠す */
+.settings-panel.open ~ .bubble,
+.settings-panel.open ~ .composer {
+  opacity: 0;
+  pointer-events: none;
+}

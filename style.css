@@ -642,3 +642,102 @@ body.light #mp-overlay{ background:rgba(0,0,0,.25); }
 .personal-mode-btn:active {
   transform: scale(.97);
 }
+
+
+/* ===== 初回チュートリアル ===== */
+
+#tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity .25s ease;
+  z-index: 200;
+}
+
+#tutorial-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#tutorial-panel {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+
+  transform: translate(-50%, -46%) scale(.96);
+
+  background: var(--bg-header);
+  color: var(--text);
+
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition:
+    opacity .25s ease,
+    transform .25s cubic-bezier(.32,.72,0,1);
+
+  z-index: 201;
+
+  overflow-y: auto;
+}
+
+#tutorial-panel.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.tutorial-content {
+  padding: 26px 22px 22px;
+}
+
+#tutorial-title {
+  margin: 0 0 20px;
+  font-size: 21px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.tutorial-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.tutorial-text p {
+  margin: 0 0 14px;
+}
+
+.tutorial-text p:last-child {
+  margin-bottom: 22px;
+}
+
+.tutorial-text strong {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+#tutorial-start-btn {
+  width: 100%;
+  padding: 12px 18px;
+  font-size: 14px;
+}
+
+/* ライトモード */
+body.light #tutorial-overlay {
+  background: rgba(0, 0, 0, .35);
+}

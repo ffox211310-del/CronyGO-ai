@@ -377,6 +377,41 @@
   </div>
 </div>
 
+ <!-- 初回チュートリアル -->
+<div id="tutorial-overlay"></div>
+
+<div id="tutorial-panel" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+  <div class="tutorial-content">
+    <h2 id="tutorial-title">CronyGOへようこそ!!</h2>
+
+    <div class="tutorial-text">
+      <p>
+        本サイトでは、Web上でさまざまなAIをローカルで動かすことができます。
+      </p>
+
+      <p>
+        ダウンロードを押す前に、まずはモデル名をタップしてモデルを選択してみましょう。
+      </p>
+
+      <p>
+        モデル名の数字が小さいほど動作が軽いです。
+      </p>
+
+      <p>
+        <strong>MLC</strong>と書いてあるモデルは、古いOSや端末では動かない場合があります。
+      </p>
+
+      <p>
+        反対に、<strong>GGUF</strong>と書かれているモデルは比較的古い端末でも動く可能性があります。
+        まずは<strong>Smollm128MのGGUF</strong>をダウンロードすることをおすすめします。
+      </p>
+    </div>
+
+    <button id="tutorial-start-btn" class="primary-btn">
+      はじめる
+    </button>
+  </div>
+</div>
   
 <script type="module" src="./app.js"></script>
 </html>

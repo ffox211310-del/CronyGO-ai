@@ -1108,6 +1108,31 @@ if (missing.length || !selectEl) { alert('mp: 見つからない → ' + missing
     close();
   });
 
+  // ==============================
+// チュートリアル 初回表示
+// ==============================
+
+const TUTORIAL_SEEN_KEY = "cronygo_tutorial_seen";
+
+function showTutorialIfFirstVisit() {
+  const tutorialSeen = localStorage.getItem(TUTORIAL_SEEN_KEY);
+
+  // すでに見ていたら何もしない
+  if (tutorialSeen === "true") return;
+
+  // チュートリアルを開く
+  const tutorialPanel = document.getElementById("tutorial-panel");
+
+  if (tutorialPanel) {
+    tutorialPanel.classList.add("open");
+  }
+
+  // 「一度表示した」と記録
+  localStorage.setItem(TUTORIAL_SEEN_KEY, "true");
+}
+
+showTutorialIfFirstVisit();
+  
   // カスタムモデルの追加/削除、Serow自動追加でoptionが変わったら追従
   new MutationObserver(() => {
     updateLabel();
@@ -1116,3 +1141,5 @@ if (missing.length || !selectEl) { alert('mp: 見つからない → ' + missing
 
   updateLabel();
 })();
+
+

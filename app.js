@@ -1128,13 +1128,13 @@ const tutorialPanel = document.getElementById("tutorial-panel");
 const tutorialStartBtn = document.getElementById("tutorial-start-btn");
 
 function openTutorial() {
-  tutorialOverlay?.classList.add("open");
-  tutorialPanel?.classList.add("open");
+  tutorialOverlay?.classList.add("show");
+  tutorialPanel?.classList.add("show");
 }
 
 function closeTutorial() {
-  tutorialOverlay?.classList.remove("open");
-  tutorialPanel?.classList.remove("open");
+  tutorialOverlay?.classList.remove("show");
+  tutorialPanel?.classList.remove("show");
 }
 
 // 初回だけ自動表示

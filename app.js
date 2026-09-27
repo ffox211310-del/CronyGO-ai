@@ -1108,9 +1108,14 @@ if (missing.length || !selectEl) { alert('mp: 見つからない → ' + missing
     close();
   });
 
-  // ==============================
-// チュートリアル 初回表示
-// ==============================
+  // カスタムモデルの追加/削除、Serow自動追加でoptionが変わったら追従
+  new MutationObserver(() => {
+    updateLabel();
+    if (sheet.classList.contains('open')) render();
+  }).observe(selectEl, { childList: true });
+
+  updateLabel();
+})();
 
 // ==============================
 // チュートリアル 初回表示
@@ -1146,14 +1151,4 @@ tutorialStartBtn?.addEventListener("click", () => {
 });
 
 showTutorialIfFirstVisit();
-  
-  // カスタムモデルの追加/削除、Serow自動追加でoptionが変わったら追従
-  new MutationObserver(() => {
-    updateLabel();
-    if (sheet.classList.contains('open')) render();
-  }).observe(selectEl, { childList: true });
-
-  updateLabel();
-})();
-
 

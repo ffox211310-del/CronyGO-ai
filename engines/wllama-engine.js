@@ -1,3 +1,4 @@
+//いえーい
 import { Wllama } from "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.2.3/esm/index.js";
 import { MODELS } from "../models.js";
 

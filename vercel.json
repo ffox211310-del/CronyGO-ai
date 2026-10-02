@@ -1,13 +1,4 @@
 {
-  "version": 2,
-  
-  "buildCommand": "echo 'Static site - no build needed'",
-  "outputDirectory": "./",
-  
-  "env": {
-    "VERCEL_ANALYTICS_ID": "your-analytics-id-optional"
-  },
-  
   "headers": [
     {
       "source": "/(.*)",
@@ -19,17 +10,8 @@
         {
           "key": "Cross-Origin-Embedder-Policy",
           "value": "require-corp"
-        },
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600, s-maxage=3600"
         }
       ]
-    },
-    {
-      "source": "/engines/(.*)",
-      "headers": [
+    }
+  ]
+}

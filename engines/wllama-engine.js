@@ -37,7 +37,7 @@ export class WllamaEngine {
    
     await this.wllama.loadModelFromUrl(modelUrl, {
       n_ctx: contextSize,
-      n_gpu_layers: 999,
+      n_gpu_layers: 0,
       n_threads: 6,
       progressCallback: ({ loaded, total }) => {
         if (!total) return;

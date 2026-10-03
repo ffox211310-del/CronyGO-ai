@@ -809,3 +809,66 @@ body.light #tutorial-overlay {
   border-color: var(--accent);
 }
 
+/* ===== PC/タブレット（横長）時のレスポンシブ対応 ===== */
+@media (min-width: 768px) {
+  /* ドロワーを常時表示 */
+  #room-drawer {
+    transform: translateX(0) !important;
+    box-shadow: 1px 0 0 var(--border);
+  }
+
+  /* オーバーレイは不要なので非表示 */
+  #room-overlay {
+    display: none !important;
+  }
+
+  /* メニューボタン（≡）は非表示 */
+  #menu-btn {
+    display: none;
+  }
+
+  /* メインエリアをドロワーの幅（280px）分ずらす */
+  header,
+  #progress-wrap,
+  #chat,
+  #voice-preview,
+  .hint,
+  #composer {
+    margin-left: 280px;
+    width: calc(100% - 280px);
+    max-width: calc(100% - 280px);
+  }
+
+  /* 設定パネルやモデル選択パネルも中央寄せが崩れないよう調整 */
+  #settings-panel,
+  #mp-sheet,
+  #tutorial-panel {
+    left: 280px;
+    right: 0;
+    width: auto;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+}
+
+/* さらに大きい画面（大型PC）での微調整 */
+@media (min-width: 1200px) {
+  #room-drawer {
+    width: 320px;
+  }
+  header,
+  #progress-wrap,
+  #chat,
+  #voice-preview,
+  .hint,
+  #composer {
+    margin-left: 320px;
+    width: calc(100% - 320px);
+    max-width: calc(100% - 320px);
+  }
+  #settings-panel,
+  #mp-sheet,
+  #tutorial-panel {
+    left: 320px;
+  }
+}

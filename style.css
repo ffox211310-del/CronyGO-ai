@@ -839,15 +839,21 @@ body.light #tutorial-overlay {
     max-width: calc(100% - 280px);
   }
 
-  /* 設定パネルやモデル選択パネルも中央寄せが崩れないよう調整 */
+  /* 設定パネルとモデル選択パネルはドロワーの右側で中央寄せ */
   #settings-panel,
-  #mp-sheet,
-  #tutorial-panel {
+  #mp-sheet {
     left: 280px;
     right: 0;
     width: auto;
     max-width: 640px;
     margin: 0 auto;
+  }
+
+  /* チュートリアルパネルは画面全体に対して中央配置（元に戻す） */
+  #tutorial-panel {
+    left: 50% !important;
+    right: auto !important;
+    width: min(440px, calc(100vw - 32px));
   }
 }
 
@@ -867,8 +873,11 @@ body.light #tutorial-overlay {
     max-width: calc(100% - 320px);
   }
   #settings-panel,
-  #mp-sheet,
-  #tutorial-panel {
+  #mp-sheet {
     left: 320px;
+  }
+  /* チュートリアルは大型画面でも中央固定 */
+  #tutorial-panel {
+    left: 50% !important;
   }
 }

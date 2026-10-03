@@ -484,6 +484,55 @@ body.light #chat.has-custom-bg::before {
   color: var(--text-sub);
   cursor:pointer; flex-shrink:0;
 }
+/* ===== ドロワー内 ブランディング ===== */
+.drawer-branding {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.drawer-branding .brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* デフォルト（ダークモード）では Light 用を隠す */
+.drawer-branding .brand-icon-light {
+  display: none;
+}
+
+/* ライトモード時は Dark 用を隠し、Light 用を表示する */
+body.light .drawer-branding .brand-icon-dark {
+  display: none;
+}
+body.light .drawer-branding .brand-icon-light {
+  display: block;
+}
+
+.drawer-branding .brand-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin: 0;
+  white-space: nowrap;
+  /* テキストにグラデーションをかけてかっこよくする */
+  background: linear-gradient(135deg, var(--text) 20%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  /* 微かな影で浮き上がりを表現 */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+}
+
+/* ライトモード時の影の微調整 */
+body.light .drawer-branding .brand-title {
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.5));
+}
 .room-del-btn:hover{ color: var(--text); border-color: var(--text-sub); }
 
 /* ライトモード上書き */
@@ -760,52 +809,3 @@ body.light #tutorial-overlay {
   border-color: var(--accent);
 }
 
-/* ===== ヘッダー ブランディング ===== */
-.app-branding {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.brand-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  object-fit: cover;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  transition: opacity 0.2s;
-}
-
-/* デフォルト（ダークモード）では Light 用を隠す */
-.brand-icon-light {
-  display: none;
-}
-
-/* ライトモード時は Dark 用を隠し、Light 用を表示する */
-body.light .brand-icon-dark {
-  display: none;
-}
-body.light .brand-icon-light {
-  display: block;
-}
-
-.brand-title {
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  margin: 0;
-  white-space: nowrap;
-  /* テキストに微妙なグラデーションをかけてかっこよくする */
-  background: linear-gradient(135deg, var(--text) 30%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  /* 微かな影で浮き上がりを表現 */
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
-}
-
-/* ライトモード時の微調整（必要に応じて） */
-body.light .brand-title {
-  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.5));
-}

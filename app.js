@@ -933,7 +933,10 @@ for await (const delta of engineManager.chat(messages, {
     isGenerating = false;
     sendEl.disabled = false;
     inputEl.readOnly = false;
-    inputEl.focus();
+    // 現在フォーカスが当たっていれば外す（キーボードを隠す）
+    if (document.activeElement === inputEl) {
+      inputEl.blur();
+    }
     try { killBtn.remove(); } catch {}
   }
 }

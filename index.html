@@ -33,7 +33,11 @@
   <div id="room-overlay"></div>
  
 <div id="room-drawer">
-  <div style="padding:16px; font-weight:600; border-bottom:1px solid #222;">CronyGO</div>
+  <div class="drawer-branding">
+    <img src="./assets/CronyGOicon.jpg" alt="CronyGO Icon" class="brand-icon brand-icon-dark" />
+    <img src="./assets/CronyGOicon_Light.jpg" alt="CronyGO Icon" class="brand-icon brand-icon-light" />
+    <h1 class="brand-title">CronyGO</h1>
+  </div>
 
   <button id="new-room-btn" class="secondary-btn" style="margin:12px; width:calc(100% - 24px);">
     + 新しいチャット
@@ -51,15 +55,7 @@
   
 <div class="header-left" style="display:flex; align-items:center; gap:10px;">
   <button id="menu-btn" aria-label="メニュー">☰</button>
-
- <!--ロゴ横のロゴ-->
- <div class="app-branding">
-      <img src="./assets/CronyGOicon.jpg" alt="CronyGO Icon" class="brand-icon brand-icon-dark" />
-      <img src="./assets/CronyGOicon_Light.jpg" alt="CronyGO Icon" class="brand-icon brand-icon-light" />
-      <h1 class="brand-title">CronyGO</h1>
- </div>
- 
- <select id="model-select" hidden>
+  <select id="model-select" hidden>
 <option value="Q0.5B">Qwen0.5B</option>
 <option value="Q1.5B">Qwen1.5B</option>
 <option value="Q3B">Qwen3B</option>

@@ -881,3 +881,46 @@ body.light #tutorial-overlay {
     left: 50% !important;
   }
 }
+
+/* ===== 回答生成中の待機UI ===== */
+.msg.assistant.pending {
+  border-style: dashed;
+  opacity: .9;
+}
+
+.pending-answer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-sub);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pending-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  animation: pending-spin 0.9s linear infinite;
+}
+
+.pending-text {
+  animation: pending-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes pending-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pending-blink {
+  0%, 100% {
+    opacity: .55;
+  }
+  50% {
+    opacity: 1;
+  }
+}

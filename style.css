@@ -898,8 +898,8 @@ body.light #tutorial-overlay {
 }
 
 .pending-icon {
-  width: 26px;
-  height: 26px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;

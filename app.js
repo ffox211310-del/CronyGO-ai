@@ -491,6 +491,15 @@ function addMessage(role, content) {
   chatEl.scrollTop = chatEl.scrollHeight;
   return div;
 }
+function showAssistantPending(el) {
+  el.classList.add("pending");
+  el.innerHTML = `
+    <div class="pending-answer" role="status" aria-live="polite">
+      <img class="pending-icon" src="./assets/Teal.png" alt="" onerror="this.style.display='none'">
+      <span class="pending-text">回答を生成しています...</span>
+    </div>
+  `;
+}
 function showFirstLoadingUI(initialText) {
   if (hasChatted) return false;
   loadingText.textContent = initialText || "準備中...";
@@ -822,6 +831,12 @@ async function sendMessageWithText(forcedText) {
   voicePreview.textContent = '';
 
   const assistantDiv = addMessage("assistant", "");
+  
+  let firstTokenReceived = false;
+
+  // 1トークン目が出るまでの待機UI
+  showAssistantPending(assistantDiv);
+
   const killBtn = document.createElement("button");
   killBtn.textContent = "■ 生成を停止";
   killBtn.className = "kill-switch";
@@ -839,7 +854,12 @@ killBtn.onclick = async () => {
   killBtn.disabled = true;
   try { await engineManager.interrupt(); } catch {}
   if (voice) voice.clearQueue(true);
-  assistantDiv.innerHTML = renderMarkdown(assistantDiv.textContent + "\n\n[停止→積み直し]");
+  if (!firstTokenReceived) {
+  assistantDiv.classList.remove("pending");
+  assistantDiv.innerHTML = renderMarkdown("[生成を停止しました]");
+} else {
+  assistantDiv.innerHTML = renderMarkdown((full || "") + "\n\n[停止→積み直し]");
+}
   const keyToReload = currentKey;
   messages = [{ role: "system", content: loadStoredPrompt() }];
   try { killBtn.remove(); } catch {}
@@ -876,60 +896,78 @@ for await (const delta of engineManager.chat(messages, {
   max_tokens,
   repeat_penalty
 })) {
-      
-      if (abortFlag) break;
-      full += delta;
-      if (full.length >= MAX_CHARS) {
-  full = full.slice(0, MAX_CHARS).trim() + "\n\n[1500文字制限→自動で積み直し]";
-  assistantDiv.innerHTML = renderMarkdown(full);
-  try { await engineManager.interrupt(); } catch {}
-  if (voice) voice.clearQueue(true);
-  const keyToReload = currentKey;
-  messages = [{ role: "system", content: loadStoredPrompt() }];
-  await loadModel(keyToReload, true);
+  if (abortFlag) break;
 
-  isGenerating = false;
-  sendEl.disabled = false;
-  inputEl.readOnly = false;
+  full += delta;
 
-  break;
+  // 最初の意味のあるトークンが来たら待機UIを解除
+  if (!firstTokenReceived && full.trim().length > 0) {
+    firstTokenReceived = true;
+    assistantDiv.classList.remove("pending");
+  }
+
+  if (full.length >= MAX_CHARS) {
+    firstTokenReceived = true;
+    assistantDiv.classList.remove("pending");
+    full = full.slice(0, MAX_CHARS).trim() + "\n\n[1500文字制限→自動で積み直し]";
+    assistantDiv.innerHTML = renderMarkdown(full);
+    try { await engineManager.interrupt(); } catch {}
+    if (voice) voice.clearQueue(true);
+    const keyToReload = currentKey;
+    messages = [{ role: "system", content: loadStoredPrompt() }];
+    await loadModel(keyToReload, true);
+    isGenerating = false;
+    sendEl.disabled = false;
+    inputEl.readOnly = false;
+    break;
+  }
+
+  // 描画は最初のトークンが来てから
+  if (firstTokenReceived) {
+    assistantDiv.innerHTML = renderMarkdown(full);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  if (isVoiceMode && voice && delta) {
+    speakBuffer += delta;
+    const matches = speakBuffer.match(sentenceSplitRegex);
+    if (matches) {
+      let consumed = 0;
+      for (const sent of matches) {
+        const s = sent.trim();
+        if (s) voice.enqueueSpeak(s);
+        consumed += sent.length;
+      }
+      speakBuffer = speakBuffer.slice(consumed);
+    }
+  }
 }
-      //↑ここまで
-      assistantDiv.innerHTML = renderMarkdown(full);
-      chatEl.scrollTop = chatEl.scrollHeight;
-
-      if (isVoiceMode && voice && delta) {
-        speakBuffer += delta;
-        const matches = speakBuffer.match(sentenceSplitRegex);
-        if (matches) {
-          let consumed = 0;
-          for (const sent of matches) {
-            const s = sent.trim();
-            if (s) voice.enqueueSpeak(s);
-            consumed += sent.length;
-          }
-          speakBuffer = speakBuffer.slice(consumed);
-        }
-      }
-    }
     full = full.trim();
-    full = full.replace(/^\s*\*\*\s*$/gm, '').trim();
-    full = full.replace(/\n{3,}/g, '\n\n').trim();
+full = full.replace(/^\s*\*\*\s*$/gm, '').trim();
+full = full.replace(/\n{3,}/g, '\n\n').trim();
 
-    if (!isKilled) {
-      assistantDiv.innerHTML = renderMarkdown(full);
-      messages.push({ role: "assistant", content: full });
-      saveCurrentRoomHistory();
-      if (voice && full && isVoiceMode) {
-        const remaining = speakBuffer.trim();
-        if (remaining) voice.enqueueSpeak(remaining);
-        voice.clearBuffer();
-      }
+assistantDiv.classList.remove("pending");
+
+if (!isKilled) {
+  if (full) {
+    assistantDiv.innerHTML = renderMarkdown(full);
+    messages.push({ role: "assistant", content: full });
+    saveCurrentRoomHistory();
+
+    if (voice && isVoiceMode) {
+      const remaining = speakBuffer.trim();
+      if (remaining) voice.enqueueSpeak(remaining);
+      voice.clearBuffer();
     }
+  } else {
+    assistantDiv.innerHTML = '<span class="pending-text">（応答がありませんでした）</span>';
+  }
+}
   } catch (e) {
-    dbg(`generation ERROR ${e.message}`);
-    if (!abortFlag) assistantDiv.innerHTML = renderMarkdown("生成エラー: " + e.message);
-  } finally {
+  dbg(`generation ERROR ${e.message}`);
+  assistantDiv.classList.remove("pending");
+  if (!abortFlag) assistantDiv.innerHTML = renderMarkdown("生成エラー: " + e.message);
+}finally {
     isGenerating = false;
     sendEl.disabled = false;
     inputEl.readOnly = false;

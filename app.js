@@ -804,7 +804,7 @@ async function sendMessageWithText(forcedText) {
   if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
 
   if (isTimeQuery(text)) {
-    addMessage("user", text);
+    const userDiv = addMessage("user", text);
     messages.push({ role: "user", content: text });
     saveCurrentRoomHistory();
     inputEl.value = "";
@@ -824,7 +824,7 @@ async function sendMessageWithText(forcedText) {
     return;
   }
 
-  addMessage("user", text);
+  const userDiv = addMessage("user", text);
   messages.push({ role: "user", content: text });
   saveCurrentRoomHistory();
   inputEl.value = "";
@@ -873,6 +873,63 @@ killBtn.onclick = async () => {
   inputEl.focus();
 };
 //ここまで
+
+  // ===== 自動スクロール制御 =====
+// 送信直後は一番下へ。
+// 生成中は「ユーザープロンプトが見切れる直前」で下スクロールを止める。
+
+let autoScrollEnabled = true;
+const STOP_MARGIN = 14;
+
+function getPromptLimit() {
+  if (!userDiv || !userDiv.isConnected) return Infinity;
+
+  const chatRect = chatEl.getBoundingClientRect();
+  const userRect = userDiv.getBoundingClientRect();
+
+  // chatEl内でのユーザープロンプトの上端位置
+  const userTop = userRect.top - chatRect.top + chatEl.scrollTop;
+
+  // 見切れる直前で止めたいので、少し手前を上限にする
+  return Math.max(0, userTop - STOP_MARGIN);
+}
+
+function smartScroll() {
+  if (!autoScrollEnabled) return;
+
+  const maxScroll = Math.max(0, chatEl.scrollHeight - chatEl.clientHeight);
+  const limit = getPromptLimit();
+
+  // 一番下まで行きたいが、プロンプトが見切れる手前で止める
+  const target = Math.min(maxScroll, limit);
+
+  // 下方向にだけ動かす（上に引き戻さない）
+  if (target > chatEl.scrollTop + 1) {
+    chatEl.scrollTop = target;
+  }
+}
+
+// ユーザーが自分でスクロール操作したら自動スクロールを止める
+function stopAutoScroll() {
+  autoScrollEnabled = false;
+}
+
+chatEl.addEventListener("wheel", stopAutoScroll, { passive: true });
+chatEl.addEventListener("touchmove", stopAutoScroll, { passive: true });
+
+// 送信直後
+requestAnimationFrame(() => {
+  const maxScroll = Math.max(0, chatEl.scrollHeight - chatEl.clientHeight);
+  const limit = getPromptLimit();
+
+  // 基本は一番下へ。
+  // ただし、一番下だとプロンプトが切れる場合はその手前を優先する。
+  chatEl.scrollTop = Math.min(maxScroll, limit);
+
+  // もし「プロンプトが切れても絶対に一番下へ飛ばしたい」なら、
+  // 上の行を消して↓にする
+  // chatEl.scrollTop = maxScroll;
+});
   isGenerating = true; sendEl.disabled = true;
   let full = "";
   let speakBuffer = "";
@@ -925,7 +982,7 @@ for await (const delta of engineManager.chat(messages, {
   // 描画は最初のトークンが来てから
   if (firstTokenReceived) {
     assistantDiv.innerHTML = renderMarkdown(full);
-    chatEl.scrollTop = chatEl.scrollHeight;
+    smartScroll();
   }
 
   if (isVoiceMode && voice && delta) {
@@ -968,9 +1025,14 @@ if (!isKilled) {
   assistantDiv.classList.remove("pending");
   if (!abortFlag) assistantDiv.innerHTML = renderMarkdown("生成エラー: " + e.message);
 }finally {
-    isGenerating = false;
-    sendEl.disabled = false;
-    inputEl.readOnly = false;
+try {
+  chatEl.removeEventListener("wheel", stopAutoScroll);
+  chatEl.removeEventListener("touchmove", stopAutoScroll);
+} catch {}
+
+isGenerating = false;
+sendEl.disabled = false;
+inputEl.readOnly = false;
     // 現在フォーカスが当たっていれば外す（キーボードを隠す）
     if (document.activeElement === inputEl) {
       inputEl.blur();

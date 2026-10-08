@@ -970,3 +970,22 @@ body.light #tutorial-overlay {
     left: 320px;
   }
 }
+
+/* ===== ライトモード時のドロワーロゴ影対策 ===== */
+
+body.light #room-drawer {
+  background: var(--bg-chat);
+}
+
+body.light .drawer-branding {
+  background: var(--bg-chat);
+  border-bottom-color: var(--border-light);
+}
+
+body.light .drawer-branding .brand-icon {
+  box-shadow: none;
+}
+
+body.light .drawer-branding .brand-title {
+  filter: none;
+}

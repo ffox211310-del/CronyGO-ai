@@ -925,23 +925,48 @@ body.light #tutorial-overlay {
   }
 }
 
-/* ===== PWA/全画面時のレイアウト崩れ対策 ===== */
+/* ===== PWA対策：テキストボックスを強制で下に戻す ===== */
 
-html, body {
-  overflow: hidden;
-  overscroll-behavior: none;
+/* PWA表示時は高さを安全側に */
+@media (display-mode: standalone) {
+  body {
+    height: 100svh;
+  }
 }
 
-body {
-  height: 100vh;
-  height: 100dvh;
+/* 下部ヒントが表示領域を食うので一旦非表示 */
+.hint {
+  display: none !important;
 }
 
-#chat {
-  min-height: 0;
-  overscroll-behavior: contain;
-}
-
+/* テキストボックスを画面下に固定 */
 #composer {
+  position: fixed !important;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  z-index: 12;
   padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+
+/* チャット欄がテキストボックスの下に潜らないように余白確保 */
+#chat {
+  padding-bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+}
+
+/* PC/タブレット：ドロワー常時表示時の位置調整 */
+@media (min-width: 768px) {
+  #composer {
+    left: 280px;
+    right: 0;
+  }
+}
+
+@media (min-width: 1200px) {
+  #composer {
+    left: 320px;
+  }
 }

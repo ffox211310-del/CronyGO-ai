@@ -924,3 +924,24 @@ body.light #tutorial-overlay {
     opacity: 1;
   }
 }
+
+/* ===== PWA/全画面時のレイアウト崩れ対策 ===== */
+
+html, body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  height: 100vh;
+  height: 100dvh;
+}
+
+#chat {
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+
+#composer {
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}

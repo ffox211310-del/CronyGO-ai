@@ -934,11 +934,6 @@ body.light #tutorial-overlay {
   }
 }
 
-/* 下部ヒントが表示領域を食うので一旦非表示 */
-.hint {
-  display: none !important;
-}
-
 /* テキストボックスを画面下に固定 */
 #composer {
   position: fixed !important;

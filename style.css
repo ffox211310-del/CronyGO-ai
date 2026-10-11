@@ -947,9 +947,10 @@ body.light #tutorial-overlay {
   padding-bottom: calc(10px + env(safe-area-inset-bottom));
 }
 
-/* チャット欄がテキストボックスの下に潜らないように余白確保 */
-#chat {
-  padding-bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+/* ヒント文を復活させ、テキストボックスの真上に置く */
+.hint {
+  display: block;
+  margin-bottom: calc(61px + env(safe-area-inset-bottom));
 }
 
 /* PC/タブレット：ドロワー常時表示時の位置調整 */

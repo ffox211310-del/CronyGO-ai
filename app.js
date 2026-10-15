@@ -1115,39 +1115,37 @@ if (localGgufBtn && localGgufFile) {
       return;
     }
 
-    // ★ここが核心：ローカルファイルをBlob URL化
-    const blobUrl = URL.createObjectURL(file);
-    const fileName = file.name;
-    const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
-    
-    if (localGgufStatus) {
-      localGgufStatus.textContent = `読み込み中: ${fileName} (${fileSizeMB} MB)`;
-      localGgufStatus.style.color = 'var(--accent)';
-    }
+   const fileName = file.name;
+const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
 
-    try {
-      const context_size = parseInt(localStorage.getItem('cronygo_context_size') || 4096);
-      const storedThreads = localStorage.getItem('cronygo_threads') || 'auto';
-      const n_threads = storedThreads === 'auto' ? 'auto' : parseInt(storedThreads);
+if (localGgufStatus) {
+  localGgufStatus.textContent = `読み込み中: ${fileName} (${fileSizeMB} MB)`;
+  localGgufStatus.style.color = 'var(--accent)';
+}
 
-      // engineManager に blob URL を直接渡す
-      await engineManager.load(
-        blobUrl, 
-        (pct, text) => {
-          if (localGgufStatus) {
-            localGgufStatus.textContent = `読み込み中: ${fileName} - ${pct}% ${text}`;
-          }
-        },
-        { context_size, n_threads }
-      );
+try {
+  const context_size = parseInt(localStorage.getItem('cronygo_context_size') || 4096);
+  const storedThreads = localStorage.getItem('cronygo_threads') || 'auto';
+  const n_threads = storedThreads === 'auto' ? 'auto' : parseInt(storedThreads);
 
-      // 成功時のUI更新
+  // blob URLではなくFileそのものを渡す
+  await engineManager.loadLocalFile(
+    file,
+    (pct, text) => {
       if (localGgufStatus) {
-        localGgufStatus.textContent = `✅ 起動完了: ${fileName}`;
-        localGgufStatus.style.color = '#4FD1C5';
+        localGgufStatus.textContent = `読み込み中: ${fileName} - ${pct}% ${text}`;
       }
+    },
+    { context_size, n_threads }
+  );
+
+  // 成功時のUI更新
+  if (localGgufStatus) {
+    localGgufStatus.textContent = `✅ 起動完了: ${fileName}`;
+    localGgufStatus.style.color = '#4FD1C5';
+  }
       
-      currentKey = blobUrl; // 内部状態の更新
+      currentKey = "__local__:" + fileName;
       statusEl.textContent = `Ready: ${fileName}`;
       statusEl.className = "ready";
       inputEl.placeholder = `${fileName} で入力...`;

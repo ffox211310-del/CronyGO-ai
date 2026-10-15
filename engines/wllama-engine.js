@@ -70,7 +70,6 @@ async load(modelKeyOrUrl, onProgress, opts = {}) {
         onProgress?.(pct, `${(loaded/1024/1024).toFixed(1)}MB / ${(total/1024/1024).toFixed(1)}MB`);
       }
     });
-  this.localFile = file;
   }
 
 //生成エラー:1163217991の修整

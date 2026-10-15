@@ -27,21 +27,28 @@ export class WllamaEngine {
     return Math.max(1, Math.min(cores - 2, 8));
   }
 
- async load(modelKeyOrUrl, onProgress, opts = {}) {
-    // Serow-0.5B みたいなキー名が来てもURLに直す
-    let modelUrl = MODELS[modelKeyOrUrl] || modelKeyOrUrl;
+// wllama-engine.js の load メソッド内、バリデーション部分を以下に更新
+async load(modelKeyOrUrl, onProgress, opts = {}) {
+  let modelUrl = MODELS[modelKeyOrUrl] || modelKeyOrUrl;
+  
+  // ★ blob: URL または .gguf を含むかをチェック
+  const isBlob = modelUrl.startsWith('blob:');
+  const isGGUF = modelUrl.toLowerCase().includes('.gguf');
 
-    if (!modelUrl.toLowerCase().includes('.gguf')) {
-      if (modelKeyOrUrl.includes('Serow')) {
-        modelUrl = "https://huggingface.co/WebAIPocket/Serow-Qwen2.5-0.5B-Instruct-gguf/resolve/main/Serow-0.5B.Q4_K_M.gguf";
-      }
+  if (!isBlob && !isGGUF) {
+    // 既存のSerowフォールバック処理は残す
+    if (modelKeyOrUrl.includes('Serow')) {
+      modelUrl = "https://huggingface.co/WebAIPocket/Serow-Qwen2.5-0.5B-Instruct-gguf/resolve/main/Serow-0.5B.Q4_K_M.gguf";
+    } else {
+      throw new Error(`Invalid model URL: ${modelUrl} (GGUFまたはローカルファイルである必要があります)`);
     }
+  }
 
-    console.log(`[WllamaEngine] loading: ${modelKeyOrUrl} -> ${modelUrl}`);
+  console.log(`[WllamaEngine] loading: ${modelKeyOrUrl} -> ${modelUrl}`);
+  
+  // ...以降の this.wllama = new Wllama(...) はそのまま...
 
-    if (!modelUrl.toLowerCase().includes('.gguf')) {
-      throw new Error(`Invalid model URL: ${modelUrl}`);
-    }
+  
 
     if (this.wllama) {
       try { await this.wllama.exit(); } catch {}

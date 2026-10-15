@@ -14,8 +14,10 @@ export const MODELS = {
   "Serow-0.5B": "https://huggingface.co/WebAIPocket/Serow-Qwen2.5-0.5B-Instruct-gguf/resolve/main/Serow-0.5B.Q4_K_M.gguf",
 };
 
+// models.js の isGGUFModel 関数を以下に更新
 export function isGGUFModel(modelId) {
   if (!modelId) return false;
   const s = modelId.toLowerCase();
-  return s.endsWith('.gguf') || s.includes('.gguf') || s.startsWith('http');
+  // ★ blob: で始まるURL（ローカルファイル）もGGUF扱いとしてWllamaに回す
+  return s.endsWith('.gguf') || s.includes('.gguf') || s.startsWith('http') || s.startsWith('blob:');
 }

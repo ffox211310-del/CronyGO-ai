@@ -756,18 +756,25 @@ async function loadModel(key, isReload = false) {
     const storedThreads = localStorage.getItem('cronygo_threads') || 'auto';
     const n_threads = storedThreads === 'auto' ? 'auto' : parseInt(storedThreads);
 
-await engineManager.load(
-  key,
-  (pct, text) => {
-    const txt = isReload
-      ? `積み直し ${pct}% ${text}`
-      : `${pct}% ${text}`;
+if (key.startsWith("__local__:")) {
+  // ローカルモデルは保持しているFileから積み直す
+  const file = engineManager.engines.wllama.localFile;
+  if (!file) throw new Error("ローカルファイルが見つかりません。選び直してください");
+  await engineManager.loadLocalFile(file, null, { context_size, n_threads });
+} else {
+  await engineManager.load(
+    key,
+    (pct, text) => {
+      const txt = isReload
+        ? `積み直し ${pct}% ${text}`
+        : `${pct}% ${text}`;
 
-    updateLoadingText(txt);
-    progressBar.style.width = `${pct}%`;
-  },
-  { context_size, n_threads }
-);
+      updateLoadingText(txt);
+      progressBar.style.width = `${pct}%`;
+    },
+    { context_size, n_threads }
+  );
+}
 
     currentKey = key;
     statusEl.textContent = isReload? `再起動完了 ${key}` : `Ready ${key} [${engineManager.getCurrentId()}]`;

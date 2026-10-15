@@ -18,7 +18,7 @@ WebLLM is used as the browser-side inference engine for running supported langua
 2. wllama
 
 Package: "@wllama/wllama"
-Version: "3.5.1"
+Version: "3.2.3"
 License: MIT License
 Copyright: ngxson and contributors (wllama), ggerganov and contributors (llama.cpp)
 

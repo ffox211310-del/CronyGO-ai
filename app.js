@@ -1093,81 +1093,144 @@ selectEl.addEventListener("change", () => {
 });
 dlBtn.addEventListener("click", () => { const key = selectEl.value; if (currentKey === key && engineManager.isReady()) return; loadModel(key); });
 statusEl.textContent = "未DL";
-
-//ここからかえてるーーーーーーーーーーー
-// app.js の下部、イベントリスナーをまとめているあたりに追加
+//ここから変えたーーーー
 const localGgufBtn = document.getElementById('local-gguf-btn');
 const localGgufFile = document.getElementById('local-gguf-file');
 const localGgufStatus = document.getElementById('local-gguf-status');
+const localSavedList = document.getElementById('local-saved-list');
 
+// ---------- ブラウザ内に保存（OPFS） ----------
+async function getModelDir() {
+  const root = await navigator.storage.getDirectory();
+  return root.getDirectoryHandle('models', { create: true });
+}
+async function saveLocalModel(file) {
+  try { await navigator.storage.persist?.(); } catch {}
+  const dir = await getModelDir();
+  const fh = await dir.getFileHandle(file.name, { create: true });
+  const w = await fh.createWritable();
+  await file.stream().pipeTo(w);
+}
+async function listLocalModels() {
+  const dir = await getModelDir();
+  const names = [];
+  for await (const [name] of dir.entries()) names.push(name);
+  return names;
+}
+async function getLocalModel(name) {
+  const dir = await getModelDir();
+  return (await dir.getFileHandle(name)).getFile();
+}
+async function deleteLocalModel(name) {
+  const dir = await getModelDir();
+  await dir.removeEntry(name);
+}
+
+// ---------- 保存済み一覧の表示 ----------
+async function renderSavedList() {
+  if (!localSavedList) return;
+  let names = [];
+  try { names = await listLocalModels(); } catch { return; }
+  if (!names.length) {
+    localSavedList.innerHTML = '<span style="font-size:11px;opacity:.5;">保存済みモデルなし</span>';
+    return;
+  }
+  localSavedList.innerHTML = names.map(n => `
+    <div style="display:flex;align-items:center;gap:6px;background:#1a1a1a;padding:6px 8px;border-radius:6px;font-size:11px;margin-top:4px;">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(n)}</span>
+      <button data-run="${escapeHtml(n)}" style="border:1px solid #4FD1C5;background:transparent;color:#4FD1C5;border-radius:4px;padding:2px 8px;">起動</button>
+      <button data-del="${escapeHtml(n)}" style="border:1px solid #444;background:transparent;color:#f55;border-radius:4px;padding:2px 8px;">削除</button>
+    </div>
+  `).join('');
+}
+
+// ---------- 読み込み本体（選択ファイルも保存済みも共通） ----------
+async function startLocalModel(file, saveToBrowser) {
+  const fileName = file.name;
+  const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
+
+  if (localGgufStatus) {
+    localGgufStatus.textContent = `読み込み中: ${fileName} (${fileSizeMB} MB) 展開中...`;
+    localGgufStatus.style.color = 'var(--accent)';
+  }
+  inputEl.disabled = true;
+  sendEl.disabled = true;
+
+  try {
+    const context_size = parseInt(localStorage.getItem('cronygo_context_size') || 4096);
+    const storedThreads = localStorage.getItem('cronygo_threads') || 'auto';
+    const n_threads = storedThreads === 'auto' ? 'auto' : parseInt(storedThreads);
+
+    await engineManager.loadLocalFile(file, null, { context_size, n_threads });
+
+    // 新しく選んだファイルだけ、ブラウザに保存
+    if (saveToBrowser) {
+      if (localGgufStatus) localGgufStatus.textContent = `保存中: ${fileName}`;
+      try { await saveLocalModel(file); }
+      catch (e) { console.warn('保存失敗', e); }
+    }
+
+    currentKey = "__local__:" + fileName;
+    statusEl.textContent = `Ready: ${fileName}`;
+    statusEl.className = "ready";
+    inputEl.placeholder = `${fileName} で入力...`;
+
+    // ★ テキストボックス復活
+    inputEl.disabled = false;
+    sendEl.disabled = false;
+    dlBtn.textContent = "起動済み";
+    dlBtn.classList.add("ready");
+    progressBar.style.opacity = "0";
+
+    if (localGgufStatus) {
+      localGgufStatus.textContent = `✅ 起動完了: ${fileName}`;
+      localGgufStatus.style.color = '#4FD1C5';
+    }
+    hideFirstLoadingUI();
+    addMessage("assistant", `ローカルモデル「${fileName}」の読み込みが完了しました！`);
+    renderSavedList();
+  } catch (err) {
+    console.error(err);
+    if (localGgufStatus) {
+      localGgufStatus.textContent = `❌ エラー: ${err.message}`;
+      localGgufStatus.style.color = '#ff4444';
+    }
+    alert(`読み込みに失敗しました: ${err.message}\nメモリ不足の可能性があります。`);
+  }
+}
+
+// ---------- ボタン類 ----------
 if (localGgufBtn && localGgufFile) {
-  localGgufBtn.addEventListener('click', () => {
-    localGgufFile.click();
-  });
+  localGgufBtn.addEventListener('click', () => localGgufFile.click());
 
   localGgufFile.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     if (!file.name.toLowerCase().endsWith('.gguf')) {
       alert('GGUFファイルを選択してください');
       localGgufFile.value = '';
       return;
     }
-
-   const fileName = file.name;
-const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
-
-if (localGgufStatus) {
-  localGgufStatus.textContent = `読み込み中: ${fileName} (${fileSizeMB} MB)`;
-  localGgufStatus.style.color = 'var(--accent)';
-}
-
-try {
-  const context_size = parseInt(localStorage.getItem('cronygo_context_size') || 4096);
-  const storedThreads = localStorage.getItem('cronygo_threads') || 'auto';
-  const n_threads = storedThreads === 'auto' ? 'auto' : parseInt(storedThreads);
-
-  // blob URLではなくFileそのものを渡す
-  await engineManager.loadLocalFile(
-    file,
-    (pct, text) => {
-      if (localGgufStatus) {
-        localGgufStatus.textContent = `読み込み中: ${fileName} (展開中...) `;
-      }
-    },
-    { context_size, n_threads }
-  );
-
-  // 成功時のUI更新
-  if (localGgufStatus) {
-    localGgufStatus.textContent = `✅ 起動完了: ${fileName}`;
-    localGgufStatus.style.color = '#4FD1C5';
-  }
-      
-      currentKey = "__local__:" + fileName;
-      statusEl.textContent = `Ready: ${fileName}`;
-      statusEl.className = "ready";
-      inputEl.placeholder = `${fileName} で入力...`;
-      
-      hideFirstLoadingUI();
-      addMessage("assistant", `ローカルモデル「${fileName}」の読み込みが完了しました！`);
-      dbg(`Local model ${fileName} loaded successfully`);
-
-    } catch (err) {
-      console.error(err);
-      if (localGgufStatus) {
-        localGgufStatus.textContent = `❌ エラー: ${err.message}`;
-        localGgufStatus.style.color = '#ff4444';
-      }
-      alert(`読み込みに失敗しました: ${err.message}\nメモリ不足の可能性があります。`);
-    } finally {
-      // 同じファイルを再度選択できるようにリセット
-      localGgufFile.value = '';
-    }
+    await startLocalModel(file, true);
+    localGgufFile.value = '';
   });
 }
-//ここまで変えてるーーーーーーーーー
+
+localSavedList?.addEventListener('click', async (e) => {
+  const run = e.target.closest('button[data-run]');
+  const del = e.target.closest('button[data-del]');
+  if (run) {
+    const file = await getLocalModel(run.dataset.run);
+    await startLocalModel(file, false);
+  } else if (del) {
+    if (!confirm(`「${del.dataset.del}」を削除しますか？`)) return;
+    await deleteLocalModel(del.dataset.del);
+    renderSavedList();
+  }
+});
+
+renderSavedList();
+//ここまで変えたーーーーーー
 function openSettings() { settingsPanel.classList.add("show"); settingsOverlay.classList.add("show"); }
 function closeSettings() { settingsPanel.classList.remove("show"); settingsOverlay.classList.remove("show"); }
 settingsBtn.addEventListener("click", openSettings);

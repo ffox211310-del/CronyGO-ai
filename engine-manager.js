@@ -63,13 +63,14 @@ class EngineManager {
   getCurrentId() {
     return this.current?.id || null;
   }
-}
-
-export const engineManager = new EngineManager();
-
-async loadLocalFile(file, onProgress, opts = {}) {
+  async loadLocalFile(file, onProgress, opts = {}) {
   if (this.current) { await this.current.unload(); this.current = null; }
   this.current = this.engines.wllama;
   await this.current.loadFromFile(file, onProgress, opts);
   this.currentKey = file.name;
+  }
 }
+
+export const engineManager = new EngineManager();
+
+

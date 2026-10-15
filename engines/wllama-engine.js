@@ -26,8 +26,6 @@ export class WllamaEngine {
     // 自動: 2コア残す（スマホのbig.LITTLE対策）、上限8
     return Math.max(1, Math.min(cores - 2, 8));
   }
-
-// wllama-engine.js の load メソッド内、バリデーション部分を以下に更新
 async load(modelKeyOrUrl, onProgress, opts = {}) {
   let modelUrl = MODELS[modelKeyOrUrl] || modelKeyOrUrl;
   
@@ -46,7 +44,6 @@ async load(modelKeyOrUrl, onProgress, opts = {}) {
 
   console.log(`[WllamaEngine] loading: ${modelKeyOrUrl} -> ${modelUrl}`);
   
-  // ...以降の this.wllama = new Wllama(...) はそのまま...
 
   
 

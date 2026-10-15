@@ -1094,6 +1094,82 @@ selectEl.addEventListener("change", () => {
 dlBtn.addEventListener("click", () => { const key = selectEl.value; if (currentKey === key && engineManager.isReady()) return; loadModel(key); });
 statusEl.textContent = "未DL";
 
+//ここからかえてるーーーーーーーーーーー
+// app.js の下部、イベントリスナーをまとめているあたりに追加
+const localGgufBtn = document.getElementById('local-gguf-btn');
+const localGgufFile = document.getElementById('local-gguf-file');
+const localGgufStatus = document.getElementById('local-gguf-status');
+
+if (localGgufBtn && localGgufFile) {
+  localGgufBtn.addEventListener('click', () => {
+    localGgufFile.click();
+  });
+
+  localGgufFile.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.gguf')) {
+      alert('GGUFファイルを選択してください');
+      localGgufFile.value = '';
+      return;
+    }
+
+    // ★ここが核心：ローカルファイルをBlob URL化
+    const blobUrl = URL.createObjectURL(file);
+    const fileName = file.name;
+    const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
+    
+    if (localGgufStatus) {
+      localGgufStatus.textContent = `読み込み中: ${fileName} (${fileSizeMB} MB)`;
+      localGgufStatus.style.color = 'var(--accent)';
+    }
+
+    try {
+      const context_size = parseInt(localStorage.getItem('cronygo_context_size') || 4096);
+      const storedThreads = localStorage.getItem('cronygo_threads') || 'auto';
+      const n_threads = storedThreads === 'auto' ? 'auto' : parseInt(storedThreads);
+
+      // engineManager に blob URL を直接渡す
+      await engineManager.load(
+        blobUrl, 
+        (pct, text) => {
+          if (localGgufStatus) {
+            localGgufStatus.textContent = `読み込み中: ${fileName} - ${pct}% ${text}`;
+          }
+        },
+        { context_size, n_threads }
+      );
+
+      // 成功時のUI更新
+      if (localGgufStatus) {
+        localGgufStatus.textContent = `✅ 起動完了: ${fileName}`;
+        localGgufStatus.style.color = '#4FD1C5';
+      }
+      
+      currentKey = blobUrl; // 内部状態の更新
+      statusEl.textContent = `Ready: ${fileName}`;
+      statusEl.className = "ready";
+      inputEl.placeholder = `${fileName} で入力...`;
+      
+      hideFirstLoadingUI();
+      addMessage("assistant", `ローカルモデル「${fileName}」の読み込みが完了しました！`);
+      dbg(`Local model ${fileName} loaded successfully`);
+
+    } catch (err) {
+      console.error(err);
+      if (localGgufStatus) {
+        localGgufStatus.textContent = `❌ エラー: ${err.message}`;
+        localGgufStatus.style.color = '#ff4444';
+      }
+      alert(`読み込みに失敗しました: ${err.message}\nメモリ不足の可能性があります。`);
+    } finally {
+      // 同じファイルを再度選択できるようにリセット
+      localGgufFile.value = '';
+    }
+  });
+}
+//ここまで変えてるーーーーーーーーー
 function openSettings() { settingsPanel.classList.add("show"); settingsOverlay.classList.add("show"); }
 function closeSettings() { settingsPanel.classList.remove("show"); settingsOverlay.classList.remove("show"); }
 settingsBtn.addEventListener("click", openSettings);

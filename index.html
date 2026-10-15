@@ -244,6 +244,23 @@
 </div>
 </div>
 
+<div class="settings-group">
+  <button class="settings-group-btn">
+    ローカルモデル (GGUF) <span class="arrow">▶</span>
+  </button>
+  <div class="settings-group-content">
+    <div class="settings-desc" style="margin-bottom:8px;">
+      サーバーにアップロードせず、端末内のGGUFファイルを直接読み込みます。<br>
+      <span style="color:var(--accent);">※大容量モデルはメモリ不足でタブが落ちる場合があります</span>
+    </div>
+    <input type="file" id="local-gguf-file" accept=".gguf" style="display:none;">
+    <button id="local-gguf-btn" class="primary-btn" style="width:100%;">
+      📁 GGUFファイルを選択して読み込む
+    </button>
+    <div id="local-gguf-status" class="settings-desc" style="margin-top:8px; min-height:1.5em;"></div>
+  </div>
+</div>
+   
   <div class="settings-group" id="group-custom">
     <button class="settings-group-btn" data-target="custom">
       <span>カスタム</span><span class="arrow">›</span>

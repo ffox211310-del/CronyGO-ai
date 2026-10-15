@@ -116,4 +116,19 @@ async unload() {
     this.wllama = null;
   }
 }
+  async loadFromFile(file, onProgress, opts = {}) {
+  if (this.wllama) { try { await this.wllama.exit(); } catch {} }
+  this.wllama = new Wllama({ default: this.WASM_URL });
+
+  const nThreads = this.resolveThreads(opts.n_threads);
+  onProgress?.(0, `${(file.size/1024/1024).toFixed(1)}MB 読み込み中`);
+
+  await this.wllama.loadModel([file], {
+    n_ctx: opts.context_size ?? 4096,
+    n_gpu_layers: 0,
+    n_threads: nThreads,
+  });
+  this.localFile = file; // 積み直し用に保持
+  onProgress?.(100, "完了");
+}
 }

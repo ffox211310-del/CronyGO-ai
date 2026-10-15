@@ -1133,7 +1133,7 @@ try {
     file,
     (pct, text) => {
       if (localGgufStatus) {
-        localGgufStatus.textContent = `読み込み中: ${fileName} - ${pct}% ${text}`;
+        localGgufStatus.textContent = `読み込み中: ${fileName} (展開中...) `;
       }
     },
     { context_size, n_threads }

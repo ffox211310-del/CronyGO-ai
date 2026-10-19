@@ -12,7 +12,7 @@ export const MODELS = {
   "llm-jp-3-1.8B": "https://huggingface.co/mmnga/llm-jp-3-1.8b-instruct3-gguf/resolve/main/llm-jp-3-1.8b-instruct3-Q4_K_M.gguf",
   "LFM-1.2BJP": "https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-GGUF/resolve/main/LFM2.5-1.2B-JP-Q4_K_M.gguf",
   //"Serow-0.5B": "https://huggingface.co/WebAIPocket/Serow-Qwen2.5-0.5B-Instruct-gguf/resolve/main/Serow-0.5B.Q4_K_M.gguf",
-  "Diffenion-Mk.1": "https://huggingface.co/WebAIPocket/Diffenion-Mk.1-Qwen2.5-1.5B-gguf/blob/main/Diffenion-Mk1v6-1.5B.Q6_K.gguf",
+  "Diffenion-Mk.1": "https://huggingface.co/WebAIPocket/Diffenion-Mk.1-Qwen2.5-1.5B-gguf/resolve/main/Diffenion-Mk1v6-1.5B.Q6_K.gguf",
 };
 
 export function isGGUFModel(modelId) {

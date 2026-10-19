@@ -1323,7 +1323,7 @@ const MP_INFO = {
   "DeepSeek-1.5B":  { name: "DeepSeek 1.5B",  desc: "DeepSeekR1で蒸留したQwen" },
   "llm-jp-3-1.8B": { name: "llm.jp 1.8B", desc: "国立情報学研究所(NII)によって作成。" },
   "LFM-1.2BJP":  { name: "LFM 1.2BJP",  desc: "日本語ヨシ、スピードヨシ" },
-  "Serow-0.5B": { name: "Serow 0.5B",     desc: "WebAIPocket製のβ試験型" },
+  //"Serow-0.5B": { name: "Serow 0.5B",     desc: "WebAIPocket製のβ試験型" },
 };
 
 (() => {

@@ -4,7 +4,7 @@ export const MODELS = {
   "Q3B": "Qwen2.5-3B-Instruct-q4f16_1-MLC",
   "Q7B": "Qwen2.5-7B-Instruct-q4f16_1-MLC",
   "Sm135M": "SmolLM2-135M-Instruct-q0f16-MLC",
-  "Llama1B": "Llama3.2-1B-Instruct-q4f16_1-MLC",
+  "Llama1B": "Llama-3.2-1B-Instruct-q4f16_1-MLC",
   "G2B-jpn": "gemma-2-2b-jpn-it-q4f16_1-MLC",
   "G2B-jpnHv": "gemma-2-2b-jpn-it-q4f32_1-MLC",
   "Smollm-135M": "https://huggingface.co/unsloth/SmolLM2-135M-Instruct-GGUF/resolve/main/SmolLM2-135M-Instruct-Q4_K_M.gguf",

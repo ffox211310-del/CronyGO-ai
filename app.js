@@ -2,7 +2,7 @@ import { VoiceManager } from "./voice.js";
 import { MODELS } from "./models.js";
 import { engineManager } from "./engine-manager.js";
 
-const DEFAULT_SYSTEM_PROMPT = "あなたはCronyGOです。日本語で簡素に答えてください。";
+const DEFAULT_SYSTEM_PROMPT = "あなたは様々な質問に答えるアシスタントです。簡素かつ丁寧に答えなさい。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
 const LS_THEME_KEY = "cronygo_theme";
 const LS_DEV_CONSOLE_KEY = "cronygo_dev_console";

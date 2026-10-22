@@ -938,14 +938,20 @@ requestAnimationFrame(() => {
   // chatEl.scrollTop = maxScroll;
 });
   isGenerating = true; sendEl.disabled = true;
-  let full = "";
-  let speakBuffer = "";
-  const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
-  try {
-    
-    const temp = parseFloat(
-  localStorage.getItem('cronygo_temp') || 0.7
-);
+let full = "";
+let speakBuffer = "";
+const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
+try {
+  // ===== UX改善: GPU(WebLLM)負荷前の描画完了待ち =====
+  // スマホでのキーボード格納やスクロール、待機UIの描画をブラウザに確実に完了させる
+  if (engineManager.getCurrentId() === 'mlc') {
+    await new Promise(resolve => setTimeout(resolve, 800)); // 0.8秒待つ
+  }
+  // ===================================================
+
+  const temp = parseFloat(
+    localStorage.getItem('cronygo_temp') || 0.7
+  );
 
 const max_tokens = parseInt(
   localStorage.getItem('cronygo_max_tokens') || 1024

@@ -1315,6 +1315,7 @@ const MP_INFO = {
   "Q3B":        { name: "Qwen 3B",        desc: "端末によっては厳しい" },
   "Q7B":        { name: "Qwen 7B",        desc: "PC推奨。スマホは快適ではないかも" },
   "Sm135M":     { name: "Smollm 135M",    desc: "WebLLMの動作テスト" },
+  "Llama1B":        { name: "Llama 1B",        desc: "Meta製の英語強めモデル" },
   "G2B-jpn":    { name: "Gemma JP 2B",    desc: "日本語に強い。重さはQwen1.5Bクラス" },
   "G2B-jpnHv":  { name: "Gemma JP 2B Hv", desc: "上記のq4f32版。少し重い" },
   //ここからGGUF

@@ -43,7 +43,7 @@ HTML・CSS・JSのみを使用しているので、Web上で完結します。�
 
 ## 制作概要
 
-- GitHub Pages で動作確認
+- NewMainブランチでテストしています。
 - Vercel でデプロイ＆正式なURLを発行
 
 > ※ **NewMain** ブランチは試験型です。動作確認済み安定版URLを、**Release** ブランチから Vercel にデプロイしています。  

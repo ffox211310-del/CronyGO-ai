@@ -215,6 +215,22 @@ body.light #loading-icon-light { display: block; }
   white-space: pre-wrap;
   max-width: 80%;
 }
+/* ダウンロード中の注意書き */
+#loading-notice {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffb84d;          /* 注意感のあるオレンジ */
+  text-align: center;
+  line-height: 1.5;
+  max-width: 90%;
+  margin-bottom: 8px;      /* アイコンとの間隔 */
+  padding: 0 12px;
+}
+
+/* ライトモード時も読みやすく */
+body.light #loading-notice {
+  color: #d97706;
+}
 #chat.is-first-loading .msg { display: none; }
 
 #composer {

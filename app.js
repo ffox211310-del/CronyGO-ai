@@ -1,7 +1,6 @@
 import { VoiceManager } from "./voice.js";
 import { MODELS } from "./models.js";
 import { engineManager } from "./engine-manager.js";
-import { EVENT_ICONS } from "./events.js";
 
 const DEFAULT_SYSTEM_PROMPT = "あなたは様々な質問に答えるアシスタントです。簡素かつ丁寧に答えなさい。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
@@ -1441,115 +1440,24 @@ tutorialStartBtn?.addEventListener("click", () => {
 showTutorialIfFirstVisit();
 
 // ==========================================
-// イベント・アイコン管理システム (v2)
+// イベント・アイコン管理システム (v3 - アドオン版)
 // ==========================================
+import { EVENT_ICONS } from "./events.js";
 
 const LS_UNLOCKED_ICONS = 'cronygo_unlocked_icons';
 const LS_CURRENT_ICON = 'cronygo_current_icon';
 
-// 所持アイコンリスト取得
-function getUnlockedIcons() {
-    try { return JSON.parse(localStorage.getItem(LS_UNLOCKED_ICONS) || "[]"); }
-    catch { return []; }
-}
-function saveUnlockedIcons(list) {
-    try { localStorage.setItem(LS_UNLOCKED_ICONS, JSON.stringify(list)); } catch {}
-}
-
-// 現在適用中のアイコンID取得
-function getCurrentIconId() {
-    return localStorage.getItem(LS_CURRENT_ICON) || 'default';
-}
-function setCurrentIconId(id) {
-    localStorage.setItem(LS_CURRENT_ICON, id);
-}
-
-// アイコンパス解決ヘルパー
+function getUnlockedIcons() { try { return JSON.parse(localStorage.getItem(LS_UNLOCKED_ICONS) || "[]"); } catch { return []; } }
+function saveUnlockedIcons(list) { try { localStorage.setItem(LS_UNLOCKED_ICONS, JSON.stringify(list)); } catch {} }
+function getCurrentIconId() { return localStorage.getItem(LS_CURRENT_ICON) || 'default'; }
+function setCurrentIconId(id) { localStorage.setItem(LS_CURRENT_ICON, id); }
 function getIconSrc(iconId) {
     if (iconId === 'default') return "./assets/CronyGOicon.jpg";
     const ev = EVENT_ICONS.find(e => e.id === iconId);
     return ev ? ev.img : "./assets/CronyGOicon.jpg";
 }
+function getActiveEvent() { return EVENT_ICONS.find(e => e.active === true); }
 
-// 現在アクティブなイベントを取得 (複数ある場合は先頭のものを優先)
-function getActiveEvent() {
-    return EVENT_ICONS.find(e => e.active === true);
-}
-
-// 1. ロード画面へのイベントアイコン注入 & クリック処理
-function setupEventIcon() {
-    const loadingView = document.getElementById('loading-view');
-    if (!loadingView) return;
-
-    // ターゲット画像要素の確保 (なければ生成)
-    let iconEl = loadingView.querySelector('.app-icon-target');
-    if (!iconEl) {
-        const existingImg = loadingView.querySelector('img.loading-icon');
-        if (existingImg) {
-            iconEl = existingImg;
-            iconEl.classList.add('app-icon-target');
-            // 既存のダーク/ライト切り替えロジックと干渉しないようクラスを付与
-            iconEl.classList.remove('loading-icon'); 
-        } else {
-            iconEl = document.createElement('img');
-            iconEl.className = 'app-icon-target loading-icon';
-            iconEl.style.cssText = 'width:200px; height:200px; object-fit:contain; border-radius:36px; box-shadow: 0 0 45px 18px var(--bg, #0a0a0a);';
-            const textEl = document.getElementById('loading-text');
-            if (textEl) loadingView.insertBefore(iconEl, textEl);
-            else loadingView.appendChild(iconEl);
-        }
-    }
-
-    const activeEvent = getActiveEvent();
-    const unlocked = getUnlockedIcons();
-    const currentSetting = getCurrentIconId();
-
-    if (activeEvent) {
-        // 【イベント開催中】
-        // 元のダーク/ライト用アイコンは隠す
-        document.querySelectorAll('#loading-icon-dark, #loading-icon-light').forEach(el => el.style.display = 'none');
-        
-        iconEl.src = activeEvent.img;
-        iconEl.style.display = 'block';
-        iconEl.style.cursor = 'pointer';
-        
-        // クリックイベント
-        iconEl.onclick = () => {
-            if (!unlocked.includes(activeEvent.id)) {
-                // 初回発見
-                unlocked.push(activeEvent.id);
-                saveUnlockedIcons(unlocked);
-                showToast(`🎉 ${activeEvent.name}アイコンを発見しました！`);
-                
-                // 演出
-                iconEl.animate([
-                    { transform: 'scale(1) rotate(0deg)' },
-                    { transform: 'scale(1.2) rotate(10deg)' },
-                    { transform: 'scale(1) rotate(0deg)' }
-                ], { duration: 600, easing: 'ease-out' });
-                
-                // 発見後、即座に適用するかはユーザーの自由（今回は設定から変えるスタイル）
-            } else {
-                // 発見済み
-                showToast(`🎃 ${activeEvent.name}アイコンはすでに発見済みです`);
-            }
-        };
-    } else {
-        // 【イベントなしモード (期間外)】
-        // 元のダーク/ライト用アイコンを復活させる
-        const isLight = document.body.classList.contains('light');
-        const darkEl = document.getElementById('loading-icon-dark');
-        const lightEl = document.getElementById('loading-icon-light');
-        if (darkEl) darkEl.style.display = isLight ? 'none' : 'block';
-        if (lightEl) lightEl.style.display = isLight ? 'block' : 'none';
-
-        // app-icon-target (イベント用) は隠す
-        iconEl.style.display = 'none';
-        iconEl.onclick = null;
-    }
-}
-
-// トースト通知
 function showToast(msg) {
     const toast = document.createElement('div');
     toast.textContent = msg;
@@ -1557,55 +1465,79 @@ function showToast(msg) {
         position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
         background: rgba(0,0,0,0.9); color: #fff; padding: 12px 24px;
         border-radius: 20px; z-index: 99999; font-size: 14px; font-weight: bold;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events: none;
-        border: 1px solid var(--accent);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events: none; border: 1px solid var(--accent);
         animation: fadeInOut 3s forwards;
     `;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }
-
-// CSSアニメーション定義
 if (!document.getElementById('toast-styles')) {
-    const style = document.createElement('style');
-    style.id = 'toast-styles';
-    style.textContent = `
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translate(-50%, 20px); }
-            15% { opacity: 1; transform: translate(-50%, 0); }
-            85% { opacity: 1; transform: translate(-50%, 0); }
-            100% { opacity: 0; transform: translate(-50%, -20px); }
-        }
-    `;
+    const style = document.createElement('style'); style.id = 'toast-styles';
+    style.textContent = `@keyframes fadeInOut { 0% { opacity: 0; transform: translate(-50%, 20px); } 15%, 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -20px); } }`;
     document.head.appendChild(style);
 }
 
-// 2. 設定UIへの追加
+// 1. ロード画面へのイベントアイコン注入
+function setupEventIcon() {
+    const loadingView = document.getElementById('loading-view');
+    if (!loadingView) return;
+
+    let iconEl = loadingView.querySelector('.app-icon-target');
+    if (!iconEl) {
+        iconEl = document.createElement('img');
+        iconEl.className = 'app-icon-target';
+        iconEl.style.cssText = 'width:200px; height:200px; object-fit:contain; border-radius:36px; box-shadow: 0 0 45px 18px var(--bg, #0a0a0a); display:none; cursor:pointer;';
+        const textEl = document.getElementById('loading-text');
+        if (textEl) loadingView.insertBefore(iconEl, textEl); else loadingView.appendChild(iconEl);
+    }
+
+    const activeEvent = getActiveEvent();
+    const unlocked = getUnlockedIcons();
+
+    if (activeEvent) {
+        document.querySelectorAll('#loading-icon-dark, #loading-icon-light').forEach(el => el.style.display = 'none');
+        iconEl.src = activeEvent.img;
+        iconEl.style.display = 'block';
+        iconEl.onclick = () => {
+            if (!unlocked.includes(activeEvent.id)) {
+                unlocked.push(activeEvent.id);
+                saveUnlockedIcons(unlocked);
+                showToast(`🎉 ${activeEvent.name}アイコンを発見しました！`);
+                iconEl.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.2) rotate(10deg)' }, { transform: 'scale(1)' }], { duration: 600 });
+            } else {
+                showToast(`🎃 ${activeEvent.name}アイコンはすでに発見済みです`);
+            }
+        };
+    } else {
+        const isLight = document.body.classList.contains('light');
+        const darkEl = document.getElementById('loading-icon-dark');
+        const lightEl = document.getElementById('loading-icon-light');
+        if (darkEl) darkEl.style.display = isLight ? 'none' : 'block';
+        if (lightEl) lightEl.style.display = isLight ? 'block' : 'none';
+        iconEl.style.display = 'none';
+        iconEl.onclick = null;
+    }
+}
+
+// 2. 設定UIへの注入
 function injectIconSettings() {
     const panel = document.getElementById('settings-panel');
     if (!panel || document.getElementById('icon-settings-section')) return;
 
-    // 「カスタム」グループの中を探すか、なければ末尾に追加
-    let customGroup = Array.from(panel.querySelectorAll('.settings-group-title')).find(el => el.textContent.includes('カスタム'));
-    let targetContainer = customGroup ? customGroup.nextElementSibling : panel;
+    // ★修正: ID 'group-custom' の中の '.settings-group-content' を正確に取得
+    const customGroupContent = document.querySelector('#group-custom .settings-group-content');
+    if (!customGroupContent) return;
 
     const section = document.createElement('div');
     section.id = 'icon-settings-section';
     section.className = 'settings-section';
     section.style.marginTop = '20px';
     section.innerHTML = `
-        <div class="settings-label">📸 アイコン変更</div>
+        <label class="settings-label">📸 アイコン変更</label>
         <div class="settings-desc">イベントで発見したアイコンを適用できます。</div>
         <div id="icon-options" style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;"></div>
     `;
-    
-    // カスタムグループの中に入れる
-    if (customGroup && customGroup.parentElement) {
-         customGroup.parentElement.appendChild(section);
-    } else {
-         panel.querySelector('.settings-body').appendChild(section);
-    }
-    
+    customGroupContent.appendChild(section);
     renderIconOptions();
 }
 
@@ -1613,77 +1545,61 @@ function renderIconOptions() {
     const container = document.getElementById('icon-options');
     if (!container) return;
     container.innerHTML = '';
-
     const current = getCurrentIconId();
     const unlocked = getUnlockedIcons();
 
-    // デフォルトボタン
     container.appendChild(createIconBtn('default', 'デフォルト', getIconSrc('default'), current));
-
-    // イベントアイコン (所持しているもののみ)
     EVENT_ICONS.forEach(ev => {
-        if (unlocked.includes(ev.id)) {
-            container.appendChild(createIconBtn(ev.id, ev.name, ev.img, current));
-        }
+        if (unlocked.includes(ev.id)) container.appendChild(createIconBtn(ev.id, ev.name, ev.img, current));
     });
 }
 
 function createIconBtn(id, label, src, currentId) {
     const btn = document.createElement('button');
-    btn.className = 'theme-opt'; // 既存のテーマ選択ボタンとデザインを統一
-    btn.style.cssText = `
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        width: 80px; height: 90px; padding: 8px; border-radius: 12px;
-        border: 1px solid var(--border-light); background: var(--bg-input); color: var(--text);
-        cursor: pointer; transition: all 0.2s;
-    `;
-    if (id === currentId) {
-        btn.style.borderColor = 'var(--accent)';
-        btn.style.color = 'var(--accent)';
-        btn.style.fontWeight = '600';
-    }
-    
-    btn.innerHTML = `
-        <img src="${src}" style="width:45px; height:45px; object-fit:contain; display:block; margin-bottom:6px; border-radius:8px;">
-        <span style="font-size:11px;">${label}</span>
-    `;
+    btn.className = 'theme-opt';
+    btn.style.cssText = `display:flex; flex-direction:column; align-items:center; justify-content:center; width:80px; height:90px; padding:8px; border-radius:12px; border:1px solid var(--border-light); background:var(--bg-input); color:var(--text); cursor:pointer;`;
+    if (id === currentId) { btn.style.borderColor = 'var(--accent)'; btn.style.color = 'var(--accent)'; }
+    btn.innerHTML = `<img src="${src}" style="width:45px; height:45px; object-fit:contain; margin-bottom:6px; border-radius:8px;"><span style="font-size:11px;">${label}</span>`;
     btn.onclick = () => {
         setCurrentIconId(id);
         renderIconOptions();
-        applyIconGlobal(); // 全体に反映
+        document.querySelectorAll('.pending-icon').forEach(el => el.src = getIconSrc(id));
         showToast('アイコンを変更しました');
     };
     return btn;
 }
 
-// 3. グローバル適用 (ロード画面 & 生成中アイコン)
-function applyIconGlobal() {
-    setupEventIcon(); // ロード画面更新
-    
-    // 既存の生成中アイコン(pending)のsrcも書き換える
-    document.querySelectorAll('.pending-icon').forEach(el => {
-        el.src = getIconSrc(getCurrentIconId());
+// ==========================================
+// フック (MutationObserverによる安全な割り込み)
+// ==========================================
+
+// 設定パネルが開かれたのを監視して注入
+const settingsPanel = document.getElementById('settings-panel');
+if (settingsPanel) {
+    const observer = new MutationObserver(() => {
+        if (settingsPanel.classList.contains('show')) injectIconSettings();
     });
+    observer.observe(settingsPanel, { attributes: true, attributeFilter: ['class'] });
 }
 
-// フック
+// 生成中アイコン(pending)の書き換え監視
+const chatEl = document.getElementById('chat');
+if (chatEl) {
+    const chatObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1 && node.classList && node.classList.contains('pending')) {
+                    const icon = node.querySelector('.pending-icon');
+                    if (icon) icon.src = getIconSrc(getCurrentIconId());
+                }
+            });
+        });
+    });
+    chatObserver.observe(chatEl, { childList: true, subtree: true });
+}
+
+// ロード画面の監視 & 初期化
 setInterval(() => {
     const lv = document.getElementById('loading-view');
-    if (lv && lv.classList.contains('show')) {
-        setupEventIcon();
-    }
-}, 1000);
-
-const origOpenSettings = window.openSettings || (() => {});
-window.openSettings = () => {
-    origOpenSettings();
-    setTimeout(injectIconSettings, 100);
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        if (document.getElementById('settings-panel')) {
-            injectIconSettings();
-        }
-    }, 1000);
-});
+    if (lv && lv.classList.contains('show')) setupEventIcon();
+}, 500);

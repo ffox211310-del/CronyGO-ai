@@ -1004,17 +1004,19 @@ body.light .drawer-branding .brand-title {
 
 /* ===== イベントアイコン用スタイル ===== */
 .app-icon-target {
-    /* 元の .loading-icon と同じサイズ・エフェクトを適用 */
-    width: 110px;
-    height: 110px;
-    border-radius: 24px;
-    object-fit: cover;
+    /* 元の .loading-icon と完全に同じサイズ・エフェクトを適用 */
+    width: 200px;
+    height: 200px;
+    border-radius: 36px;
+    object-fit: contain;
     
-    /* 周囲がフェードアウトするマスク処理 */
-    -webkit-mask-image: radial-gradient(ellipse at center, black 50%, transparent 90%);
-    mask-image: radial-gradient(ellipse at center, black 50%, transparent 90%);
+    /* 周囲がフェードアウトするマスク処理 (.loading-iconと同じ値) */
+    -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
+    mask-image: radial-gradient(ellipse at center, black 60%, transparent 88%);
     
-    /* クリック時のポインター */
+    /* 光のモヤ (.loading-iconと同じ値) */
+    box-shadow: 0 0 45px 18px var(--bg, #0a0a0a);
+    
     cursor: pointer;
     transition: transform 0.2s;
 }

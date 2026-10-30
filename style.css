@@ -1001,3 +1001,23 @@ body.light .drawer-branding .brand-icon {
 body.light .drawer-branding .brand-title {
   filter: none;
 }
+
+/* ===== イベントアイコン用スタイル ===== */
+.app-icon-target {
+    /* 元の .loading-icon と同じサイズ・エフェクトを適用 */
+    width: 110px;
+    height: 110px;
+    border-radius: 24px;
+    object-fit: cover;
+    
+    /* 周囲がフェードアウトするマスク処理 */
+    -webkit-mask-image: radial-gradient(ellipse at center, black 50%, transparent 90%);
+    mask-image: radial-gradient(ellipse at center, black 50%, transparent 90%);
+    
+    /* クリック時のポインター */
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.app-icon-target:active {
+    transform: scale(0.95);
+}

@@ -10,7 +10,7 @@ export const EVENT_ICONS = [
         id: "halloween_2026",           // 内部ID (ユニークな名前)
         name: "ハロウィン2026",         // 表示名
         img: "./assets/halloween_icon.png", // 画像パス (assets/eventsフォルダ推奨)
-        active: true,                   // ★イベント開催中はtrue、終了したらfalseにするだけ！
+        active: false,                   // ★イベント開催中はtrue、終了したらfalseにするだけ！
     },
     {
         id: "xmas_2026",

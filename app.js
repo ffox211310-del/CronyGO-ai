@@ -1441,7 +1441,7 @@ tutorialStartBtn?.addEventListener("click", () => {
 showTutorialIfFirstVisit();
 
 // ==========================================
-// イベント・アイコン管理システム (v6 - 変数衝突回避・ライトモード廃止版)
+// イベント・アイコン管理システム (v7 - シンプル・CSS優先版)
 // ==========================================
 // ※ import { EVENT_ICONS } from "./events.js"; はファイル先頭に記述済みとします
 
@@ -1456,7 +1456,7 @@ function setCurrentIconId(id) { localStorage.setItem(LS_CURRENT_ICON, id); }
 function getActiveEvent() { return EVENT_ICONS.find(e => e.active === true); }
 
 function getIconSrc(iconId) {
-    if (iconId === 'default') return "./assets/CronyGOicon.jpg"; // デフォルトはこれ一つ
+    if (iconId === 'default') return "./assets/CronyGOicon.jpg";
     const ev = EVENT_ICONS.find(e => e.id === iconId);
     return ev ? ev.img : "./assets/CronyGOicon.jpg";
 }
@@ -1485,24 +1485,26 @@ function setupEventIcon() {
     const lvEl = document.getElementById('loading-view');
     if (!lvEl) return;
 
-    // イベント用アイコン要素の確保
-    let iconEl = lvEl.querySelector('.app-icon-target');
-    if (!iconEl) {
-        iconEl = document.createElement('img');
-        iconEl.className = 'app-icon-target';
-        iconEl.style.cssText = 'display:none; cursor:pointer; margin-bottom:10px;';
+    // デフォルトアイコン (CronyGOicon.jpg)
+    const defaultIcon = document.getElementById('loading-icon-dark');
+    // ライト用は邪魔なので強制非表示 (縦に2個出るのを防止)
+    const lightIcon = document.getElementById('loading-icon-light');
+    if (lightIcon) lightIcon.style.display = 'none';
+
+    // イベント用アイコン要素
+    let eventIcon = lvEl.querySelector('.app-icon-target');
+    if (!eventIcon) {
+        eventIcon = document.createElement('img');
+        eventIcon.className = 'app-icon-target'; // ★CSS(.app-icon-target)でサイズ・デザインを制御
+        // インラインスタイルにはサイズを書かず、表示切替用のみに留める
+        eventIcon.style.cssText = 'display:none; cursor:pointer; margin-bottom:10px;';
         const textEl = document.getElementById('loading-text');
-        if (textEl) lvEl.insertBefore(iconEl, textEl); else lvEl.appendChild(iconEl);
+        if (textEl) lvEl.insertBefore(eventIcon, textEl); else lvEl.appendChild(eventIcon);
     }
 
     const currentId = getCurrentIconId();
     const activeEvent = getActiveEvent();
     const unlocked = getUnlockedIcons();
-
-    // ★既存のデフォルトアイコン要素を取得
-    // ID指定ではなく「.app-icon-target 以外の .loading-icon」をすべて取得することで、
-    // HTML側でLight用が消えていたりIDが変わっていても柔軟に対応します。
-    const defaultIcons = lvEl.querySelectorAll('.loading-icon:not(.app-icon-target)');
 
     let showEventIcon = false;
     let isClickable = false;
@@ -1512,15 +1514,15 @@ function setupEventIcon() {
         // 【設定でイベントアイコンが選択されている】
         const selectedEvent = EVENT_ICONS.find(e => e.id === currentId);
         if (selectedEvent && unlocked.includes(selectedEvent.id)) {
-            iconEl.src = selectedEvent.img;
+            eventIcon.src = selectedEvent.img;
             showEventIcon = true;
-            isClickable = false; // 適用済みなのでクリック無効
+            isClickable = false;
         }
     } else {
         // 【設定はデフォルト】
         if (activeEvent && !unlocked.includes(activeEvent.id)) {
             // 期間中 かつ 未ゲット → ゲットチャンス
-            iconEl.src = activeEvent.img;
+            eventIcon.src = activeEvent.img;
             showEventIcon = true;
             isClickable = true;
         }
@@ -1528,18 +1530,17 @@ function setupEventIcon() {
 
     // --- DOM操作 ---
     if (showEventIcon) {
-        // イベントアイコンを表示
-        iconEl.style.display = 'block';
-        defaultIcons.forEach(el => el.style.display = 'none'); // 既存は隠す
+        // イベントアイコンを表示、デフォルトは隠す
+        eventIcon.style.display = 'block';
+        if (defaultIcon) defaultIcon.style.display = 'none';
 
         if (isClickable) {
-            iconEl.style.cursor = 'pointer';
-            iconEl.onclick = () => {
+            eventIcon.onclick = () => {
                 if (!unlocked.includes(activeEvent.id)) {
                     unlocked.push(activeEvent.id);
                     saveUnlockedIcons(unlocked);
                     showToast(`🎉 ${activeEvent.name}アイコンを発見しました！`);
-                    iconEl.animate([
+                    eventIcon.animate([
                         { transform: 'scale(1)' }, 
                         { transform: 'scale(1.1) rotate(5deg)' }, 
                         { transform: 'scale(1)' }
@@ -1549,14 +1550,13 @@ function setupEventIcon() {
                 }
             };
         } else {
-            iconEl.style.cursor = 'default';
-            iconEl.onclick = null;
+            eventIcon.onclick = null;
         }
     } else {
-        // デフォルトアイコンを表示 (イベント用は隠す)
-        iconEl.style.display = 'none';
-        iconEl.onclick = null;
-        defaultIcons.forEach(el => el.style.display = 'block'); // 既存を表示
+        // デフォルトアイコンを表示、イベント用は隠す
+        eventIcon.style.display = 'none';
+        eventIcon.onclick = null;
+        if (defaultIcon) defaultIcon.style.display = 'block';
     }
 }
 
@@ -1603,7 +1603,7 @@ function createIconBtn(id, label, src, currentId) {
     btn.onclick = () => {
         setCurrentIconId(id);
         renderIconOptions();
-        setupEventIcon(); // ロード画面にも即座に反映
+        setupEventIcon();
         document.querySelectorAll('.pending-icon').forEach(el => el.src = getIconSrc(id));
         showToast('アイコンを変更しました');
     };
@@ -1614,7 +1614,6 @@ function createIconBtn(id, label, src, currentId) {
 // フック (変数衝突回避版)
 // ==========================================
 
-// 設定パネル監視
 const settingsPanelEl = document.getElementById('settings-panel');
 if (settingsPanelEl) {
     const observer = new MutationObserver(() => {
@@ -1623,7 +1622,6 @@ if (settingsPanelEl) {
     observer.observe(settingsPanelEl, { attributes: true, attributeFilter: ['class'] });
 }
 
-// チャット欄監視
 const chatCt = document.getElementById('chat');
 if (chatCt) {
     const chatObserver = new MutationObserver((mutations) => {
@@ -1639,7 +1637,6 @@ if (chatCt) {
     chatObserver.observe(chatCt, { childList: true, subtree: true });
 }
 
-// ロード画面監視
 setInterval(() => {
     const lv = document.getElementById('loading-view');
     if (lv && lv.classList.contains('show')) setupEventIcon();

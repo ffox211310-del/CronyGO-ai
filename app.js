@@ -1570,21 +1570,21 @@ function createIconBtn(id, label, src, currentId) {
 }
 
 // ==========================================
-// フック (MutationObserverによる安全な割り込み)
+// フック (MutationObserverによる安全な割り込み)ChatElなどによる二重定義を対策する。
 // ==========================================
 
 // 設定パネルが開かれたのを監視して注入
-const settingsPanel = document.getElementById('settings-panel');
-if (settingsPanel) {
+const settingsPanelEl = document.getElementById('settings-panel');
+if (settingsPanelEl) {
     const observer = new MutationObserver(() => {
-        if (settingsPanel.classList.contains('show')) injectIconSettings();
+        if (settingsPanelEl.classList.contains('show')) injectIconSettings();
     });
-    observer.observe(settingsPanel, { attributes: true, attributeFilter: ['class'] });
+    observer.observe(settingsPanelEl, { attributes: true, attributeFilter: ['class'] });
 }
 
 // 生成中アイコン(pending)の書き換え監視
-const chatEl = document.getElementById('chat');
-if (chatEl) {
+const chatCt = document.getElementById('chat');
+if (chatCt) {
     const chatObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
@@ -1595,7 +1595,7 @@ if (chatEl) {
             });
         });
     });
-    chatObserver.observe(chatEl, { childList: true, subtree: true });
+    chatObserver.observe(chatCt, { childList: true, subtree: true });
 }
 
 // ロード画面の監視 & 初期化

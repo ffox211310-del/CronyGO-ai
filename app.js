@@ -1,6 +1,7 @@
 import { VoiceManager } from "./voice.js";
 import { MODELS } from "./models.js";
 import { engineManager } from "./engine-manager.js";
+import { EVENT_ICONS } from "./events.js";
 
 const DEFAULT_SYSTEM_PROMPT = "あなたは様々な質問に答えるアシスタントです。簡素かつ丁寧に答えなさい。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
@@ -1442,7 +1443,6 @@ showTutorialIfFirstVisit();
 // ==========================================
 // イベント・アイコン管理システム (v3 - アドオン版)
 // ==========================================
-import { EVENT_ICONS } from "./events.js";
 
 const LS_UNLOCKED_ICONS = 'cronygo_unlocked_icons';
 const LS_CURRENT_ICON = 'cronygo_current_icon';

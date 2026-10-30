@@ -1441,8 +1441,9 @@ tutorialStartBtn?.addEventListener("click", () => {
 showTutorialIfFirstVisit();
 
 // ==========================================
-// イベント・アイコン管理システム (v3 - アドオン版)
+// イベント・アイコン管理システム (v6 - 変数衝突回避・ライトモード廃止版)
 // ==========================================
+// ※ import { EVENT_ICONS } from "./events.js"; はファイル先頭に記述済みとします
 
 const LS_UNLOCKED_ICONS = 'cronygo_unlocked_icons';
 const LS_CURRENT_ICON = 'cronygo_current_icon';
@@ -1451,12 +1452,14 @@ function getUnlockedIcons() { try { return JSON.parse(localStorage.getItem(LS_UN
 function saveUnlockedIcons(list) { try { localStorage.setItem(LS_UNLOCKED_ICONS, JSON.stringify(list)); } catch {} }
 function getCurrentIconId() { return localStorage.getItem(LS_CURRENT_ICON) || 'default'; }
 function setCurrentIconId(id) { localStorage.setItem(LS_CURRENT_ICON, id); }
+
+function getActiveEvent() { return EVENT_ICONS.find(e => e.active === true); }
+
 function getIconSrc(iconId) {
-    if (iconId === 'default') return "./assets/CronyGOicon.jpg";
+    if (iconId === 'default') return "./assets/CronyGOicon.jpg"; // デフォルトはこれ一つ
     const ev = EVENT_ICONS.find(e => e.id === iconId);
     return ev ? ev.img : "./assets/CronyGOicon.jpg";
 }
-function getActiveEvent() { return EVENT_ICONS.find(e => e.active === true); }
 
 function showToast(msg) {
     const toast = document.createElement('div');
@@ -1479,43 +1482,81 @@ if (!document.getElementById('toast-styles')) {
 
 // 1. ロード画面へのイベントアイコン注入
 function setupEventIcon() {
-    const loadingView = document.getElementById('loading-view');
-    if (!loadingView) return;
+    const lvEl = document.getElementById('loading-view');
+    if (!lvEl) return;
 
-    let iconEl = loadingView.querySelector('.app-icon-target');
+    // イベント用アイコン要素の確保
+    let iconEl = lvEl.querySelector('.app-icon-target');
     if (!iconEl) {
         iconEl = document.createElement('img');
         iconEl.className = 'app-icon-target';
-        iconEl.style.cssText = 'width:200px; height:200px; object-fit:contain; border-radius:36px; box-shadow: 0 0 45px 18px var(--bg, #0a0a0a); display:none; cursor:pointer;';
+        iconEl.style.cssText = 'display:none; cursor:pointer; margin-bottom:10px;';
         const textEl = document.getElementById('loading-text');
-        if (textEl) loadingView.insertBefore(iconEl, textEl); else loadingView.appendChild(iconEl);
+        if (textEl) lvEl.insertBefore(iconEl, textEl); else lvEl.appendChild(iconEl);
     }
 
+    const currentId = getCurrentIconId();
     const activeEvent = getActiveEvent();
     const unlocked = getUnlockedIcons();
 
-    if (activeEvent) {
-        document.querySelectorAll('#loading-icon-dark, #loading-icon-light').forEach(el => el.style.display = 'none');
-        iconEl.src = activeEvent.img;
-        iconEl.style.display = 'block';
-        iconEl.onclick = () => {
-            if (!unlocked.includes(activeEvent.id)) {
-                unlocked.push(activeEvent.id);
-                saveUnlockedIcons(unlocked);
-                showToast(`🎉 ${activeEvent.name}アイコンを発見しました！`);
-                iconEl.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.2) rotate(10deg)' }, { transform: 'scale(1)' }], { duration: 600 });
-            } else {
-                showToast(`🎃 ${activeEvent.name}アイコンはすでに発見済みです`);
-            }
-        };
+    // ★既存のデフォルトアイコン要素を取得
+    // ID指定ではなく「.app-icon-target 以外の .loading-icon」をすべて取得することで、
+    // HTML側でLight用が消えていたりIDが変わっていても柔軟に対応します。
+    const defaultIcons = lvEl.querySelectorAll('.loading-icon:not(.app-icon-target)');
+
+    let showEventIcon = false;
+    let isClickable = false;
+
+    // --- 表示ロジック ---
+    if (currentId !== 'default') {
+        // 【設定でイベントアイコンが選択されている】
+        const selectedEvent = EVENT_ICONS.find(e => e.id === currentId);
+        if (selectedEvent && unlocked.includes(selectedEvent.id)) {
+            iconEl.src = selectedEvent.img;
+            showEventIcon = true;
+            isClickable = false; // 適用済みなのでクリック無効
+        }
     } else {
-        const isLight = document.body.classList.contains('light');
-        const darkEl = document.getElementById('loading-icon-dark');
-        const lightEl = document.getElementById('loading-icon-light');
-        if (darkEl) darkEl.style.display = isLight ? 'none' : 'block';
-        if (lightEl) lightEl.style.display = isLight ? 'block' : 'none';
+        // 【設定はデフォルト】
+        if (activeEvent && !unlocked.includes(activeEvent.id)) {
+            // 期間中 かつ 未ゲット → ゲットチャンス
+            iconEl.src = activeEvent.img;
+            showEventIcon = true;
+            isClickable = true;
+        }
+    }
+
+    // --- DOM操作 ---
+    if (showEventIcon) {
+        // イベントアイコンを表示
+        iconEl.style.display = 'block';
+        defaultIcons.forEach(el => el.style.display = 'none'); // 既存は隠す
+
+        if (isClickable) {
+            iconEl.style.cursor = 'pointer';
+            iconEl.onclick = () => {
+                if (!unlocked.includes(activeEvent.id)) {
+                    unlocked.push(activeEvent.id);
+                    saveUnlockedIcons(unlocked);
+                    showToast(`🎉 ${activeEvent.name}アイコンを発見しました！`);
+                    iconEl.animate([
+                        { transform: 'scale(1)' }, 
+                        { transform: 'scale(1.1) rotate(5deg)' }, 
+                        { transform: 'scale(1)' }
+                    ], { duration: 600 });
+                } else {
+                    showToast(`${activeEvent.name}アイコンはすでに発見済みです`);
+                }
+            };
+        } else {
+            iconEl.style.cursor = 'default';
+            iconEl.onclick = null;
+        }
+    } else {
+        // デフォルトアイコンを表示 (イベント用は隠す)
         iconEl.style.display = 'none';
         iconEl.onclick = null;
+        defaultIcons.forEach(el => el.style.display = 'block'); // 既存を表示
     }
 }
 
@@ -1524,7 +1565,6 @@ function injectIconSettings() {
     const panel = document.getElementById('settings-panel');
     if (!panel || document.getElementById('icon-settings-section')) return;
 
-    // ★修正: ID 'group-custom' の中の '.settings-group-content' を正確に取得
     const customGroupContent = document.querySelector('#group-custom .settings-group-content');
     if (!customGroupContent) return;
 
@@ -1533,7 +1573,7 @@ function injectIconSettings() {
     section.className = 'settings-section';
     section.style.marginTop = '20px';
     section.innerHTML = `
-        <label class="settings-label">📸 アイコン変更</label>
+        <label class="settings-label">アイコン変更</label>
         <div class="settings-desc">イベントで発見したアイコンを適用できます。</div>
         <div id="icon-options" style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;"></div>
     `;
@@ -1548,7 +1588,7 @@ function renderIconOptions() {
     const current = getCurrentIconId();
     const unlocked = getUnlockedIcons();
 
-    container.appendChild(createIconBtn('default', 'デフォルト', getIconSrc('default'), current));
+    container.appendChild(createIconBtn('default', 'デフォルト', "./assets/CronyGOicon.jpg", current));
     EVENT_ICONS.forEach(ev => {
         if (unlocked.includes(ev.id)) container.appendChild(createIconBtn(ev.id, ev.name, ev.img, current));
     });
@@ -1563,6 +1603,7 @@ function createIconBtn(id, label, src, currentId) {
     btn.onclick = () => {
         setCurrentIconId(id);
         renderIconOptions();
+        setupEventIcon(); // ロード画面にも即座に反映
         document.querySelectorAll('.pending-icon').forEach(el => el.src = getIconSrc(id));
         showToast('アイコンを変更しました');
     };
@@ -1570,10 +1611,10 @@ function createIconBtn(id, label, src, currentId) {
 }
 
 // ==========================================
-// フック (MutationObserverによる安全な割り込み)ChatElなどによる二重定義を対策する。
+// フック (変数衝突回避版)
 // ==========================================
 
-// 設定パネルが開かれたのを監視して注入
+// 設定パネル監視
 const settingsPanelEl = document.getElementById('settings-panel');
 if (settingsPanelEl) {
     const observer = new MutationObserver(() => {
@@ -1582,7 +1623,7 @@ if (settingsPanelEl) {
     observer.observe(settingsPanelEl, { attributes: true, attributeFilter: ['class'] });
 }
 
-// 生成中アイコン(pending)の書き換え監視
+// チャット欄監視
 const chatCt = document.getElementById('chat');
 if (chatCt) {
     const chatObserver = new MutationObserver((mutations) => {
@@ -1598,7 +1639,7 @@ if (chatCt) {
     chatObserver.observe(chatCt, { childList: true, subtree: true });
 }
 
-// ロード画面の監視 & 初期化
+// ロード画面監視
 setInterval(() => {
     const lv = document.getElementById('loading-view');
     if (lv && lv.classList.contains('show')) setupEventIcon();

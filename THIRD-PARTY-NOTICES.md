@@ -133,9 +133,9 @@ Licensed under the MIT License.
 
 Falcon H1 1.5B
 
--Provider: https://huggingface.co/tiiuae/Falcon-H1-1.5B-Instruct-GGUF
--License: falcon-llm-license
--WebAIPocket uses this model under license. The model is used for inference using wllama.
+Provider: https://huggingface.co/tiiuae/Falcon-H1-1.5B-Instruct-GGUF
+License: falcon-llm-license
+WebAIPocket uses this model under license. The model is used for inference using wllama.
 
 ---
 

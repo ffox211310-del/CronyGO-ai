@@ -4,7 +4,7 @@ CronyGO includes or uses the following third-party software, models, and fonts. 
 
 ---
 
-1. WebLLM
+WebLLM
 
 Package: "@mlc-ai/web-llm"
 Version: "0.2.79"
@@ -15,7 +15,7 @@ WebLLM is used as the browser-side inference engine for running supported langua
 
 ---
 
-2. wllama
+wllama
 
 Package: "@wllama/wllama"
 Version: "3.2.3"
@@ -31,7 +31,7 @@ wllama.wasm is a WebAssembly build of llama.cpp.
 
 ---
 
-3. Qwen2.5
+Qwen2.5
 
 Models:
 - Qwen2.5-0.5B-Instruct
@@ -46,20 +46,7 @@ Used for local browser-based inference (MLC-compiled).
 
 ---
 
-4. Serow
-
-Model: Serow-Qwen2.5-0.5B-Instruct-gguf (Serow-0.5B.Q4_K_M.gguf)
-Base model: Qwen2.5-0.5B-Instruct
-License: Apache License 2.0 (inherited from Qwen2.5)
-Copyright: WebAIPocket (fine-tune), Alibaba Cloud / Qwen team (base model)
-
-Serow is a Japanese fine-tuned variant of Qwen2.5-0.5B, created by CronyGO author.
-Distributed as GGUF and used via wllama for local browser-based inference.
-Base model license (Apache 2.0) remains applicable.
-
----
-
-5. llm-jp-3-1.8B
+llm-jp-3-1.8B
 
 Model: llm-jp-3-1.8b-instruct3-Q4_K_M.gguf
 Base model: llm-jp/llm-jp-3-1.8b-instruct3
@@ -75,7 +62,7 @@ The base model is licensed under the Apache License 2.0.
 
 ---
 
-6. Gemma
+Gemma
 
 Models:
 - Gemma-2-2B-it (gemma-2-2b-it-q4f16_1-MLC, q4f32_1-MLC)
@@ -89,7 +76,7 @@ MLC-compiled versions (mlc-ai/...) remain subject to Gemma Terms.
 
 ---
 
-7. SmolLM2
+SmolLM2
 
 Models:
 - SmolLM2-135M-Instruct (base model)
@@ -111,7 +98,7 @@ Both base model and MLC/GGUF variants are licensed under the Apache License 2.0.
 
 ---
 
-8. LFM2.5-1.2B-JP
+LFM2.5-1.2B-JP
 
 Model: LFM2.5-1.2B-JP-Q4_K_M.gguf
 Base model: LiquidAI/LFM2.5-1.2B-JP
@@ -127,7 +114,7 @@ The model is distributed under the LFM Open License v1.0, which includes a comme
 
 ---
 
-9. DeepSeek-R1-Distill-Qwen-1.5B
+DeepSeek-R1-Distill-Qwen-1.5B
 
 Model: DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf
 Base model: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
@@ -144,7 +131,7 @@ Licensed under the MIT License.
 
 ---
 
-10. Inter
+Inter
 
 Font: Inter
 License: SIL Open Font License 1.1 (OFL-1.1)
@@ -153,7 +140,7 @@ UI font.
 
 ---
 
-11. JetBrains Mono
+JetBrains Mono
 
 Font: JetBrains Mono
 License: SIL Open Font License 1.1 (OFL-1.1)

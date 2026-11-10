@@ -858,27 +858,13 @@ killBtn.onclick = async () => {
   if (abortFlag) return;
   abortFlag = true;
   isKilled = true;
-  killBtn.textContent = "停止→再読込中...";
+  killBtn.textContent = "停止中...";
   killBtn.disabled = true;
   try { await engineManager.interrupt(); } catch {}
   if (voice) voice.clearQueue(true);
-  if (!firstTokenReceived) {
-  assistantDiv.classList.remove("pending");
-  assistantDiv.innerHTML = renderMarkdown("[生成を停止しました]");
-} else {
-  assistantDiv.innerHTML = renderMarkdown((full || "") + "\n\n[停止→積み直し]");
-}
-  const keyToReload = currentKey;
-  messages = [{ role: "system", content: loadStoredPrompt() }];
-  try { killBtn.remove(); } catch {}
-
-  await loadModel(keyToReload, true);
-
-  // ← 追加: メインループのfinallyが来なくても確実にUIを復帰させる
-  isGenerating = false;
-  sendEl.disabled = false;
-  inputEl.readOnly = false;
-  inputEl.focus();
+ 
+  
+  
 };
 //ここまで
 
@@ -940,6 +926,7 @@ requestAnimationFrame(() => {
 });
   isGenerating = true; sendEl.disabled = true;
 let full = "";
+let hitMaxChars = false;
 let speakBuffer = "";
 const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
 try {
@@ -962,7 +949,7 @@ const repeat_penalty = parseFloat(
   localStorage.getItem('cronygo_repeat_penalty') || 1.1
 );
 
-for await (const delta of engineManager.chat(messages, {
+for await (const delta of abortFlag ? [] : engineManager.chat(messages, {
   temperature: temp,
   max_tokens,
   repeat_penalty
@@ -980,16 +967,12 @@ for await (const delta of engineManager.chat(messages, {
   if (full.length >= MAX_CHARS) {
     firstTokenReceived = true;
     assistantDiv.classList.remove("pending");
-    full = full.slice(0, MAX_CHARS).trim() + "\n\n[1500文字制限→自動で積み直し]";
+    /*停止処理変更*/
+    full = full.slice(0, MAX_CHARS).trim() + "\n\n[1500文字制限で停止]";
     assistantDiv.innerHTML = renderMarkdown(full);
+    hitMaxChars = true;
     try { await engineManager.interrupt(); } catch {}
     if (voice) voice.clearQueue(true);
-    const keyToReload = currentKey;
-    messages = [{ role: "system", content: loadStoredPrompt() }];
-    await loadModel(keyToReload, true);
-    isGenerating = false;
-    sendEl.disabled = false;
-    inputEl.readOnly = false;
     break;
   }
 
@@ -1019,20 +1002,32 @@ full = full.replace(/\n{3,}/g, '\n\n').trim();
 
 assistantDiv.classList.remove("pending");
 
-if (!isKilled) {
+if (isKilled) {
   if (full) {
-    assistantDiv.innerHTML = renderMarkdown(full);
+    assistantDiv.innerHTML = renderMarkdown(full + "\n\n[生成を停止しました]");
     messages.push({ role: "assistant", content: full });
     saveCurrentRoomHistory();
 
-    if (voice && isVoiceMode) {
-      const remaining = speakBuffer.trim();
-      if (remaining) voice.enqueueSpeak(remaining);
-      voice.clearBuffer();
-    }
+    
   } else {
-    assistantDiv.innerHTML = '<span class="pending-text">（応答がありませんでした）</span>';
+    assistantDiv.innerHTML = renderMarkdown("[生成を停止しました]");
+    }
+} else if (full) {
+  assistantDiv.innerHTML = renderMarkdown(full);
+  // 制限マーカーは表示専用。履歴には本文だけ入れる
+  const contentForHistory = hitMaxChars
+    ? full.replace(/\n\n\[1500文字制限で停止\]$/, "")
+    : full;
+  messages.push({ role: "assistant", content: contentForHistory });
+  saveCurrentRoomHistory();
+
+  if (voice && isVoiceMode && !hitMaxChars) {
+    const remaining = speakBuffer.trim();
+    if (remaining) voice.enqueueSpeak(remaining);
+  voice.clearBuffer();
   }
+  } else {
+  assistantDiv.innerHTML = '<span class="pending-text">（応答がありませんでした）</span>';
 }
   } catch (e) {
   dbg(`generation ERROR ${e.message}`);

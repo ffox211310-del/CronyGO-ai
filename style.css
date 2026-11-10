@@ -86,7 +86,6 @@ header h1 {
   color: var(--text);
   white-space: nowrap;
   flex-shrink: 0;
-  font-family: 'Orbitron', sans-serif;
 }
 
 #model-select {
@@ -538,7 +537,6 @@ body.light .drawer-branding .brand-icon-light {
   letter-spacing: 0.05em;
   margin: 0;
   white-space: nowrap;
-  font-family: 'Orbitron', sans-serif;
   
 }
 

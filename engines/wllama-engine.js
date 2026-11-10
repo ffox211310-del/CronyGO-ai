@@ -8,6 +8,7 @@ export class WllamaEngine {
   wllama = null;
   WASM_URL = "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.8.1/esm/wasm/wllama.wasm";
   _abortFn = null;
+  _abort = null;
   _stopRequested = false;
 
   isReady() { return !!this.wllama; }
@@ -77,6 +78,9 @@ async *chat(messages, opts = {}) {
   if (!this.wllama) throw new Error("wllama not loaded");
   this._stopRequested = false;
   this._stream = null;
+    // 停止はwllama標準のabortSignalでリクエスト自体をキャンセルする（モデルは積んだまま）
+  const ac = new AbortController();
+  this._abort = ac;
 
   console.log("[Wllama] generation settings:", {
   temperature: opts.temperature,
@@ -93,21 +97,30 @@ async *chat(messages, opts = {}) {
   top_p: 0.9,
   top_k: 40,
   stream: true,
+  abortSignal: ac.signal,
 });
   
   this._stream = stream;
 
-  for await (const chunk of stream) {
-    if (this._stopRequested) break;
-    const delta = chunk?.choices?.[0]?.delta?.content || "";
-    if (delta) yield delta;
+  try {
+    for await (const chunk of stream) {
+      if (this._stopRequested) break;
+      const delta = chunk?.choices?.[0]?.delta?.content || "";
+      if (delta) yield delta;
+    }
+  } catch (e) {
+    // abort時はwllamaがAbortError(name: "AbortError")を投げる。停止は正常終了として飲む
+    if (this._stopRequested || e?.name === "AbortError") return;
+    throw e;
+  } finally {
+    if (this._abort === ac) this._abort = null;
   }
 }
 
 async interrupt() {
   this._stopRequested = true;
-  // OAI互換のstreamオブジェクトなら controller.abort() を持つことがある(OpenAI SDK方式)
-  try { this._stream?.controller?.abort?.(); } catch {}
+    // リクエストをキャンセルするだけ。exit()はしないのでモデル再読み込みは不要
+  try { this._abort?.abort(); } catch {}
 }
 
 async unload() {

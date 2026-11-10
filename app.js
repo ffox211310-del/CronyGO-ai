@@ -954,7 +954,11 @@ for await (const delta of abortFlag ? [] : engineManager.chat(messages, {
   max_tokens,
   repeat_penalty
 })) {
-  if (abortFlag) break;
+    // ★停止/上限到達後はbreakせず「捨て読み」してストリームを自然終了させる。
+  // WebLLMは生成ごとに内部ロックを取り、自然終了時にしか解放しない。
+  // for awaitを途中で抜けるとロックが残り、次の生成がロック待ちで永久に始まらない（実機で発生）。
+  // interrupt済みなら生成はすぐ終わる。最悪でもmax_tokensで必ず終わるので捨て読みは有限。
+  if (abortFlag || hitMaxChars) continue;
 
   full += delta;
 
@@ -973,7 +977,6 @@ for await (const delta of abortFlag ? [] : engineManager.chat(messages, {
     hitMaxChars = true;
     try { await engineManager.interrupt(); } catch {}
     if (voice) voice.clearQueue(true);
-    break;
   }
 
   // 描画は最初のトークンが来てから

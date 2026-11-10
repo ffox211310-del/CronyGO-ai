@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@600;700&display=swap');
 :root {
   --bg: #0a0a0a;
   --bg-header: #000000;
@@ -1019,4 +1019,21 @@ body.light .drawer-branding .brand-title {
 }
 .app-icon-target:active {
     transform: scale(0.95);
+}
+
+/* ▼▼▼ 既存のCSSの最後などに追加 ▼▼▼ */
+
+/* 共通クラス（HTML内の特定の文字に使う用） */
+.brand-font {
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+/* ヘッダーとドロワーのロゴにも自動適用 */
+header h1, 
+.drawer-branding .brand-title {
+    font-family: 'Oxanium', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.05em;
 }

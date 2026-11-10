@@ -1024,7 +1024,7 @@ body.light .drawer-branding .brand-title {
 /* 共通クラス（HTML内の特定の文字に使う用） */
 .brand-font {
     font-family: 'Oxanium', sans-serif;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
 }
 
@@ -1032,6 +1032,6 @@ body.light .drawer-branding .brand-title {
 header h1, 
 .drawer-branding .brand-title {
     font-family: 'Oxanium', sans-serif;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.05em;
 }

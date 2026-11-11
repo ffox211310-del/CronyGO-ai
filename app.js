@@ -594,21 +594,50 @@ function renderRoomList(){
       </div>
 
       <div style="display:flex; gap:4px; flex-shrink:0;">
+      
   <button class="room-rename-btn"
-    data-rename-id="${r.id}"
-    aria-label="名前変更"
-    title="名前変更"
-    style="width:24px; height:24px; border-radius:50%; border:1px solid #333; background:transparent; color:#888; cursor:pointer;">
-    ✎
-  </button>
+  data-rename-id="${r.id}"
+  aria-label="名前変更"
+  title="名前変更"
+  style="
+    width:24px;
+    height:24px;
+    border-radius:50%;
+    border:1px solid #333;
+    background:transparent;
+    color:#888;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    line-height:1;
+  ">
+  ✎
+</button>
 
-  <button class="room-del-btn"
-    data-del-id="${r.id}"
-    aria-label="削除"
-    title="削除"
-    style="width:24px; height:24px; border-radius:50%; border:1px solid #333; background:transparent; color:#888; cursor:pointer;">
-    ×
-  </button>
+
+  <button class="room-rename-btn"
+  data-rename-id="${r.id}"
+  aria-label="削除"
+  title="削除"
+  style="
+    width:24px;
+    height:24px;
+    border-radius:50%;
+    border:1px solid #333;
+    background:transparent;
+    color:#888;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    line-height:1;
+  ">
+  ×
+</button>
+
 </div>
       
     </div>

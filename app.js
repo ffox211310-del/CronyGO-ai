@@ -986,6 +986,9 @@ requestAnimationFrame(() => {
 });
   isGenerating = true; sendEl.disabled = true;
 // Think専用の受け皿。本文（full）とは完全に分ける
+let full = "";
+let hitMaxChars = false;
+let speakBuffer = "";
 let thinkFull = "";
 let thinkBlockEl = null;
 let thinkBodyEl = null;

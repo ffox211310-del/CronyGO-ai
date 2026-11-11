@@ -616,9 +616,8 @@ function renderRoomList(){
   ✎
 </button>
 
-
-  <button class="room-rename-btn"
-  data-rename-id="${r.id}"
+ <button class="room-del-btn"
+  data-del-id="${r.id}"
   aria-label="削除"
   title="削除"
   style="
@@ -1049,6 +1048,7 @@ assistantDiv.innerHTML = "";
 assistantDiv.style.display = "none";
 }
 thinkBodyEl.textContent = thinkFull;
+thinkBodyEl.scrollTop = thinkBodyEl.scrollHeight;
 smartScroll();
 continue;
 }

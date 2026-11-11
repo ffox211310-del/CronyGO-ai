@@ -86,6 +86,7 @@ function loadStoredRepeatPenalty(){
 const tempSlider = document.getElementById('temp-slider');
 const tempValue = document.getElementById('temp-value');
 const maxTokensInput = document.getElementById('max-tokens-input');
+const thinkToggle = document.getElementById('think-toggle');
 
 const repeatPenaltySlider = document.getElementById('repeat-penalty-slider');
 const repeatPenaltyValue = document.getElementById('repeat-penalty-value');
@@ -161,7 +162,12 @@ if(maxTokensInput){
     localStorage.setItem('cronygo_max_tokens', e.target.value);
   });
 }
-
+if(thinkToggle){
+　thinkToggle.checked = localStorage.getItem('cronygo_thinking')!== '0';
+　thinkToggle.addEventListener('change', (e)=>{
+　localStorage.setItem('cronygo_thinking', e.target.checked? '1': '0');
+　});
+}
 async function refreshCacheInfo(){
   const usageEl = document.getElementById('cache-usage');
   const modelEl = document.getElementById('cache-model-name');
@@ -480,18 +486,39 @@ function renderMarkdown(text) {
   return html.trim();
 }
 
-function addMessage(role, content) {
-  const div = document.createElement("div");
-  div.className = `msg ${role}`;
-  if (role === 'assistant') {
-    div.innerHTML = renderMarkdown(content);
-  } else {
-    div.textContent = content;
-  }
-  chatEl.appendChild(div);
-  chatEl.scrollTop = chatEl.scrollHeight;
-  return div;
+// 思考ブロック（折りたたみ）を組み立てる。本文とは別枠
+function createThinkBlock(thinkText, collapsed = true) {
+const block = document.createElement("div");
+block.className = "think-block" + (collapsed? " closed": "");
+const head = document.createElement("div");
+head.className = "think-head";
+head.innerHTML = '<span>思考</span><span class="think-chev">▾</span>';
+const body = document.createElement("div");
+body.className = "think-body";
+body.textContent = thinkText || "";
+head.addEventListener("click", () => block.classList.toggle("closed"));
+block.appendChild(head);
+block.appendChild(body);
+return block;
 }
+
+function addMessage(role, content, think) {
+const div = document.createElement("div");
+div.className = `msg ${role}`;
+if (role === 'assistant') {
+div.innerHTML = renderMarkdown(content);
+} else {
+div.textContent = content;
+}
+// 履歴にThinkがあれば、本文の上に畳んだ状態で復元する
+if (role === 'assistant' && think) {
+chatEl.appendChild(createThinkBlock(think, true));
+}
+chatEl.appendChild(div);
+chatEl.scrollTop = chatEl.scrollHeight;
+return div;
+}
+
 function showAssistantPending(el) {
   el.classList.add("pending");
   el.innerHTML = `
@@ -589,7 +616,9 @@ function renderRoomList(){
 }
 const WELCOME_TEXT = "こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。";
 function clearChatUI(){
-  chatEl.querySelectorAll('.msg').forEach(el=>el.remove());
+  
+  chatEl.querySelectorAll('.msg,.think-block').forEach(el=>el.remove());
+  
   if(!chatEl.contains(loadingView)){
     chatEl.appendChild(loadingView);
   }
@@ -605,7 +634,9 @@ function renderChatFromHistory(history){
     hideFirstLoadingUI();
     return;
   }
-  history.forEach(m=>{ addMessage(m.role, m.content); });
+  
+  history.forEach(m=>{ addMessage(m.role, m.content, m.think);});
+  
   hasChatted = true;
   hideFirstLoadingUI();
 }
@@ -925,9 +956,11 @@ requestAnimationFrame(() => {
   // chatEl.scrollTop = maxScroll;
 });
   isGenerating = true; sendEl.disabled = true;
-let full = "";
-let hitMaxChars = false;
-let speakBuffer = "";
+// Think専用の受け皿。本文（full）とは完全に分ける
+let thinkFull = "";
+let thinkBlockEl = null;
+let thinkBodyEl = null;
+let thinkCollapsed = false;
 const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
 try {
   // ===== UX改善: GPU(WebLLM)負荷前の描画完了待ち =====
@@ -949,16 +982,52 @@ const repeat_penalty = parseFloat(
   localStorage.getItem('cronygo_repeat_penalty') || 1.1
 );
 
-for await (const delta of abortFlag ? [] : engineManager.chat(messages, {
-  temperature: temp,
-  max_tokens,
-  repeat_penalty
+// 送信時は think フィールドを落とす（履歴の表示専用。モデルには送らない）
+const sendMessages = messages.map(m => ({ role: m.role, content: m.content}));
+// 設定スイッチ（デフォルトON。'0'の時だけOFF）
+const thinkingOn = localStorage.getItem('cronygo_thinking')!== '0';
+// Wllama時のみ実効max_tokensにThink予算(+2048)を上乗せする。
+// Think自体の上限はロード時の reasoning_budget_tokens: 2048 が担保する
+const effMaxTokens = engineManager.getCurrentId() === 'wllama'? max_tokens + 2048: max_tokens;
+
+// 生成開始前に停止されていたら生成自体を始めない（開始前のinterruptはエンジンに効かないため）
+for await (const chunk of abortFlag? []: engineManager.chat(sendMessages, {
+temperature: temp,
+max_tokens: effMaxTokens,
+repeat_penalty,
+thinking: thinkingOn
 })) {
+  
     // ★停止/上限到達後はbreakせず「捨て読み」してストリームを自然終了させる。
   // WebLLMは生成ごとに内部ロックを取り、自然終了時にしか解放しない。
   // for awaitを途中で抜けるとロックが残り、次の生成がロック待ちで永久に始まらない（実機で発生）。
   // interrupt済みなら生成はすぐ終わる。最悪でもmax_tokensで必ず終わるので捨て読みは有限。
   if (abortFlag || hitMaxChars) continue;
+
+  // Thinkチャンクは本文と別枠へ。full・文字数カウント・TTSには一切入れない
+if (chunk.type === "think") {
+thinkFull += chunk.text;
+if (!thinkBlockEl) {
+thinkBlockEl = createThinkBlock("", false);
+assistantDiv.before(thinkBlockEl);
+thinkBodyEl = thinkBlockEl.querySelector(".think-body");
+// 思考が始まったら待機UIは畳んで、本文バブルは本文が来るまで隠す
+assistantDiv.classList.remove("pending");
+assistantDiv.innerHTML = "";
+assistantDiv.style.display = "none";
+}
+thinkBodyEl.textContent = thinkFull;
+smartScroll();
+continue;
+}
+const delta = chunk.text;
+
+// 本文が始まったら思考ブロックを畳み、本文バブルを出す
+if (thinkBlockEl &&!thinkCollapsed) {
+thinkCollapsed = true;
+thinkBlockEl.classList.add("closed");
+assistantDiv.style.display = "";
+}
 
   full += delta;
 
@@ -1006,13 +1075,12 @@ full = full.replace(/\n{3,}/g, '\n\n').trim();
 assistantDiv.classList.remove("pending");
 
 if (isKilled) {
-  if (full) {
-    assistantDiv.innerHTML = renderMarkdown(full + "\n\n[生成を停止しました]");
-    messages.push({ role: "assistant", content: full });
-    saveCurrentRoomHistory();
-
-    
-  } else {
+  if (full || thinkFull) {
+assistantDiv.style.display = "";
+assistantDiv.innerHTML = renderMarkdown((full? full + "\n\n": "") + "[生成を停止しました]");
+messages.push({ role: "assistant", content: full,...(thinkFull? { think: thinkFull}: {})});
+saveCurrentRoomHistory();
+} else {
     assistantDiv.innerHTML = renderMarkdown("[生成を停止しました]");
     }
 } else if (full) {
@@ -1021,7 +1089,7 @@ if (isKilled) {
   const contentForHistory = hitMaxChars
     ? full.replace(/\n\n\[1500文字制限で停止\]$/, "")
     : full;
-  messages.push({ role: "assistant", content: contentForHistory });
+  messages.push({ role: "assistant", content: contentForHistory,...(thinkFull? { think: thinkFull}: {})});
   saveCurrentRoomHistory();
 
   if (voice && isVoiceMode && !hitMaxChars) {
@@ -1030,12 +1098,16 @@ if (isKilled) {
   voice.clearBuffer();
   }
   } else {
-  assistantDiv.innerHTML = '<span class="pending-text">（応答がありませんでした）</span>';
+assistantDiv.style.display = "";
+assistantDiv.innerHTML = '<span class="pending-text">（応答がありませんでした）</span>';
 }
   } catch (e) {
   dbg(`generation ERROR ${e.message}`);
+  
   assistantDiv.classList.remove("pending");
-  if (!abortFlag) assistantDiv.innerHTML = renderMarkdown("生成エラー: " + e.message);
+assistantDiv.style.display = "";
+if (!abortFlag) assistantDiv.innerHTML = renderMarkdown("生成エラー: " + e.message);
+  
 }finally {
 try {
   chatEl.removeEventListener("wheel", stopAutoScroll);

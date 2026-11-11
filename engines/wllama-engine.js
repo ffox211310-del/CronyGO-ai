@@ -67,6 +67,8 @@ async load(modelKeyOrUrl, onProgress, opts = {}) {
       n_threads: nThreads,
       // Thinkを分離して reasoning_content で受け取る指定（ロード時）
       reasoning_format: "deepseek",
+      // Think専用の上限。本文の max_tokens とは別枠（ロード時）
+      reasoning_budget_tokens: 2048,
       progressCallback: ({ loaded, total }) => {
         if (!total) return;
         const pct = Math.round((loaded / total) * 100);
@@ -91,38 +93,37 @@ async *chat(messages, opts = {}) {
   context_size: "load-time"
 });
   
-  const stream = await this.wllama.createChatCompletion({
-  messages,
-  max_tokens: opts.max_tokens ?? 1024,
-  temperature: opts.temperature ?? 0.7,
-  repeat_penalty: opts.repeat_penalty ?? 1.1,
-  top_p: 0.9,
-  top_k: 40,
-  stream: true,
-  abortSignal: ac.signal,
-});
+const completionParams = {
+messages,
+max_tokens: opts.max_tokens?? 1024,
+temperature: opts.temperature?? 0.7,
+repeat_penalty: opts.repeat_penalty?? 1.1,
+top_p: 0.9,
+top_k: 40,
+stream: true,
+abortSignal: ac.signal,
+};
+// 設定でOFFの時だけ enable_thinking:false を送る（best-effort）。
+// テンプレートがこの変数を見ないモデル（DeepSeek等）は無視して思考を続ける。
+// 届いた思考はエンジン側では一切隠さない・剥がさない。
+if (opts.thinking === false) {
+completionParams.chat_template_kwargs = { enable_thinking: false};
+}
+const stream = await this.wllama.createChatCompletion(completionParams);
   
   this._stream = stream;
 
-  // 検証中だけマーカー付きで混ぜて返す（Step2で正式分離）
-this._thinkOpen = false;
+  // Thinkと本文を型付きで分離して返す（正式分離）
 try {
 for await (const chunk of stream) {
 if (this._stopRequested) break;
 const deltaObj = chunk?.choices?.[0]?.delta || {};
 const rDelta = deltaObj.reasoning_content || "";
-if (rDelta) {
-if (!this._thinkOpen) { this._thinkOpen = true; yield "⟦think⟧\n";}
-yield rDelta;
-}
+if (rDelta) yield { type: "think", text: rDelta};
 const delta = deltaObj.content || "";
-if (delta) {
-if (this._thinkOpen) { this._thinkOpen = false; yield "\n⟦/think⟧\n";}
-yield delta;
+if (delta) yield { type: "text", text: delta};
 }
-}
-if (this._thinkOpen) { this._thinkOpen = false; yield "\n⟦/think⟧";}
-  } catch (e) {
+} catch (e) {
     // abort時はwllamaがAbortError(name: "AbortError")を投げる。停止は正常終了として飲む
     if (this._stopRequested || e?.name === "AbortError") return;
     throw e;
@@ -156,6 +157,7 @@ async unload() {
     n_threads: nThreads,
     // 同上
     reasoning_format: "deepseek",
+    reasoning_budget_tokens: 2048,
   });
   this.localFile = file; // 積み直し用に保持
   onProgress?.(100, "完了");

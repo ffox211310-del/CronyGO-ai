@@ -65,6 +65,8 @@ async load(modelKeyOrUrl, onProgress, opts = {}) {
       n_ctx: contextSize,
       n_gpu_layers: 0,
       n_threads: nThreads,
+      // Thinkを分離して reasoning_content で受け取る指定（ロード時）
+      reasoning_format: "deepseek",
       progressCallback: ({ loaded, total }) => {
         if (!total) return;
         const pct = Math.round((loaded / total) * 100);
@@ -102,12 +104,24 @@ async *chat(messages, opts = {}) {
   
   this._stream = stream;
 
-  try {
-    for await (const chunk of stream) {
-      if (this._stopRequested) break;
-      const delta = chunk?.choices?.[0]?.delta?.content || "";
-      if (delta) yield delta;
-    }
+  // 検証中だけマーカー付きで混ぜて返す（Step2で正式分離）
+this._thinkOpen = false;
+try {
+for await (const chunk of stream) {
+if (this._stopRequested) break;
+const deltaObj = chunk?.choices?.[0]?.delta || {};
+const rDelta = deltaObj.reasoning_content || "";
+if (rDelta) {
+if (!this._thinkOpen) { this._thinkOpen = true; yield "⟦think⟧\n";}
+yield rDelta;
+}
+const delta = deltaObj.content || "";
+if (delta) {
+if (this._thinkOpen) { this._thinkOpen = false; yield "\n⟦/think⟧\n";}
+yield delta;
+}
+}
+if (this._thinkOpen) { this._thinkOpen = false; yield "\n⟦/think⟧";}
   } catch (e) {
     // abort時はwllamaがAbortError(name: "AbortError")を投げる。停止は正常終了として飲む
     if (this._stopRequested || e?.name === "AbortError") return;
@@ -140,6 +154,8 @@ async unload() {
     n_ctx: opts.context_size ?? 4096,
     n_gpu_layers: 0,
     n_threads: nThreads,
+    // 同上
+    reasoning_format: "deepseek",
   });
   this.localFile = file; // 積み直し用に保持
   onProgress?.(100, "完了");

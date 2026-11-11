@@ -31,18 +31,19 @@ wllama.wasm is a WebAssembly build of llama.cpp.
 
 ---
 
-Qwen2.5
+Qwen2.5＆3
 
 Models:
 - Qwen2.5-0.5B-Instruct
 - Qwen2.5-1.5B-Instruct
 - Qwen2.5-3B-Instruct
 - Qwen2.5-7B-Instruct
+- Qwen3-0.6B-Instruct
 
 License: Apache License 2.0
 Copyright: Alibaba Cloud / Qwen team
 
-Used for local browser-based inference (MLC-compiled).
+Used for local browser-based inference (MLC-compiled＆GGUF-compiled).
 
 ---
 

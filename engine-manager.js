@@ -44,9 +44,14 @@ class EngineManager {
   }
 //↑ここまで停止関係
   async *chat(messages, opts) {
-    if (!this.current) throw new Error("No engine loaded");
-    yield* this.current.chat(messages, opts);
-  }
+   if (!this.current) throw new Error("No engine loaded");
+   // チャンク形式を {type:"text"|"think", text} に統一する。
+   // 文字列で返すエンジン（WebLLM）は本文として包み直す。Wllamaは最初から型付き。
+   for await (const chunk of this.current.chat(messages, opts)) {
+   if (typeof chunk === "string") yield { type: "text", text: chunk};
+   else yield chunk;
+ }
+}
 
   async interrupt() {
     await this.current?.interrupt();

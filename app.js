@@ -1419,10 +1419,10 @@ roomListEl?.addEventListener('click', (e)=>{
 // ===== モデル選択UI (mp-) =====
 
 const MP_INFO = {
-  "Q0.5B":      { name: "Qwen 0.5B",      desc: "WebLLMで動く最軽量枠" },
-  "Q1.5B":      { name: "Qwen 1.5B",      desc: "標準。会話になる" },
-  "Q3B":        { name: "Qwen 3B",        desc: "端末によっては厳しい" },
-  "Q7B":        { name: "Qwen 7B",        desc: "PC推奨。スマホは快適ではないかも" },
+  "Q0.5B":      { name: "Qwen2.5 0.5B",      desc: "WebLLMで動く最軽量枠" },
+  "Q1.5B":      { name: "Qwen2.5 1.5B",      desc: "標準。会話になる" },
+  "Q3B":        { name: "Qwen2.5 3B",        desc: "端末によっては厳しい" },
+  "Q7B":        { name: "Qwen2.5 7B",        desc: "PC推奨。スマホは快適ではないかも" },
   "Sm135M":     { name: "Smollm 135M",    desc: "WebLLMの動作テスト" },
   "Llama1B":        { name: "Llama 1B",        desc: "Meta製の英語強めモデル" },
   "Llama3B":        { name: "Llama 3B",        desc: "同じくLlamaの3Bバージョン" },
@@ -1430,7 +1430,8 @@ const MP_INFO = {
   "G2B-jpnHv":  { name: "Gemma JP 2B Hv", desc: "上記のq4f32版。少し重い" },
   //ここからGGUF
   "Smollm-135M":  { name: "Smollm 135M",  desc: "Wllamaの動作確認用" },
-  "Qwen-0.5B":  { name: "Qwen 0.5B",      desc: "GGUFのQwen0.5。MLCと比較してみよう" },
+  "Qwen-0.5B":  { name: "Qwen2.5 0.5B",      desc: "GGUFのQwen0.5。MLCと比較してみよう" },
+  "Qwen3-0.6B":  { name: "Qwen3 0.6B",      desc: "軽量でありながらThinkモード搭載" },
   "DeepSeek-1.5B":  { name: "DeepSeek 1.5B",  desc: "DeepSeekR1で蒸留したQwen" },
   "llm-jp-3-1.8B": { name: "llm.jp 1.8B", desc: "国立情報学研究所(NII)によって作成。" },
   "LFM-1.2BJP":  { name: "LFM 1.2BJP",  desc: "日本語ヨシ、スピードヨシ" },

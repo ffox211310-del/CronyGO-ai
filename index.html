@@ -166,6 +166,15 @@
     <input type="number" id="max-tokens-input" min="128" max="4096" step="128" value="1024" style="width:100%; background:var(--input-bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px;">
     <div class="settings-desc">1回の返答の長さ</div>
   </div>
+ <!-- 追加: Think（思考） -->
+<div class="settings-section">
+<div style="display:flex; justify-content:space-between; align-items:center;">
+<label class="settings-label" for="think-toggle" style="margin:0;">Think（思考過程）</label>
+<input type="checkbox" id="think-toggle" checked style="width:20px; height:20px; accent-color:var(--accent); cursor:pointer;">
+</div>
+<div class="settings-desc">ONの場合、対応モデル（GGUF）の思考過程を回答とは別枠で表示します</div>
+<div class="settings-desc" style="margin-top:4px;">※ このスイッチは、ThinkのON/OFFができるモデルのみに対応しています。対応していないモデルでは、OFFにしても思考が続くことがあります。</div>
+</div>
 
  <div class="settings-section">
   <div class="settings-label">コンテキスト</div>

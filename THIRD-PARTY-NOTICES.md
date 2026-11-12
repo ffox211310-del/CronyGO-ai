@@ -31,6 +31,28 @@ wllama.wasm is a WebAssembly build of llama.cpp.
 
 ---
 
+marked
+
+Package: "marked"
+Version: "12.0.2"
+License: MIT License
+Copyright: Christopher Jeffrey and contributors
+
+marked is used as the Markdown parser that converts assistant replies (headings, tables, lists, code, etc.) to HTML.
+
+---
+
+DOMPurify
+
+Package: "dompurify"
+Version: "3.2.7"
+License: Apache License 2.0 / Mozilla Public License 2.0 (dual license)
+Copyright: Dr.-Ing. Mario Heiderich, Cure53 and contributors
+
+DOMPurify is used to sanitize the HTML produced from Markdown before it is inserted into the chat view.
+
+---
+
 Qwen2.5＆3
 
 Models:

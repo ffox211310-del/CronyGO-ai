@@ -270,7 +270,7 @@ let messages = [{ role: "system", content: loadStoredPrompt() }];
 
 const chatEl = document.getElementById("chat");
 const micBtn = document.getElementById("mic-btn");
-const voicePreview = document.getElementById("voice-preview");
+const voicePreview = document.getElementById("voice-preview") || { textContent: ""};
 const inputEl = document.getElementById("input");
 const sendEl = document.getElementById("send");
 const statusEl = document.getElementById("status");

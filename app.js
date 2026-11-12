@@ -935,11 +935,10 @@ async function sendMessageWithText(forcedText) {
   // 1トークン目が出るまでの待機UI
   showAssistantPending(assistantDiv);
 
-  const killBtn = document.createElement("button");
-  killBtn.textContent = "■ 生成を停止";
-  killBtn.className = "kill-switch";
-  killBtn.style.cssText = "margin:6px 0 10px 0;background:#ff3b3b;color:#fff;border:0;border-radius:18px;padding:6px 14px;font-size:12px;cursor:pointer;align-self:flex-start;";
-  assistantDiv.after(killBtn);
+  const killBtn = document.getElementById("kill-btn");
+  killBtn.hidden = false;
+  killBtn.disabled = false;
+  sendEl.hidden = true;
 
   //Wllamaのみ停止のアプローチを変える
   let abortFlag = false;
@@ -948,7 +947,6 @@ killBtn.onclick = async () => {
   if (abortFlag) return;
   abortFlag = true;
   isKilled = true;
-  killBtn.textContent = "停止中...";
   killBtn.disabled = true;
   try { await engineManager.interrupt(); } catch {}
   if (voice) voice.clearQueue(true);
@@ -1185,7 +1183,7 @@ inputEl.readOnly = false;
       inputEl.blur();
     }
     
-    try { killBtn.remove(); } catch {}
+    try { killBtn.hidden = true; killBtn.onclick = null; sendEl.hidden = false;} catch {}
   }
 }
 
@@ -1226,7 +1224,18 @@ micBtn.addEventListener('click', () => {
   }
 });
 
-sendEl.addEventListener("click", () => { lastInputWasVoice = false; sendMessage(); });
+sendEl.addEventListener("click", () => { lastInputWasVoice = false; sendMessage(); syncInputHeight();});
+inputEl.addEventListener("keydown", (e) => {
+if (e.isComposing || e.keyCode === 229) return;
+if (e.key === "Enter" &&!e.shiftKey) { e.preventDefault(); lastInputWasVoice = false; sendMessage(); syncInputHeight();}
+});
+
+function syncInputHeight() {
+inputEl.style.height = "auto";
+inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+}
+inputEl.addEventListener("input", syncInputHeight);
+
 inputEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); lastInputWasVoice = false; sendMessage(); }
 });

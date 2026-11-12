@@ -1026,7 +1026,7 @@ const sendMessages = messages.map(m => ({ role: m.role, content: m.content}));
 const thinkingOn = localStorage.getItem('cronygo_thinking')!== '0';
 // Wllama時のみ実効max_tokensにThink予算(+2048)を上乗せする。
 // Think自体の上限はロード時の reasoning_budget_tokens: 2048 が担保する
-const effMaxTokens = engineManager.getCurrentId() === 'wllama'? max_tokens + 2048: max_tokens;
+const effMaxTokens = engineManager.getCurrentId() === 'wllama' && thinkingOn ? max_tokens + 2048 : max_tokens;
 
 // 生成開始前に停止されていたら生成自体を始めない（開始前のinterruptはエンジンに効かないため）
 for await (const chunk of abortFlag? []: engineManager.chat(sendMessages, {

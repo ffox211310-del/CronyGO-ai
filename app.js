@@ -1,7 +1,9 @@
-import { VoiceManager } from "./voice.js";
-import { MODELS } from "./models.js";
-import { engineManager } from "./engine-manager.js";
-import { EVENT_ICONS } from "./events.js";
+import { VoiceManager} from "./voice.js";
+import { MODELS} from "./models.js";
+import { engineManager} from "./engine-manager.js";
+import { EVENT_ICONS} from "./events.js";
+import { marked} from "./lib/marked.esm.js";
+import DOMPurify from "./lib/purify.esm.js";
 
 const DEFAULT_SYSTEM_PROMPT = "あなたは様々な質問に答えるアシスタントです。簡素かつ丁寧に答えなさい。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
@@ -458,33 +460,55 @@ if (window.speechSynthesis) {
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
-function renderMarkdown(text) {
-  if (!text) return '';
-  let t = text.trim();
-  t = t.replace(/^\s*\*\*\s*$/gm, '');
-  t = t.replace(/\*\*\s*\n\s*([\s\S]+?)\s*\n\s*\*\*/g, '**$1**');
-  t = t.replace(/\*\*\s+([\s\S]+?)\s+\*\*/g, '**$1**');
-  t = t.split('\n').map(line => {
-    const m = line.match(/^\s*([\*\-・])\s+(.+)$/);
-    if (m) return `• ${m[2]}`;
-    return line;
-  }).join('\n');
-  let html = escapeHtml(t);
-  html = html.replace(/\*\*\*([\s\S]+?)\*\*\*/g, (m,p1)=>{ const inner=p1.trim(); return inner ? `<strong><em>${inner}</em></strong>` : ''; });
-  html = html.replace(/\*\*([\s\S]+?)\*\*/g, (m,p1)=>{
-    const inner = p1.trim();
-    if (!inner || inner === ':' ) return '';
-    return `<strong>${inner}</strong>`;
-  });
-  html = html.replace(/(^|[^•\*\n])\*([^*\n•]+?)\*(?!\*)/g, (m, pre, inner)=>{
-    if (pre.includes('•')) return m;
-    return `${pre}<em>${inner}</em>`;
-  });
-  html = html.replace(/\n{3,}/g, '\n\n');
-  html = html.replace(/\n/g, '<br>');
-  html = html.replace(/(<br>\s*)+$/g, '');
-  return html.trim();
+
+function preprocessMarkdown(text) {
+let t = text;
+// ** だけの行を消す（従来の掃除）
+t = t.replace(/^\s*\*\*\s*$/gm, '');
+// ** の内側に改行・余分な空白がある太字を整える（従来の掃除）
+t = t.replace(/\*\*\s*\n\s*([\s\S]+?)\s*\n\s*\*\*/g, '**$1**');
+t = t.replace(/\*\*\s+([\s\S]+?)\s+\*\*/g, '**$1**');
+// 見出し：# の直後に空白が無い場合は補う（##見出し → ## 見出し）
+t = t.replace(/^(#{1,6})([^\s#])/gm, '$1 $2');
+// 行頭の ・ / • 箇条書きを - にそろえる（marked のリストとして読ませる）
+t = t.replace(/^[ \t]*[・•][ \t]*(.+)$/gm, '- $1');
+// 表：区切り行（|---|）が無い表は、ヘッダ行の列数で区切り行を補う
+const isRow = (s) => /^\s*\|/.test(s);
+const isDelim = (s) => /^[|:\-\s]+$/.test(s.trim()) && s.includes('-');
+const cellCount = (s) => {
+let x = s.trim();
+if (x.startsWith('|')) x = x.slice(1);
+if (x.endsWith('|')) x = x.slice(0, -1);
+return x.split('|').length;
+};
+const lines = t.split('\n');
+const out = [];
+for (let i = 0; i < lines.length; i++) {
+out.push(lines[i]);
+// 表の開始行（直前が表の行ではない行）でのみ補う
+const isBlockStart = i === 0 ||!isRow(lines[i - 1]);
+if (isBlockStart && isRow(lines[i]) &&!isDelim(lines[i]) && i + 1 < lines.length && isRow(lines[i + 1]) &&!isDelim(lines[i + 1])) {
+out.push('| ' + Array(cellCount(lines[i])).fill('---').join(' | ') + ' |');
 }
+}
+return out.join('\n');
+}
+
+marked.setOptions({ gfm: true, breaks: true});
+
+function renderMarkdown(text) {
+if (!text) return '';
+const t = preprocessMarkdown(String(text).trim());
+let html;
+try {
+html = marked.parse(t);
+} catch {
+// 万一パースに失敗したら、最低限エスケープ＋改行だけして返す
+return escapeHtml(t).replace(/\n/g, '<br>');
+}
+return DOMPurify.sanitize(html);
+}
+
 
 // 思考ブロック（折りたたみ）を組み立てる。本文とは別枠
 function createThinkBlock(thinkText, collapsed = true) {

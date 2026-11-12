@@ -350,13 +350,13 @@ const bgOpacity = document.getElementById('bg-opacity');
 const LS_BG = "cronygo_chat_bg";
 const LS_BG_OP = "cronygo_chat_bg_op";
 function applyBg(dataUrl){
-  if(dataUrl){
-    chatEl.style.backgroundImage = `url("${dataUrl}")`;
-    chatEl.classList.add('has-custom-bg');
-  }else{
-    chatEl.style.backgroundImage = '';
-    chatEl.classList.remove('has-custom-bg');
-  }
+if(dataUrl){
+document.body.style.backgroundImage = `url("${dataUrl}")`;
+chatEl.classList.add('has-custom-bg');
+}else{
+document.body.style.backgroundImage = '';
+chatEl.classList.remove('has-custom-bg');
+}
 }
 function applyOpacity(v){
   document.documentElement.style.setProperty('--chat-bg-overlay', v/100);

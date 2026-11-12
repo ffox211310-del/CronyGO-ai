@@ -385,6 +385,7 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
+  z-index: 5;
   background: var(--bg-header);
 }
 .settings-header h2 { font-size: 14px; margin: 0; color: var(--text); }

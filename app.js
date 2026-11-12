@@ -1233,8 +1233,16 @@ if (e.key === "Enter" &&!e.shiftKey) { e.preventDefault(); lastInputWasVoice = f
 function syncInputHeight() {
 inputEl.style.height = "auto";
 inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+syncComposerPad();
+}
+function syncComposerPad() {
+const composerEl = document.getElementById("composer");
+if (!composerEl ||!chatEl) return;
+chatEl.style.paddingBottom = (composerEl.offsetHeight + 16) + "px";
 }
 inputEl.addEventListener("input", syncInputHeight);
+window.addEventListener("resize", syncComposerPad);
+syncComposerPad();
 
 inputEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); lastInputWasVoice = false; sendMessage(); }

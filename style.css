@@ -175,6 +175,30 @@ header h1 {
   color: var(--text);
   border-bottom-left-radius: 6px;
 }
+/* ===== Markdown（marked 出力） ===== */
+.msg.assistant { white-space: normal;}
+.msg.assistant p { margin: 0 0 8px;}
+.msg.assistant p:last-child { margin-bottom: 0;}
+.msg.assistant h1,.msg.assistant h2,.msg.assistant h3,.msg.assistant h4,.msg.assistant h5,.msg.assistant h6 { margin: 10px 0 6px; line-height: 1.4;}
+.msg.assistant h1:first-child,.msg.assistant h2:first-child,.msg.assistant h3:first-child,.msg.assistant h4:first-child { margin-top: 0;}
+.msg.assistant h1 { font-size: 18px;}
+.msg.assistant h2 { font-size: 16.5px;}
+.msg.assistant h3 { font-size: 15px;}
+.msg.assistant h4,.msg.assistant h5,.msg.assistant h6 { font-size: 14.5px;}
+.msg.assistant ul,.msg.assistant ol { margin: 4px 0 8px; padding-left: 20px;}
+.msg.assistant li { margin: 2px 0;}
+.msg.assistant table { display: block; overflow-x: auto; max-width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px;}
+.msg.assistant th,.msg.assistant td { border: 1px solid var(--border-light); padding: 6px 8px; text-align: left;}
+.msg.assistant th { background: var(--bg-input); font-weight: 700;}
+.msg.assistant code { font-family: monospace; font-size: 12.5px; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 6px; padding: 1px 5px;}
+.msg.assistant pre { background: var(--bg-input); border: 1px solid var(--border-light); border-radius: 10px; padding: 10px 12px; margin: 8px 0; overflow-x: auto;}
+.msg.assistant pre code { background: none; border: none; padding: 0;}
+.msg.assistant blockquote { margin: 8px 0; padding: 2px 0 2px 10px; border-left: 3px solid var(--accent); color: var(--text-sub);}
+.msg.assistant blockquote p { margin: 0;}
+.msg.assistant hr { border: none; border-top: 1px solid var(--border-light); margin: 10px 0;}
+.msg.assistant a { color: var(--accent);}
+.msg.assistant img { max-width: 100%; border-radius: 8px;}
+
 .msg.system {
   align-self: center;
   background: var(--bg-input);

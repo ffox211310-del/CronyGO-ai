@@ -292,33 +292,33 @@ body.light #loading-notice {
 #chat.is-first-loading .msg { display: none; }
 
 #composer {
-  padding: 10px 12px;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-shrink: 0;
-  min-width: 0;
+padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+background: var(--bg);
+display: flex; justify-content: center; flex-shrink: 0;
 }
-#composer > button {
-  flex-shrink: 0;
+.composer-sheet {
+width: 100%; max-width: 768px;
+background: var(--bg-input);
+border: 1px solid var(--border-light);
+border-radius: 26px;
+padding: 10px 12px 8px;
+display: flex; flex-direction: column; gap: 6px;
 }
-#input {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--border-light);
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-size: 15px;
-  outline: none;
-  background: var(--bg-input);
-  color: var(--text);
-}
-#input::placeholder { color: var(--text-sub); }
-#input:focus { border-color: var(--accent); }
+.composer-sheet:focus-within { border-color: var(--accent);}
+.composer-tools { display: flex; justify-content: space-between; align-items: center;}
+.tools-left,.tools-right { display: flex; align-items: center; gap: 8px;}
+#send[hidden], #kill-btn[hidden] { display: none;}
 
-#send, #settings-btn, #mic-btn {
+#input {
+width: 100%;
+border: none; background: transparent; color: var(--text);
+font-family: inherit; font-size: 15px; line-height: 1.5;
+padding: 4px 6px; outline: none; resize: none;
+max-height: 120px; overflow-y: auto;
+}
+#input::placeholder { color: var(--text-sub);}
+
+#send, #settings-btn, #mic-btn, #attach-btn, #kill-btn {
   width: 40px; height: 40px;
   border-radius: 50%;
   border: 0;
@@ -340,6 +340,12 @@ body.light #loading-notice {
 }
 #settings-btn:hover { color: var(--text); }
 #settings-btn:active { transform: scale(0.96); }
+
+#attach-btn { background: var(--bg-input); color: var(--text-sub); border: 1px solid var(--border-light);}
+#attach-btn:active { transform: scale(0.96);}
+#kill-btn { background: #ff3b3b; color: #fff;}
+#kill-btn:active { transform: scale(0.96);}
+#kill-btn:disabled { opacity:.55;}
 
 .hint { font-size: 10px; color: var(--text-hint); text-align: center; padding: 4px 12px 8px; background: var(--bg); }
 
@@ -472,7 +478,8 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
 
 @media (max-width: 380px) {
   #composer { gap: 6px; padding: 10px 8px; }
-  #mic-btn, #send, #settings-btn { width: 36px; height: 36px; }
+  
+  #mic-btn, #send, #settings-btn, #attach-btn, #kill-btn { width: 36px; height: 36px;}
 }
 
 /* チャット背景 - 修正版 */

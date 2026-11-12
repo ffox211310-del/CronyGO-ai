@@ -1,13 +1,15 @@
-const CACHE_NAME = "cronygo-v82";
+const CACHE_NAME = "cronygo-v83";
 
 const urlsToCache = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./app.js",
-  "./manifest.json",
-  "./CronyGOicon_192.png",
-  "./CronyGOicon_512.png"
+"./",
+"./index.html",
+"./style.css",
+"./app.js",
+"./lib/marked.esm.js",
+"./lib/purify.esm.js",
+"./manifest.json",
+"./CronyGOicon_192.png",
+"./CronyGOicon_512.png"
 ];
 
 /* インストール - Solpon方式 */

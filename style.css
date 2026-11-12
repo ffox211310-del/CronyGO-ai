@@ -496,6 +496,11 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
   z-index: 0;
   pointer-events: none;
 }
+/* 背景写真を画面全体に（コンポーザ背後の黒帯をなくす） */
+#chat.has-custom-bg { background-color: transparent;}
+#composer { background: transparent;}
+.hint { background: transparent;}
+body { background-size: cover; background-position: center; background-repeat: no-repeat;}
 body.light #chat.has-custom-bg::before {
   background: rgba(229,229,229,var(--chat-bg-overlay, 0.4));
 }

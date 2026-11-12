@@ -753,6 +753,13 @@ function initRooms(){
 }
 function initCustomModelUI(){
   refreshModelSelect();
+  try {
+    const saved = localStorage.getItem('cronygo_model');
+    if (saved && [...selectEl.options].some(o => o.value === saved)) {
+      selectEl.value = saved;
+      selectEl.dispatchEvent(new Event('change'));
+    }
+  } catch {}
   document.getElementById('custom-model-add-btn')?.addEventListener('click', ()=>{
     const input = document.getElementById('custom-model-id-input');
     const id = input?.value.trim();
@@ -1201,6 +1208,7 @@ inputEl.addEventListener("keydown", (e) => {
 });
 selectEl.addEventListener("change", () => {
   const key = selectEl.value;
+  try { localStorage.setItem('cronygo_model', key); } catch {}
   if (currentKey === key && engineManager.isReady()) {
     dlBtn.textContent = "起動済み"; statusEl.textContent = `Ready ${key}`; statusEl.className = "ready";
   } else {

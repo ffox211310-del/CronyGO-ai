@@ -936,17 +936,7 @@ if (!text && img) text = "この画像について説明してください";
 
   if (!img && isTimeQuery(text)) {
     const userDiv = addMessage("user", text);
-if (img) {
-const im = document.createElement("img");
-im.src = img.url;
-im.className = "msg-img";
-im.alt = "添付画像";
-userDiv.appendChild(im);
-// 吹き出し表示用に URL は生かす（revokeしない）。添付状態だけ解除
-pendingImage = null;
-attachPreview.hidden = true;
-attachThumb.removeAttribute("src");
-}
+
 messages.push({ role: "user", content: text});
     saveCurrentRoomHistory();
     inputEl.value = "";
@@ -967,6 +957,19 @@ messages.push({ role: "user", content: text});
   }
 
   const userDiv = addMessage("user", text);
+
+  if (img) {
+const im = document.createElement("img");
+im.src = img.url;
+im.className = "msg-img";
+im.alt = "添付画像";
+userDiv.appendChild(im);
+// 吹き出し表示用に URL は生かす（revokeしない）。添付状態だけ解除
+pendingImage = null;
+attachPreview.hidden = true;
+attachThumb.removeAttribute("src");
+}
+  
   messages.push({ role: "user", content: text });
   saveCurrentRoomHistory();
   inputEl.value = "";
@@ -1088,6 +1091,16 @@ const repeat_penalty = parseFloat(
 
 // 送信時は think フィールドを落とす（履歴の表示専用。モデルには送らない）
 const sendMessages = messages.map(m => ({ role: m.role, content: m.content}));
+
+  // 画像は添付ターンの最後のuser発言にだけ part として混ぜる（履歴はテキストのみ）
+if (img) {
+const lastUser = [...sendMessages].reverse().find(m => m.role === "user");
+if (lastUser) lastUser.content = [
+{ type: "text", text: lastUser.content},
+{ type: "image", data: img.buffer},
+];
+}
+  
 // 設定スイッチ（デフォルトON。'0'の時だけOFF）
 const thinkingOn = localStorage.getItem('cronygo_thinking')!== '0';
 // Wllama時のみ実効max_tokensにThink予算(+2048)を上乗せする。

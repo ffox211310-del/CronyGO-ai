@@ -1117,3 +1117,10 @@ header h1,
 @media (min-width: 1200px) {
 #composer #voice-preview { margin-left: 0; max-width: none;}
 }
+
+/* ===== 画像添付（Vision step1） ===== */
+#attach-preview { position: relative; align-self: flex-start;}
+#attach-preview[hidden] { display: none;}
+#attach-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-light); display: block;}
+#attach-clear { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border-light); background: var(--bg-assistant); color: inherit; font-size: 12px; line-height: 1; cursor: pointer;}
+.msg.user.msg-img { display: block; max-width: 220px; max-height: 220px; border-radius: 12px; margin-top: 6px;}

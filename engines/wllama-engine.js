@@ -1,6 +1,6 @@
 //いえーい
 import { Wllama } from "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.8.1/esm/index.js";
-import { MODELS } from "../models.js";
+import { MODELS, MMPROJ} from "../models.js";
 
 export class WllamaEngine {
   id = "wllama";
@@ -61,7 +61,11 @@ async load(modelKeyOrUrl, onProgress, opts = {}) {
       "(setting:", opts.n_threads, ", cores:", navigator.hardwareConcurrency,
       ", isolated:", self.crossOriginIsolated, ")");
    
-    await this.wllama.loadModelFromUrl(modelUrl, {
+    // VLモデルは mmproj（画像エンコーダ）も一緒にロードする
+const mmprojUrl = MMPROJ[modelKeyOrUrl];
+const modelSource = mmprojUrl? { url: modelUrl, mmprojUrl}: modelUrl;
+if (mmprojUrl) console.log("[Wllama] mmproj:", mmprojUrl);
+await this.wllama.loadModelFromUrl(modelSource, {
       n_ctx: contextSize,
       n_gpu_layers: 0,
       n_threads: nThreads,

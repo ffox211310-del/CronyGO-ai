@@ -20,6 +20,11 @@ export const MODELS = {
   "Diffenion-Mk.1": "https://huggingface.co/WebAIPocket/Diffenion-Mk.1-Qwen2.5-1.5B-gguf/resolve/main/Diffenion-Mk1v6-1.5B.Q6_K.gguf",
 };
 
+// VLモデルの mmproj（画像エンコーダ）のURL。本体のキーと対応させる
+export const MMPROJ = {
+"LFM-VL-450M": "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/resolve/main/mmproj-LFM2.5-VL-450m-Q8_0.gguf",
+};
+
 export function isGGUFModel(modelId) {
   if (!modelId) return false;
   const s = modelId.toLowerCase();

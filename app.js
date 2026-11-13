@@ -1,5 +1,5 @@
 import { VoiceManager} from "./voice.js";
-import { MODELS} from "./models.js";
+import { MODELS, MMPROJ} from "./models.js";
 import { engineManager} from "./engine-manager.js";
 import { EVENT_ICONS} from "./events.js";
 import { marked} from "./lib/marked.esm.js";
@@ -894,16 +894,60 @@ if (key.startsWith("__local__:")) {
   }
 }
 
+// ===== 画像添付（Vision step1：WllamaのVLモデル専用） =====
+let pendingImage = null; // { buffer: ArrayBuffer, url: string}
+const imageInput = document.getElementById("image-input");
+const attachPreview = document.getElementById("attach-preview");
+const attachThumb = document.getElementById("attach-thumb");
+
+function clearPendingImage() {
+if (pendingImage?.url) URL.revokeObjectURL(pendingImage.url);
+pendingImage = null;
+attachPreview.hidden = true;
+attachThumb.removeAttribute("src");
+}
+document.getElementById("attach-clear").addEventListener("click", clearPendingImage);
+document.getElementById("attach-btn").addEventListener("click", () => {
+if (engineManager.getCurrentId()!== "wllama" ||!MMPROJ[engineManager.currentKey]) {
+addMessage("system", "画像はVLモデルを選択した時だけ使えます");
+return;
+}
+imageInput.click();
+});
+imageInput.addEventListener("change", async () => {
+const f = imageInput.files?.[0];
+imageInput.value = "";
+if (!f) return;
+clearPendingImage();
+pendingImage = { buffer: await f.arrayBuffer(), url: URL.createObjectURL(f)};
+attachThumb.src = pendingImage.url;
+attachPreview.hidden = false;
+});
+
+
 async function sendMessageWithText(forcedText) {
-  const text = (forcedText || inputEl.value).trim();
-  if (!text || isGenerating) return;
+let text = (forcedText || inputEl.value).trim();
+const img = pendingImage;
+if ((!text &&!img) || isGenerating) return;
+if (!text && img) text = "この画像について説明してください";
   const isVoiceMode = lastInputWasVoice;
   lastInputWasVoice = false;
   if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
 
-  if (isTimeQuery(text)) {
+  if (!img && isTimeQuery(text)) {
     const userDiv = addMessage("user", text);
-    messages.push({ role: "user", content: text });
+if (img) {
+const im = document.createElement("img");
+im.src = img.url;
+im.className = "msg-img";
+im.alt = "添付画像";
+userDiv.appendChild(im);
+// 吹き出し表示用に URL は生かす（revokeしない）。添付状態だけ解除
+pendingImage = null;
+attachPreview.hidden = true;
+attachThumb.removeAttribute("src");
+}
+messages.push({ role: "user", content: text});
     saveCurrentRoomHistory();
     inputEl.value = "";
     voicePreview.textContent = '';
@@ -1482,8 +1526,9 @@ const MP_INFO = {
   "Qwen-0.5B":  { name: "Qwen2.5 0.5B",      desc: "GGUFのQwen0.5。MLCと比較してみよう" },
   "Qwen3-0.6B":  { name: "Qwen3 0.6B",      desc: "軽量でありながらThinkモード搭載" },
   "DeepSeek-1.5B":  { name: "DeepSeek 1.5B",  desc: "DeepSeekR1で蒸留したQwen" },
-  "llm-jp-3-1.8B": { name: "llm.jp 1.8B", desc: "国立情報学研究所(NII)によって作成。" },
-  "LFM-1.2BJP":  { name: "LFM 1.2BJP",  desc: "日本語ヨシ、スピードヨシ" },
+  "llm-jp-3-1.8B": { name: "llm-jp 1.8B", desc: "国立情報学研究所(NII)によって作成。" },
+  "LFM-1.2BJP":  { name: "LFM2.5 1.2BJP",  desc: "日本語ヨシ、スピードヨシ" },
+  "LFM-VL-450M": { name: "LFM2.5 VL 450M", desc: "画像が読めるVLモデル（Wllama・実験中）"},
   "FalconH1-1.5B":  { name: "FalconH1 1.5B",  desc: "独自のアーキテクチャで高速推論が可能。" },
   //"Serow-0.5B": { name: "Serow 0.5B",     desc: "WebAIPocket製のβ試験型" },
   "Diffenion-Mk.1":  { name: "Diffenion Mk.1",  desc: "ディベートに特化したWebAIPocketオリジナルモデル" },

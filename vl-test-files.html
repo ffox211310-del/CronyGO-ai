@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wllama local-file VL test</title>
+<style>
+  body { font-family: sans-serif; margin: 16px; background: #111; color: #eee; }
+  button { font-size: 16px; padding: 10px 14px; margin: 4px 4px 4px 0; }
+  #log { white-space: pre-wrap; word-break: break-all; background: #000; border: 1px solid #444; padding: 10px; font-size: 12px; min-height: 300px; }
+  canvas { display: none; }
+</style>
+</head>
+<body>
+<h3>ローカルファイルVL検証（loadModel([file, mmproj]) が通るか）</h3>
+<div>
+  <button id="btn-f1">検証開始： loadModel([本体File, mmprojFile])</button>
+</div>
+<p style="font-size:13px">各テスト：HFから2ファイルをDL→File化→読み込み→小さいテスト画像で質問。ログはこのページに出ます。数分かかります。</p>
+<canvas id="cv" width="256" height="192"></canvas>
+<pre id="log"></pre>
+
+<script type="module">
+import { Wllama } from "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.8.1/esm/index.js";
+
+const WASM_URL = "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.8.1/esm/wasm/wllama.wasm";
+const MODEL_URL = "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/resolve/main/LFM2.5-VL-450M-Q4_0.gguf";
+const MMPROJ_URL = "https://huggingface.co/LiquidAI/LFM2.5-VL-450M-GGUF/resolve/main/mmproj-LFM2.5-VL-450m-Q8_0.gguf";
+
+const logEl = document.getElementById("log");
+const t0 = performance.now();
+function log(...args) {
+  const line = `[${((performance.now() - t0) / 1000).toFixed(1)}s] ` + args.map(a => typeof a === "string" ? a : JSON.stringify(a)).join(" ");
+  logEl.textContent += line + "\n";
+  console.log(line);
+}
+window.addEventListener("error", e => log("WINDOW ERROR:", e.message));
+window.addEventListener("unhandledrejection", e => log("UNHANDLED REJECTION:", e.reason?.name || "", e.reason?.message || String(e.reason)));
+log("crossOriginIsolated =", self.crossOriginIsolated);
+
+// 小さいテスト画像（256x192：赤丸・青四角・7392・緑三角）
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+ctx.fillStyle = "white"; ctx.fillRect(0, 0, 256, 192);
+ctx.fillStyle = "rgb(220,40,40)"; ctx.beginPath(); ctx.arc(32, 32, 24, 0, Math.PI * 2); ctx.fill();
+ctx.fillStyle = "rgb(40,80,220)"; ctx.fillRect(200, 8, 48, 48);
+ctx.fillStyle = "rgb(40,170,70)"; ctx.beginPath(); ctx.moveTo(128, 128); ctx.lineTo(96, 176); ctx.lineTo(160, 176); ctx.closePath(); ctx.fill();
+ctx.fillStyle = "black"; ctx.font = "bold 56px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+ctx.fillText("7392", 128, 92);
+const imgBlob = await new Promise(r => cv.toBlob(r, "image/png"));
+const imgBuf = await imgBlob.arrayBuffer();
+log("test image ready:", imgBuf.byteLength, "bytes");
+
+let blobs = null;
+async function fetchFiles() {
+  if (blobs) return blobs;
+  log("downloading model + mmproj from HF...");
+  const [m, p] = await Promise.all([fetch(MODEL_URL), fetch(MMPROJ_URL)]);
+  const [mb, pb] = await Promise.all([m.blob(), p.blob()]);
+  log("downloaded:", (mb.size / 1048576).toFixed(1) + "MB", "/", (pb.size / 1048576).toFixed(1) + "MB");
+  blobs = { mb, pb };
+  return blobs;
+}
+
+const LOAD_PARAMS = { n_ctx: 4096, n_gpu_layers: 0, reasoning_format: "deepseek", reasoning_budget_tokens: 2048 };
+
+async function askImage(wllama, label) {
+  log(label + ": supportInputModality('image') =", (() => { try { return wllama.supportInputModality("image"); } catch (e) { return "ERR " + e.message; } })());
+  const start = performance.now();
+  const hb = setInterval(() => log(label + `: ...waiting (${((performance.now() - start) / 1000).toFixed(0)}s)`), 15000);
+  try {
+    const stream = await wllama.createChatCompletion({
+      messages: [{ role: "user", content: [
+        { type: "text", text: "画像の中央の4桁の数字と、左上と右上の図形の色と形を教えて" },
+        { type: "image", data: imgBuf },
+      ]}],
+      max_tokens: 256, temperature: 0.2, stream: true,
+    });
+    let out = "";
+    for await (const chunk of stream) {
+      const d = chunk?.choices?.[0]?.delta || {};
+      out += (d.content || "") + (d.reasoning_content || "");
+    }
+    log(label + `: ANSWER (${((performance.now() - start) / 1000).toFixed(1)}s) =`, out.slice(0, 400));
+    log(label + ": 正解は「7392、左上は赤い丸、右上は青い四角」");
+  } catch (e) {
+    log(label + ": ERROR", e?.name || "", e?.message || String(e));
+  } finally { clearInterval(hb); }
+}
+
+async function testF1() {
+  const { mb, pb } = await fetchFiles();
+  const modelFile = new File([mb], "LFM2.5-VL-450M-Q4_0.gguf");
+  const mmprojFile = new File([pb], "mmproj-LFM2.5-VL-450m-Q8_0.gguf");
+  const wllama = new Wllama({ default: WASM_URL });
+  log("F1: loadModel([modelFile, mmprojFile]) start");
+  try {
+    await wllama.loadModel([modelFile, mmprojFile], { ...LOAD_PARAMS });
+    log("F1: load OK");
+    await askImage(wllama, "F1");
+  } catch (e) {
+    log("F1: LOAD ERROR", e?.name || "", e?.message || String(e));
+  }
+  try { await wllama.exit(); } catch {}
+  log("F1: done");
+}
+
+
+document.getElementById("btn-f1").addEventListener("click", () => testF1().catch(e => log("F1 FATAL:", e?.message || String(e))));
+log("ready");
+</script>
+</body>
+</html>

@@ -919,7 +919,28 @@ const f = imageInput.files?.[0];
 imageInput.value = "";
 if (!f) return;
 clearPendingImage();
-pendingImage = { buffer: await f.arrayBuffer(), url: URL.createObjectURL(f)};
+  
+  // 速度対策：モデルに渡す画像は長辺256pxまで縮小（画像トークン256→64、表示用URLは元のまま）
+  let sendBuf;
+  try {
+    const bmp = await createImageBitmap(f);
+    const scale = Math.min(1, 256 / Math.max(bmp.width, bmp.height));
+    if (scale < 1) {
+      const cvs = document.createElement("canvas");
+      cvs.width = Math.round(bmp.width * scale);
+      cvs.height = Math.round(bmp.height * scale);
+      cvs.getContext("2d").drawImage(bmp, 0, 0, cvs.width, cvs.height);
+      const blob = await new Promise(r => cvs.toBlob(r, "image/jpeg", 0.85));
+      sendBuf = await blob.arrayBuffer();
+    } else {
+      sendBuf = await f.arrayBuffer();
+    }
+    bmp.close?.();
+  } catch {
+    sendBuf = await f.arrayBuffer();
+  }
+  pendingImage = { buffer: sendBuf, url: URL.createObjectURL(f) };
+  
 attachThumb.src = pendingImage.url;
 attachPreview.hidden = false;
 });

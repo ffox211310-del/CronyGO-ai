@@ -676,8 +676,8 @@ function renderChatFromHistory(history){
     return;
   }
   
-  history.forEach(m=>{ addMessage(m.role, m.content, m.think);});
   
+  history.forEach(m=>{ addMessage(m.role, m.content, m.think, m.img);});
   hasChatted = true;
   hideFirstLoadingUI();
 }
@@ -988,7 +988,8 @@ attachPreview.hidden = true;
 attachThumb.removeAttribute("src");
 }
   
-  messages.push({ role: "user", content: text });
+  messages.push({ role: "user", content: text, ...(img?.thumb ? { img: img.thumb } : {}) });
+  
   saveCurrentRoomHistory();
   inputEl.value = "";
   voicePreview.textContent = '';

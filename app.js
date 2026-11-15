@@ -1388,7 +1388,9 @@ async function renderSavedList() {
 }
 
 // ---------- 読み込み本体（選択ファイルも保存済みも共通） ----------
-async function startLocalModel(file, saveToBrowser) {
+
+async function startLocalModel(file, saveToBrowser, mmprojFile = null) {
+  
   const fileName = file.name;
   const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
 
@@ -1404,7 +1406,10 @@ async function startLocalModel(file, saveToBrowser) {
     const storedThreads = localStorage.getItem('cronygo_threads') || 'auto';
     const n_threads = storedThreads === 'auto' ? 'auto' : parseInt(storedThreads);
 
-    await engineManager.loadLocalFile(file, null, { context_size, n_threads });
+    await engineManager.loadLocalFile(file, null, { context_size, n_threads, mmprojFile });
+
+    // VLとして読み込めたら画像添付を有効化（表示ブロックの isVisionModel が参照）
+    localVisionLoaded = !!mmprojFile;
 
     // 新しく選んだファイルだけ、ブラウザに保存
     if (saveToBrowser) {
@@ -1426,7 +1431,7 @@ async function startLocalModel(file, saveToBrowser) {
     progressBar.style.opacity = "0";
 
     if (localGgufStatus) {
-      localGgufStatus.textContent = `✅ 起動完了: ${fileName}`;
+      localGgufStatus.textContent = `起動完了: ${fileName}`;
       localGgufStatus.style.color = '#4FD1C5';
     }
     hideFirstLoadingUI();
@@ -1447,14 +1452,21 @@ if (localGgufBtn && localGgufFile) {
   localGgufBtn.addEventListener('click', () => localGgufFile.click());
 
   localGgufFile.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (!file.name.toLowerCase().endsWith('.gguf')) {
+    const files = [...e.target.files].filter(f => f.name.toLowerCase().endsWith('.gguf'));
+    if (!files.length) {
       alert('GGUFファイルを選択してください');
       localGgufFile.value = '';
       return;
     }
-    await startLocalModel(file, true);
+    // ファイル名で判定：名前に mmproj を含む方がプロジェクタ、もう一方が本体
+    const mmprojFile = files.find(f => f.name.toLowerCase().includes('mmproj')) || null;
+    const file = files.find(f => f !== mmprojFile);
+    if (!file) {
+      alert('モデル本体のGGUFも一緒に選択してください');
+      localGgufFile.value = '';
+      return;
+    }
+    await startLocalModel(file, true, mmprojFile);
     localGgufFile.value = '';
   });
 }

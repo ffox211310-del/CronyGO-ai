@@ -507,14 +507,22 @@ block.appendChild(body);
 return block;
 }
 
-function addMessage(role, content, think) {
-const div = document.createElement("div");
-div.className = `msg ${role}`;
-if (role === 'assistant') {
-div.innerHTML = renderMarkdown(content);
-} else {
-div.textContent = content;
-}
+function addMessage(role, content, think, imgData) {
+  const div = document.createElement("div");
+  div.className = `msg ${role}`;
+  if (role === 'assistant') {
+    div.innerHTML = renderMarkdown(content);
+  } else {
+    div.textContent = content;
+  }
+  // 履歴から復元した送信画像（data URL）を吹き出し内に表示する
+  if (role === 'user' && imgData) {
+    const im = document.createElement("img");
+    im.src = imgData;
+    im.className = "msg-img";
+    im.alt = "添付画像";
+    div.appendChild(im);
+  }
 // 履歴にThinkがあれば、本文の上に畳んだ状態で復元する
 if (role === 'assistant' && think) {
 chatEl.appendChild(createThinkBlock(think, true));

@@ -581,9 +581,18 @@ function saveRooms(){
 function loadRoomMessages(id){
   try{ const r = localStorage.getItem(LS_ROOM_PREFIX+id); return r? JSON.parse(r) : []; }catch{ return []; }
 }
+
 function saveRoomMessages(id, msgs){
-  try{ localStorage.setItem(LS_ROOM_PREFIX+id, JSON.stringify(msgs)); }catch(e){ console.warn(e); }
+  try{ localStorage.setItem(LS_ROOM_PREFIX+id, JSON.stringify(msgs)); }
+  catch(e){
+    // 容量オーバー時は画像を落として、テキストだけでも保存を試みる
+    try{
+      const stripped = msgs.map(m => { const { img, ...rest } = m; return rest; });
+      localStorage.setItem(LS_ROOM_PREFIX+id, JSON.stringify(stripped));
+    }catch{ console.warn(e); }
+  }
 }
+
 function getHistory(){ return messages.slice(1); }
 function saveCurrentRoomHistory(){
   if(!currentRoomId) return;

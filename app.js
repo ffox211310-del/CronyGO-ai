@@ -922,15 +922,18 @@ if (!f) return;
 clearPendingImage();
   
   // 速度対策：モデルに渡す画像は長辺256pxまで縮小（画像トークン256→64、表示用URLは元のまま）
+  // ついでに履歴保存用のサムネイル（長辺256pxのJPEG data URL）も同じcanvasで作る
   let sendBuf;
+  let thumbUrl = null;
   try {
     const bmp = await createImageBitmap(f);
     const scale = Math.min(1, 256 / Math.max(bmp.width, bmp.height));
+    const cvs = document.createElement("canvas");
+    cvs.width = Math.round(bmp.width * scale);
+    cvs.height = Math.round(bmp.height * scale);
+    cvs.getContext("2d").drawImage(bmp, 0, 0, cvs.width, cvs.height);
+    thumbUrl = cvs.toDataURL("image/jpeg", 0.7);
     if (scale < 1) {
-      const cvs = document.createElement("canvas");
-      cvs.width = Math.round(bmp.width * scale);
-      cvs.height = Math.round(bmp.height * scale);
-      cvs.getContext("2d").drawImage(bmp, 0, 0, cvs.width, cvs.height);
       const blob = await new Promise(r => cvs.toBlob(r, "image/jpeg", 0.85));
       sendBuf = await blob.arrayBuffer();
     } else {
@@ -940,7 +943,7 @@ clearPendingImage();
   } catch {
     sendBuf = await f.arrayBuffer();
   }
-  pendingImage = { buffer: sendBuf, url: URL.createObjectURL(f) };
+  pendingImage = { buffer: sendBuf, url: URL.createObjectURL(f), thumb: thumbUrl };
   
 attachThumb.src = pendingImage.url;
 attachPreview.hidden = false;

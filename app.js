@@ -1374,13 +1374,16 @@ async function renderSavedList() {
   if (!localSavedList) return;
   let names = [];
   try { names = await listLocalModels(); } catch { return; }
-  if (!names.length) {
+  
+  const bodies = names.filter(n => !n.endsWith('.mmproj.gguf'));
+  if (!bodies.length) {
     localSavedList.innerHTML = '<span style="font-size:11px;opacity:.5;">保存済みモデルなし</span>';
     return;
   }
-  localSavedList.innerHTML = names.map(n => `
+  localSavedList.innerHTML = bodies.map(n => `
+  
     <div style="display:flex;align-items:center;gap:6px;background:#1a1a1a;padding:6px 8px;border-radius:6px;font-size:11px;margin-top:4px;">
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(n)}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(n)}${names.includes(n + '.mmproj.gguf') ? ' <span style="color:#4FD1C5;">[VL]</span>' : ''}</span>
       <button data-run="${escapeHtml(n)}" style="border:1px solid #4FD1C5;background:transparent;color:#4FD1C5;border-radius:4px;padding:2px 8px;">起動</button>
       <button data-del="${escapeHtml(n)}" style="border:1px solid #444;background:transparent;color:#f55;border-radius:4px;padding:2px 8px;">削除</button>
     </div>
@@ -1414,8 +1417,14 @@ async function startLocalModel(file, saveToBrowser, mmprojFile = null) {
     // 新しく選んだファイルだけ、ブラウザに保存
     if (saveToBrowser) {
       if (localGgufStatus) localGgufStatus.textContent = `保存中: ${fileName}`;
+      
+      
       try { await saveLocalModel(file); }
       catch (e) { console.warn('保存失敗', e); }
+      if (mmprojFile) {
+        try { await saveLocalModel(new File([mmprojFile], fileName + '.mmproj.gguf')); }
+        catch (e) { console.warn('mmproj保存失敗', e); }
+      }
     }
 
     currentKey = "__local__:" + fileName;
@@ -1440,7 +1449,7 @@ async function startLocalModel(file, saveToBrowser, mmprojFile = null) {
   } catch (err) {
     console.error(err);
     if (localGgufStatus) {
-      localGgufStatus.textContent = `❌ エラー: ${err.message}`;
+      localGgufStatus.textContent = `エラー: ${err.message}`;
       localGgufStatus.style.color = '#ff4444';
     }
     alert(`読み込みに失敗しました: ${err.message}\nメモリ不足の可能性があります。`);
@@ -1474,14 +1483,19 @@ if (localGgufBtn && localGgufFile) {
 localSavedList?.addEventListener('click', async (e) => {
   const run = e.target.closest('button[data-run]');
   const del = e.target.closest('button[data-del]');
+  
   if (run) {
     const file = await getLocalModel(run.dataset.run);
-    await startLocalModel(file, false);
+    let mmprojFile = null;
+    try { mmprojFile = await getLocalModel(run.dataset.run + '.mmproj.gguf'); } catch {}
+    await startLocalModel(file, false, mmprojFile);
   } else if (del) {
     if (!confirm(`「${del.dataset.del}」を削除しますか？`)) return;
     await deleteLocalModel(del.dataset.del);
+    try { await deleteLocalModel(del.dataset.del + '.mmproj.gguf'); } catch {}
     renderSavedList();
   }
+  
 });
 
 renderSavedList();

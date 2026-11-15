@@ -862,6 +862,9 @@ if (key.startsWith("__local__:")) {
     inputEl.placeholder = `${key}で入力...`;
     hideFirstLoadingUI();
     addMessage("assistant", isReload? `${key} 積み直し完了！続きをどうぞ` : `${key} 起動完了！`);
+    if (isVisionModel() && !/Firefox/i.test(navigator.userAgent)) {
+      addMessage("system", "画像認識は Firefox での実行を推奨します。Chromeなど一部ブラウザでは処理が止まることがあります。");
+    }
     dbg(`model ${key} loaded via ${engineManager.getCurrentId()}`);
   } catch (e) {
     dbg(`model load ERROR ${e.message}`);
@@ -1444,6 +1447,9 @@ async function startLocalModel(file, saveToBrowser, mmprojFile = null) {
     }
     hideFirstLoadingUI();
     addMessage("assistant", `ローカルモデル「${fileName}」の読み込みが完了しました！`);
+    if (isVisionModel() && !/Firefox/i.test(navigator.userAgent)) {
+      addMessage("system", "画像認識は Firefox での実行を推奨します。Chromeなど一部ブラウザでは処理が止まることがあります。");
+    }
     renderSavedList();
   } catch (err) {
     console.error(err);

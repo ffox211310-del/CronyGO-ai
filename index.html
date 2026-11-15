@@ -279,9 +279,11 @@
       サーバーにアップロードせず、端末内のGGUFファイルを直接読み込みます。<br>
       <span style="color:var(--accent);">※大容量モデルはメモリ不足でタブが落ちる場合があります</span>
     </div>
-    <input type="file" id="local-gguf-file" accept=".gguf" style="display:none;">
+   
+    <input type="file" id="local-gguf-file" accept=".gguf" multiple style="display:none;">
+   
     <button id="local-gguf-btn" class="primary-btn" style="width:100%;">
-      📁 GGUFファイルを選択して読み込む
+      GGUFファイルを選択して読み込む
     </button>
     <div id="local-gguf-status" class="settings-desc" style="margin-top:8px; min-height:1.5em;"></div>
     <div id="local-saved-list"></div>

@@ -921,20 +921,28 @@ document.getElementById("attach-clear").addEventListener("click", clearPendingIm
 
 document.getElementById("attach-btn").addEventListener("click", () => {
   const menu = document.getElementById("plus-menu");
+  
   const imgRow = document.getElementById("plus-menu-image");
+  const camRow = document.getElementById("plus-menu-camera");
   // 開くたびに今のモデルの状態で有効/無効を決め直す（モデル切替後に古い状態が残らない）
   imgRow.disabled = !isVisionModel();
+  camRow.disabled = !isVisionModel();
+  
   menu.hidden = !menu.hidden;
 });
 document.getElementById("plus-menu-image").addEventListener("click", () => {
   document.getElementById("plus-menu").hidden = true;
   imageInput.click();
 });
+document.getElementById("plus-menu-camera").addEventListener("click", () => {
+  document.getElementById("plus-menu").hidden = true;
+  document.getElementById("camera-input").click();
+});
 // 「ファイルをアップロード」は準備中のため今は押せない（将来のファイル読み取り用）。
 // 押された時の処理は作らない。disabled なのでクリックイベント自体が来ない。
-imageInput.addEventListener("change", async () => {
-const f = imageInput.files?.[0];
-imageInput.value = "";
+async function handleImageSelect(input) {
+const f = input.files?.[0];
+input.value = "";
 if (!f) return;
 clearPendingImage();
   
@@ -964,7 +972,10 @@ clearPendingImage();
   
 attachThumb.src = pendingImage.url;
 attachPreview.hidden = false;
-});
+}
+imageInput.addEventListener("change", () => handleImageSelect(imageInput));
+const cameraInput = document.getElementById("camera-input");
+cameraInput.addEventListener("change", () => handleImageSelect(cameraInput));
 
 
 async function sendMessageWithText(forcedText) {

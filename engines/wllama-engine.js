@@ -155,7 +155,11 @@ async unload() {
   const nThreads = this.resolveThreads(opts.n_threads);
   onProgress?.(0, `${(file.size/1024/1024).toFixed(1)}MB 読み込み中`);
 
-  await this.wllama.loadModel([file], {
+  // mmprojFile があれば [本体, mmproj] の順で渡す（F1検証済みの形）
+  const files = opts.mmprojFile ? [file, opts.mmprojFile] : [file];
+
+  await this.wllama.loadModel(files, {
+    
     n_ctx: opts.context_size ?? 4096,
     n_gpu_layers: 0,
     n_threads: nThreads,

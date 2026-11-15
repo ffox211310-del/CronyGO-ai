@@ -24,26 +24,7 @@ const LS_ROOM_PREFIX = "cronygo_room_";
 let rooms = [];
 let currentRoomId = null;
 
-function getCurrentTimeString() {
-  const now = new Date();
-  const weekdays = ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"];
-  const y = now.getFullYear();
-  const m = now.getMonth()+1;
-  const d = now.getDate();
-  const wd = weekdays[now.getDay()];
-  const h = now.getHours();
-  const mm = String(now.getMinutes()).padStart(2,'0');
-  return `${y}年${m}月${d}日 ${wd} ${h}時${mm}分`;
-}
-function isTimeQuery(text) {
-  const t = text.trim().toLowerCase();
-  if (/(今日は何日|今日何日|きょうは何日|今日の日付|何曜日|今何時|いまなんじ|現在時刻|今の時間|いまのじかん)/.test(t)) return true;
-  if (t === "何日" || t === "何日?" || t === "何時" || t === "何時?" || t === "何日？" || t === "何時？") return true;
-  if (t.includes("何日ですか") || t.includes("何時ですか") || t.includes("何曜日ですか")) return true;
-  if (t.includes("今日") && (t.includes("何日") || t.includes("何曜日") || t.includes("日付") || t.includes("曜日"))) return true;
-  if ((t.includes("今") || t.includes("現在")) && (t.includes("何時") || t.includes("時間") || t.includes("じかん"))) return true;
-  return false;
-}
+
 
 let voice = null;
 let currentKey = null;
@@ -917,13 +898,20 @@ attachPreview.hidden = true;
 attachThumb.removeAttribute("src");
 }
 document.getElementById("attach-clear").addEventListener("click", clearPendingImage);
+
 document.getElementById("attach-btn").addEventListener("click", () => {
-if (engineManager.getCurrentId()!== "wllama" ||!MMPROJ[engineManager.currentKey]) {
-addMessage("system", "画像はVLモデルを選択した時だけ使えます");
-return;
-}
-imageInput.click();
+  const menu = document.getElementById("plus-menu");
+  const imgRow = document.getElementById("plus-menu-image");
+  // 開くたびに今のモデルの状態で有効/無効を決め直す（モデル切替後に古い状態が残らない）
+  imgRow.disabled = !isVisionModel();
+  menu.hidden = !menu.hidden;
 });
+document.getElementById("plus-menu-image").addEventListener("click", () => {
+  document.getElementById("plus-menu").hidden = true;
+  imageInput.click();
+});
+// 「ファイルをアップロード」は準備中のため今は押せない（将来のファイル読み取り用）。
+// 押された時の処理は作らない。disabled なのでクリックイベント自体が来ない。
 imageInput.addEventListener("change", async () => {
 const f = imageInput.files?.[0];
 imageInput.value = "";

@@ -894,6 +894,15 @@ if (key.startsWith("__local__:")) {
   }
 }
 
+// Vision step2：添付可否は「MMPROJキー」ではなくこのフラグで判定する（LFM限定をやめる）。
+// 標準モデルは MMPROJ 定義があれば ON。ローカルモデルは mmproj 付きで読めた時に
+// localVisionLoaded を true にする（立てる配線はエンジン側ブロック）。
+let localVisionLoaded = false;
+function isVisionModel() {
+  if (engineManager.getCurrentId() !== "wllama") return false;
+  return !!MMPROJ[engineManager.currentKey] || localVisionLoaded;
+}
+
 // ===== 画像添付（Vision step1：WllamaのVLモデル専用） =====
 let pendingImage = null; // { buffer: ArrayBuffer, url: string}
 const imageInput = document.getElementById("image-input");

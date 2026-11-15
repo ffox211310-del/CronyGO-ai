@@ -819,6 +819,7 @@ async function loadModel(key, isReload = false) {
   const isFirstPhase = !hasChatted && !isReload;
 
   dlBtn.disabled = true;
+  localVisionLoaded = false;
   dlBtn.textContent = isReload? "再読込中..." : "読込中...";
   statusEl.className = "loading";
   progressBar.style.opacity = "1";
@@ -1405,6 +1406,7 @@ async function startLocalModel(file, saveToBrowser, mmprojFile = null) {
   
   const fileName = file.name;
   const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
+  localVisionLoaded = false;
 
   if (localGgufStatus) {
     localGgufStatus.textContent = `読み込み中: ${fileName} (${fileSizeMB} MB) 展開中...`;

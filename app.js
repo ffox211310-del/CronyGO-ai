@@ -956,22 +956,7 @@ if (!text && img) text = "この画像について説明してください";
   lastInputWasVoice = false;
   if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
 
-  if (!img && isTimeQuery(text)) {
-    const userDiv = addMessage("user", text);
-
-messages.push({ role: "user", content: text});
-    saveCurrentRoomHistory();
-    inputEl.value = "";
-    voicePreview.textContent = '';
-    const nowStr = getCurrentTimeString();
-    const reply = `${nowStr}です`;
-    addMessage("assistant", reply);
-    messages.push({ role: "assistant", content: reply });
-    saveCurrentRoomHistory(); 
-    dbg(`[TimeQuery] matched "${text}" -> ${reply}`);
-    if (isVoiceMode && voice) voice.speak(reply);
-    return;
-  }
+  
 
   if (!engineManager.isReady()) {
     addMessage("system", "モデルをダウンロードしてください");

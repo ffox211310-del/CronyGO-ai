@@ -145,6 +145,17 @@ if(maxTokensInput){
     localStorage.setItem('cronygo_max_tokens', e.target.value);
   });
 }
+const fileLimitInput = document.getElementById('file-limit-input');
+if(fileLimitInput){
+  fileLimitInput.value = loadFileLimit();
+  fileLimitInput.addEventListener('change', (e)=>{
+    let v = parseInt(e.target.value);
+    if(!Number.isFinite(v) || v < 0) v = 1000;
+    e.target.value = v;
+    localStorage.setItem('cronygo_file_limit', String(v));
+    refreshFileLimitLabel();
+  });
+}
 if(thinkToggle){
 　thinkToggle.checked = localStorage.getItem('cronygo_thinking')!== '0';
 　thinkToggle.addEventListener('change', (e)=>{
@@ -938,8 +949,74 @@ document.getElementById("plus-menu-camera").addEventListener("click", () => {
   document.getElementById("plus-menu").hidden = true;
   document.getElementById("camera-input").click();
 });
-// 「ファイルをアップロード」は準備中のため今は押せない（将来のファイル読み取り用）。
-// 押された時の処理は作らない。disabled なのでクリックイベント自体が来ない。
+
+// ===== ファイル添付（txt / md / PDF のテキスト読み取り） =====
+let pendingFile = null; // { name: string, text: string }
+const fileInput = document.getElementById("file-input");
+const filePreview = document.getElementById("file-preview");
+const fileNameEl = document.getElementById("file-name");
+
+function loadFileLimit() {
+  const v = parseInt(localStorage.getItem("cronygo_file_limit"));
+  return Number.isFinite(v) && v >= 0 ? v : 1000;
+}
+function refreshFileLimitLabel() {
+  const el = document.getElementById("plus-menu-file-limit");
+  if (!el) return;
+  const lim = loadFileLimit();
+  el.textContent = lim === 0 ? "無制限" : lim + "文字まで";
+}
+function clearPendingFile() {
+  pendingFile = null;
+  filePreview.hidden = true;
+  fileNameEl.textContent = "";
+}
+document.getElementById("file-clear").addEventListener("click", clearPendingFile);
+document.getElementById("plus-menu-file").addEventListener("click", () => {
+  document.getElementById("plus-menu").hidden = true;
+  fileInput.click();
+});
+fileInput.addEventListener("change", async () => {
+  const f = fileInput.files?.[0];
+  fileInput.value = "";
+  if (!f) return;
+  let text = "";
+  try {
+    if (/\.pdf$/i.test(f.name)) {
+      fileNameEl.textContent = "PDFを読み取り中…";
+      filePreview.hidden = false;
+      const pdfjs = await import("./lib/pdf.min.mjs");
+      pdfjs.GlobalWorkerOptions.workerSrc = "./lib/pdf.worker.min.mjs";
+      const doc = await pdfjs.getDocument({ data: await f.arrayBuffer() }).promise;
+      const pages = [];
+      for (let p = 1; p <= doc.numPages; p++) {
+        const page = await doc.getPage(p);
+        const tc = await page.getTextContent();
+        pages.push(tc.items.map(i => i.str + (i.hasEOL ? "\n" : "")).join(""));
+      }
+      text = pages.join("\n");
+    } else {
+      text = await f.text();
+    }
+  } catch {
+    clearPendingFile();
+    addMessage("system", "ファイルを読み取れませんでした");
+    return;
+  }
+  text = text.trim();
+  if (!text) {
+    clearPendingFile();
+    addMessage("system", "ファイルからテキストを抽出できませんでした");
+    return;
+  }
+  const lim = loadFileLimit();
+  if (lim > 0 && text.length > lim) text = text.slice(0, lim);
+  clearPendingImage();
+  pendingFile = { name: f.name, text };
+  fileNameEl.textContent = f.name;
+  filePreview.hidden = false;
+});
+refreshFileLimitLabel();
 async function handleImageSelect(input) {
 const f = input.files?.[0];
 input.value = "";

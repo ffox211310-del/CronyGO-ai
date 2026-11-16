@@ -121,20 +121,14 @@ Both base model and MLC/GGUF variants are licensed under the Apache License 2.0.
 
 ---
 
-LFM2.5-1.2B-JP
+LFM2.5 Family
 
-Model: LFM2.5-1.2B-JP-Q4_K_M.gguf
-Base model: LiquidAI/LFM2.5-1.2B-JP
+Model: LFM2.5-1.2B-JP-Q4_K_M.gguf,LFM2.5-350M-Q8_0.gguf,LFM2-VL-450M-Q8_0.gguf
 License: LFM Open License v1.0
 Copyright: Liquid AI, Inc.
-Source: https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP
-GGUF: https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-GGUF
-Direct file: https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-GGUF/resolve/main/LFM2.5-1.2B-JP-Q4_K_M.gguf
-
-LFM2.5-1.2B-JP is a Japanese-specialized compact language model developed by Liquid AI.
-Used via wllama for local browser-based inference.
-The model is distributed under the LFM Open License v1.0, which includes a commercial use limitation (free for entities with annual revenue under $10 million).
-
+Source: https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP,https://huggingface.co/LiquidAI/LFM2-VL-450M,https://huggingface.co/LiquidAI/LFM2.5-350M
+GGUF: https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-GGUF,https://huggingface.co/LiquidAI/LFM2-VL-450M-GGUF,
+https://huggingface.co/LiquidAI/LFM2.5-350M-GGUF
 ---
 
 DeepSeek-R1-Distill-Qwen-1.5B

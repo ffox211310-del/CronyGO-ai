@@ -1139,3 +1139,5 @@ header h1,
 #file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #file-clear { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border-light); background: var(--bg-assistant); color: inherit; font-size: 12px; line-height: 1; cursor: pointer; }
 .msg-img { display: block; max-width: 220px; max-height: 220px; border-radius: 12px; margin-top: 6px;}
+.msg-file-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 6px 10px; border: 1px solid var(--border-light); border-radius: 10px; background: rgba(0,0,0,0.15); font-size: 12px; max-width: 100%; }
+.msg-file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

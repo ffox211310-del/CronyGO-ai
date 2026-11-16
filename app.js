@@ -1022,6 +1022,7 @@ const f = input.files?.[0];
 input.value = "";
 if (!f) return;
 clearPendingImage();
+clearPendingFile();
   
   // 速度対策：モデルに渡す画像は長辺256pxまで縮小（画像トークン256→64、表示用URLは元のまま）
   // ついでに履歴保存用のサムネイル（長辺256pxのJPEG data URL）も同じcanvasで作る

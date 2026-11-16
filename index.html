@@ -99,14 +99,19 @@
 <img id="attach-thumb" alt="添付画像のプレビュー">
 <button id="attach-clear" type="button" aria-label="添付を取り消す">×</button>
 </div>
+<div id="file-preview" hidden>
+<span id="file-name"></span>
+<button id="file-clear" type="button" aria-label="ファイルを取り消す">×</button>
+</div>
 
 <div id="plus-menu" hidden>
-<button id="plus-menu-file" type="button" disabled>ファイルをアップロード <span>準備中</span></button>
+<button id="plus-menu-file" type="button">ファイルをアップロード <span id="plus-menu-file-limit">1000文字まで</span></button>
 <button id="plus-menu-image" type="button">画像を追加</button>
 <button id="plus-menu-camera" type="button">カメラで撮る</button>
 </div>
 <input type="file" id="image-input" accept="image/*" hidden>
 <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
+<input type="file" id="file-input" accept=".txt,.md,.pdf" hidden>
 <textarea id="input" rows="1" placeholder="モデルをダウンロードしてください" autocomplete="off" disabled></textarea>
 <div class="composer-tools">
 <div class="tools-left">
@@ -189,6 +194,12 @@
     </div>
     <input type="number" id="max-tokens-input" min="128" max="4096" step="128" value="1024" style="width:100%; background:var(--input-bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px;">
     <div class="settings-desc">1回の返答の長さ</div>
+   
+    <div style="margin-top:12px; display:flex; justify-content:space-between; margin-bottom:6px;">
+      <span style="font-size:12px;">ファイル文字数上限</span>
+    </div>
+    <input type="number" id="file-limit-input" min="0" step="100" value="1000" style="width:100%; background:var(--input-bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px;">
+    <div class="settings-desc">ファイル添付で読み取る文字数（0=無制限・自己責任）</div>
   </div>
  <!-- 追加: Think（思考） -->
 <div class="settings-section">

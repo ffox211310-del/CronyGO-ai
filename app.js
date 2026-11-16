@@ -1058,9 +1058,13 @@ cameraInput.addEventListener("change", () => handleImageSelect(cameraInput));
 
 async function sendMessageWithText(forcedText) {
 let text = (forcedText || inputEl.value).trim();
+  
 const img = pendingImage;
-if ((!text &&!img) || isGenerating) return;
+const file = pendingFile;
+  if ((!text &&!img && !file) || isGenerating) return;
 if (!text && img) text = "この画像について説明してください";
+if (!text && file) text = "このファイルについて説明してください";
+const content = file ? text + "\n\n【ファイル「" + file.name + "」の内容】\n" + file.text + "\n【ファイルここまで】" : text;
   const isVoiceMode = lastInputWasVoice;
   lastInputWasVoice = false;
   if (!hasChatted) { hasChatted = true; hideFirstLoadingUI(); }
@@ -1072,8 +1076,8 @@ if (!text && img) text = "この画像について説明してください";
     return;
   }
 
-  const userDiv = addMessage("user", text);
-
+  const userDiv = addMessage("user", content);
+  
   if (img) {
 const im = document.createElement("img");
 im.src = img.url;
@@ -1085,8 +1089,11 @@ pendingImage = null;
 attachPreview.hidden = true;
 attachThumb.removeAttribute("src");
 }
+  if (file) {
+clearPendingFile();
+}
   
-  messages.push({ role: "user", content: text, ...(img?.thumb ? { img: img.thumb } : {}) });
+  messages.push({ role: "user", content, ...(img?.thumb ? { img: img.thumb } : {}) });
   
   saveCurrentRoomHistory();
   inputEl.value = "";

@@ -121,13 +121,15 @@ Both base model and MLC/GGUF variants are licensed under the Apache License 2.0.
 
 ---
 
-LFM2.5 Family
+LFM2.5＆2 Family
 
 Model: LFM2.5-1.2B-JP-Q4_K_M.gguf,LFM2.5-350M-Q8_0.gguf,LFM2-VL-450M-Q8_0.gguf
 License: LFM Open License v1.0
 Copyright: Liquid AI, Inc.
 Source: https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP https://huggingface.co/LiquidAI/LFM2-VL-450M https://huggingface.co/LiquidAI/LFM2.5-350M
 GGUF: https://huggingface.co/LiquidAI/LFM2.5-1.2B-JP-202606-GGUF https://huggingface.co/LiquidAI/LFM2-VL-450M-GGUF https://huggingface.co/LiquidAI/LFM2.5-350M-GGUF
+
+These models are used for conversations and conversations about images.
 
 ---
 

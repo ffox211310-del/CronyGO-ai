@@ -1610,6 +1610,7 @@ const MP_INFO = {
   "DeepSeek-1.5B":  { name: "DeepSeek 1.5B",  desc: "DeepSeekR1で蒸留したQwen" },
   "llm-jp-3-1.8B": { name: "llm-jp 1.8B", desc: "国立情報学研究所(NII)によって作成。" },
   "LFM-1.2BJP":  { name: "LFM2.5 1.2BJP",  desc: "日本語ヨシ、スピードヨシ" },
+  "LFM-350M":  { name: "LFM2.5 350M",  desc: "軽量なのに会話がスムーズ" },
   "LFM-VL-450M": { name: "LFM2.5 VL 450M", desc: "画像が読めるVLモデル（Wllama・実験中）"},
   "FalconH1-1.5B":  { name: "FalconH1 1.5B",  desc: "独自のアーキテクチャで高速推論が可能。" },
   //"Serow-0.5B": { name: "Serow 0.5B",     desc: "WebAIPocket製のβ試験型" },

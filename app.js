@@ -596,9 +596,9 @@ function loadRoomMessages(id){
 function saveRoomMessages(id, msgs){
   try{ localStorage.setItem(LS_ROOM_PREFIX+id, JSON.stringify(msgs)); }
   catch(e){
-    // 容量オーバー時は画像を落として、テキストだけでも保存を試みる
+    // 容量オーバー時は画像とファイル本文を落として、テキストだけでも保存を試みる
     try{
-      const stripped = msgs.map(m => { const { img, ...rest } = m; return rest; });
+      const stripped = msgs.map(m => { const { img, ...rest } = m; if (typeof rest.content === "string") rest.content = rest.content.replace(/\n\n【ファイル「[^」]*」の内容】[\s\S]*?【ファイルここまで】/g, ""); return rest; });
       localStorage.setItem(LS_ROOM_PREFIX+id, JSON.stringify(stripped));
     }catch{ console.warn(e); }
   }

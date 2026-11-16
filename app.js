@@ -523,6 +523,15 @@ function addMessage(role, content, think, imgData) {
   div.className = `msg ${role}`;
   if (role === 'assistant') {
     div.innerHTML = renderMarkdown(content);
+  } else if (role === 'user' && content.includes("\n\n【ファイル「")) {
+    // ファイル添付は本文を畳んで、質問＋ファイル名チップだけ見せる（送信内容・履歴データはそのまま）
+    div.textContent = content.slice(0, content.indexOf("\n\n【ファイル「"));
+    const name = (content.match(/【ファイル「([^」]*)」の内容】/) || [])[1] || "ファイル";
+    const chip = document.createElement("div");
+    chip.className = "msg-file-chip";
+    chip.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span></span>';
+    chip.querySelector("span").textContent = name;
+    div.appendChild(chip);
   } else {
     div.textContent = content;
   }

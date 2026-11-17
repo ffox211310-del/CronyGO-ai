@@ -644,7 +644,18 @@ function downloadTextFile(text, name, type){
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  // 自動クリックで落ちないブラウザ向けに、設定内に実リンクも出す（自分のタップなら確実に落ちる）
+  const area = document.getElementById("export-link-area");
+  if(area){
+    area.innerHTML = "";
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    link.textContent = name + " をダウンロード";
+    link.style.color = "var(--accent)";
+    area.appendChild(link);
+  }
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
 }
 function exportChat(format){
   const history = getHistory();

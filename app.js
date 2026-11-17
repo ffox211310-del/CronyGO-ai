@@ -1391,6 +1391,8 @@ thinking: thinkingOn
   // for awaitを途中で抜けるとロックが残り、次の生成がロック待ちで永久に始まらない（実機で発生）。
   // interrupt済みなら生成はすぐ終わる。最悪でもmax_tokensで必ず終わるので捨て読みは有限。
   if (abortFlag || hitMaxChars) continue;
+  // 生成ログ: 処理したチャンクを数える（1チャンク≒1トークンの簡易計測）
+  { const tNow = performance.now(); if (!genFirstAt) genFirstAt = tNow; genLastAt = tNow; genTokens++; }
 
   // Thinkチャンクは本文と別枠へ。full・文字数カウント・TTSには一切入れない
 if (chunk.type === "think") {
@@ -1457,6 +1459,14 @@ assistantDiv.style.display = "";
     }
   }
 }
+
+  // 生成ログの集計（2トークン未満は速度が出せないので付けない）
+const genStats = (() => {
+  if (!genFirstAt || genTokens < 2) return null;
+  const mspt = (genLastAt - genFirstAt) / (genTokens - 1);
+  if (!(mspt > 0)) return null;
+  return { ttft: Math.round(genFirstAt - genT0), mspt: Math.round(mspt * 10) / 10, tps: Math.round(100000 / mspt) / 100, tokens: genTokens };
+})();
     full = full.trim();
 full = full.replace(/^\s*\*\*\s*$/gm, '').trim();
 full = full.replace(/\n{3,}/g, '\n\n').trim();
@@ -1467,8 +1477,9 @@ if (isKilled) {
   if (full || thinkFull) {
 assistantDiv.style.display = "";
 assistantDiv.innerHTML = renderMarkdown((full? full + "\n\n": "") + "[生成を停止しました]");
-messages.push({ role: "assistant", content: full,...(thinkFull? { think: thinkFull}: {})});
+messages.push({ role: "assistant", content: full,...(thinkFull? { think: thinkFull}: {}),...(genStats? { stats: genStats}: {})});
 saveCurrentRoomHistory();
+if (genStats) assistantDiv.after(createGenStatsEl(genStats));
 } else {
     assistantDiv.innerHTML = renderMarkdown("[生成を停止しました]");
     }
@@ -1478,8 +1489,9 @@ saveCurrentRoomHistory();
   const contentForHistory = hitMaxChars
     ? full.replace(/\n\n\[1500文字制限で停止\]$/, "")
     : full;
-  messages.push({ role: "assistant", content: contentForHistory,...(thinkFull? { think: thinkFull}: {})});
+  messages.push({ role: "assistant", content: contentForHistory,...(thinkFull? { think: thinkFull}: {}),...(genStats? { stats: genStats}: {})});
   saveCurrentRoomHistory();
+  if (genStats) assistantDiv.after(createGenStatsEl(genStats));
 
   if (voice && isVoiceMode && !hitMaxChars) {
     const remaining = speakBuffer.trim();

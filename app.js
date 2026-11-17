@@ -840,7 +840,7 @@ function renderChatFromHistory(history){
   }
   
   
-  history.forEach(m=>{ addMessage(m.role, m.content, m.think, m.img);});
+  history.forEach(m=>{ addMessage(m.role, m.content, m.think, m.img, m.stats);});
   hasChatted = true;
   hideFirstLoadingUI();
 }

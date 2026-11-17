@@ -618,12 +618,15 @@ function saveCurrentRoomHistory(){
   if(!currentRoomId) return;
   saveRoomMessages(currentRoomId, getHistory());
   const room = rooms.find(r=>r.id===currentRoomId);
-  if(room && room.title==="新しいチャット" && getHistory().length>0){
-    const firstUser = getHistory().find(m=>m.role==="user");
-    if(firstUser){
-      room.title = firstUser.content.slice(0,20) + (firstUser.content.length>20?"…":"");
-      saveRooms(); renderRoomList();
+  if(room){
+    room.updatedAt = Date.now();
+    if(room.title==="新しいチャット" && getHistory().length>0){
+      const firstUser = getHistory().find(m=>m.role==="user");
+      if(firstUser){
+        room.title = firstUser.content.slice(0,20) + (firstUser.content.length>20?"…":"");
+      }
     }
+    saveRooms(); renderRoomList();
   }
 }
 

@@ -626,7 +626,7 @@ function saveCurrentRoomHistory(){
     }
   }
 }
-function renderRoomList(){
+
   // ===== 会話エクスポート（JSON / Markdown） =====
 function exportFileBase(){
   const room = rooms.find(r=>r.id===currentRoomId);

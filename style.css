@@ -560,6 +560,12 @@ body.light #chat.has-custom-bg::before {
   background: transparent;
 }
 .room-item:hover{ background: var(--bg-input); }
+.room-group-label{
+  padding:10px 16px 4px;
+  font-size:11px;
+  opacity:0.5;
+  color: var(--text);
+}
 .room-item.active{
   background: var(--bg-input);
   border-left:3px solid var(--accent, #4FD1C5);

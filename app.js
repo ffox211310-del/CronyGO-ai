@@ -1732,6 +1732,9 @@ setTimeout(initCustomModelUI, 100);
 
 newRoomBtn?.addEventListener('click', createRoom);
 
+document.getElementById('export-json-btn')?.addEventListener('click', ()=>exportChat("json"));
+document.getElementById('export-md-btn')?.addEventListener('click', ()=>exportChat("md"));
+
 roomListEl?.addEventListener('click', (e)=>{
 
   // 名前変更

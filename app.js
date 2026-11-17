@@ -518,7 +518,19 @@ block.appendChild(body);
 return block;
 }
 
-function addMessage(role, content, think, imgData) {
+// 生成ログ（PocketPal風の3点表示）。数値は履歴に保存して復元時も出す
+function formatGenStats(s){
+  const ttft = s.ttft >= 10000 ? (s.ttft / 1000).toFixed(1) + "s" : s.ttft + "ms";
+  return `${Math.round(s.mspt)}ms/トークン, ${s.tps.toFixed(2)} トークン/秒, ${ttft} TTFT`;
+}
+function createGenStatsEl(s){
+  const el = document.createElement("div");
+  el.className = "msg-stats";
+  el.textContent = formatGenStats(s);
+  return el;
+}
+
+function addMessage(role, content, think, imgData, stats) {
   const div = document.createElement("div");
   div.className = `msg ${role}`;
   if (role === 'assistant') {
@@ -548,6 +560,7 @@ if (role === 'assistant' && think) {
 chatEl.appendChild(createThinkBlock(think, true));
 }
 chatEl.appendChild(div);
+if (role === 'assistant' && stats) chatEl.appendChild(createGenStatsEl(stats));
 chatEl.scrollTop = chatEl.scrollHeight;
 return div;
 }

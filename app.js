@@ -719,6 +719,7 @@ function exportChat(format){
   }
   downloadTextFile(lines.join("\n"), exportFileBase() + ".md", "text/markdown");
 }
+function renderRoomList(){
   if(!roomListEl) return;
   roomListEl.innerHTML = rooms.map(r=>`
     <div class="room-item ${r.id===currentRoomId?'active':''}" data-id="${r.id}" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">

@@ -627,6 +627,87 @@ function saveCurrentRoomHistory(){
   }
 }
 function renderRoomList(){
+  // ===== 会話エクスポート（JSON / Markdown） =====
+function exportFileBase(){
+  const room = rooms.find(r=>r.id===currentRoomId);
+  const title = (room?.title || "チャット").replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, "_").slice(0, 30) || "チャット";
+  const d = new Date();
+  const ymd = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  return `CronyGO-${ymd}-${title}`;
+}
+function downloadTextFile(text, name, type){
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function exportChat(format){
+  const history = getHistory();
+  if(!history.length){ addMessage("system", "エクスポートする会話がありません"); return; }
+  const room = rooms.find(r=>r.id===currentRoomId);
+  if(format === "json"){
+    const data = {
+      app: "CronyGO",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      room: {
+        title: room?.title || "",
+        createdAt: room ? new Date(room.createdAt || parseInt(room.id)).toISOString() : null,
+        model: room?.model || ""
+      },
+      messages: history.map(m => { const { img, ...rest } = m; return rest; })
+    };
+    downloadTextFile(JSON.stringify(data, null, 2), exportFileBase() + ".json", "application/json");
+    return;
+  }
+  const lines = [];
+  lines.push(`# ${room?.title || "チャット"}`);
+  lines.push("");
+  lines.push(`- エクスポート日: ${new Date().toLocaleString()}`);
+  if(room) lines.push(`- 部屋の作成日: ${new Date(room.createdAt || parseInt(room.id)).toLocaleDateString()}`);
+  if(room?.model) lines.push(`- モデル: ${room.model}`);
+  lines.push(`- 発言数: ${history.length}`);
+  lines.push("- システムプロンプトは含まれていません。画像はエクスポートされません。");
+  lines.push("");
+  for(const m of history){
+    if(m.role === "user"){
+      lines.push("## ユーザー");
+      lines.push("");
+      const fm = m.content.match(/\n\n【ファイル「([^」]*)」の内容】\n([\s\S]*?)\n【ファイルここまで】$/);
+      if(fm){
+        lines.push(m.content.slice(0, m.content.indexOf("\n\n【ファイル「")));
+        lines.push("");
+        lines.push(`<details><summary>添付ファイル: ${fm[1]}</summary>`);
+        lines.push("");
+        lines.push(fm[2]);
+        lines.push("");
+        lines.push("</details>");
+      } else {
+        lines.push(m.content);
+      }
+      if(m.img) lines.push("\n[画像を添付しました]");
+    } else if(m.role === "assistant"){
+      lines.push("## CronyGO");
+      lines.push("");
+      if(m.think){
+        lines.push("<details><summary>思考過程</summary>");
+        lines.push("");
+        lines.push(m.think);
+        lines.push("");
+        lines.push("</details>");
+        lines.push("");
+      }
+      lines.push(m.content);
+    }
+    lines.push("");
+  }
+  downloadTextFile(lines.join("\n"), exportFileBase() + ".md", "text/markdown");
+}
   if(!roomListEl) return;
   roomListEl.innerHTML = rooms.map(r=>`
     <div class="room-item ${r.id===currentRoomId?'active':''}" data-id="${r.id}" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">

@@ -1147,3 +1147,4 @@ header h1,
 .msg-img { display: block; max-width: 220px; max-height: 220px; border-radius: 12px; margin-top: 6px;}
 .msg-file-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 6px 10px; border: 1px solid var(--border-light); border-radius: 10px; background: rgba(0,0,0,0.15); font-size: 12px; max-width: 100%; }
 .msg-file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-stats { font-size: 11px; opacity: 0.55; margin: 2px 2px 12px; }

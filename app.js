@@ -722,13 +722,36 @@ function exportChat(format){
   }
   downloadTextFile(lines.join("\n"), exportFileBase() + ".md", "text/markdown");
 }
+function roomBucketLabel(ts){
+  const now = new Date();
+  const d = new Date(ts);
+  const startOfDay = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
+  if(days <= 0) return "今日";
+  if(days === 1) return "昨日";
+  if(days <= 6) return "今週";
+  if(days <= 13) return "先週";
+  if(days <= 29) return "一ヶ月前";
+  const months = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+  if(months <= 1) return "一ヶ月前";
+  if(months < 12) return months + "ヶ月前";
+  const years = Math.floor(months / 12);
+  return years === 1 ? "一年前" : years + "年前";
+}
 function renderRoomList(){
   if(!roomListEl) return;
-  roomListEl.innerHTML = rooms.map(r=>`
+  const sorted = [...rooms].sort((a, b) => (b.updatedAt || b.createdAt || parseInt(b.id)) - (a.updatedAt || a.createdAt || parseInt(a.id)));
+  let lastLabel = "";
+  let html = "";
+  for(const r of sorted){
+    const ts = r.updatedAt || r.createdAt || parseInt(r.id);
+    const label = roomBucketLabel(ts);
+    if(label !== lastLabel){ html += `<div class="room-group-label">${label}</div>`; lastLabel = label; }
+    html += `
     <div class="room-item ${r.id===currentRoomId?'active':''}" data-id="${r.id}" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
       <div style="min-width:0; flex:1;">
         <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">${r.title}</span>
-        <span style="font-size:10px; opacity:0.5;">${new Date(parseInt(r.id)).toLocaleDateString()}</span>
+        <span style="font-size:10px; opacity:0.5;">${new Date(ts).toLocaleDateString()}</span>
       </div>
 
       <div style="display:flex; gap:4px; flex-shrink:0;">
@@ -778,7 +801,9 @@ function renderRoomList(){
 </div>
       
     </div>
-  `).join('');
+  `;
+  }
+  roomListEl.innerHTML = html;
 }
 const WELCOME_TEXT = "こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。";
 function clearChatUI(){

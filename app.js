@@ -821,7 +821,7 @@ function renderRoomList(){
 const WELCOME_TEXT = "こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。";
 function clearChatUI(){
   
-  chatEl.querySelectorAll('.msg,.think-block').forEach(el=>el.remove());
+  chatEl.querySelectorAll('.msg,.think-block,.msg-stats,.msg-actions').forEach(el=>el.remove());
   
   if(!chatEl.contains(loadingView)){
     chatEl.appendChild(loadingView);

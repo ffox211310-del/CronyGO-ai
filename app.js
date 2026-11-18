@@ -585,6 +585,66 @@ function regenerateLast(row){
   sendMessageWithText(null, true);
 }
 
+// ===== 送信済みプロンプトの編集 =====
+let editingIndex = null;
+function attachEditButton(bubbleDiv, index){
+  const row = document.createElement("div");
+  row.className = "msg-edit-row";
+  const btn = document.createElement("button");
+  btn.className = "msg-edit-btn";
+  btn.textContent = "編集";
+  btn.addEventListener("click", () => startEditMessage(index, bubbleDiv));
+  row.appendChild(btn);
+  bubbleDiv.after(row);
+}
+// 自分の発言を編集する。保存すると、その発言より後ろを切り捨てて再生成する
+function startEditMessage(index, bubbleDiv){
+  if (isGenerating || editingIndex !== null) return;
+  const msg = messages[index];
+  if (!msg || msg.role !== "user" || msg.img) return;
+  if (!engineManager.isReady()) { addMessage("system", "モデルをダウンロードしてください"); return; }
+  editingIndex = index;
+  const marker = msg.content.indexOf("\n\n【ファイル「");
+  const question = marker >= 0 ? msg.content.slice(0, marker) : msg.content;
+  const fileSuffix = marker >= 0 ? msg.content.slice(marker) : "";
+  bubbleDiv.innerHTML = "";
+  if (fileSuffix) {
+    const note = document.createElement("div");
+    note.className = "msg-edit-note";
+    note.textContent = "ファイルの内容はそのまま残ります";
+    bubbleDiv.appendChild(note);
+  }
+  const ta = document.createElement("textarea");
+  ta.className = "msg-edit-area";
+  ta.value = question;
+  ta.rows = 3;
+  bubbleDiv.appendChild(ta);
+  const btnRow = document.createElement("div");
+  btnRow.className = "msg-edit-btns";
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "msg-edit-save";
+  saveBtn.textContent = "保存して再生成";
+  saveBtn.addEventListener("click", () => {
+    const newQ = ta.value.trim();
+    if (!newQ) return;
+    if (!engineManager.isReady()) { addMessage("system", "モデルをダウンロードしてください"); return; }
+    const newContent = newQ + fileSuffix;
+    editingIndex = null;
+    messages.length = index;
+    saveCurrentRoomHistory();
+    renderChatFromHistory(getHistory());
+    sendMessageWithText(newContent);
+  });
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "msg-edit-cancel";
+  cancelBtn.textContent = "キャンセル";
+  cancelBtn.addEventListener("click", () => { editingIndex = null; renderChatFromHistory(getHistory()); });
+  btnRow.appendChild(saveBtn);
+  btnRow.appendChild(cancelBtn);
+  bubbleDiv.appendChild(btnRow);
+  ta.focus();
+}
+
 function addMessage(role, content, think, imgData, stats) {
   const div = document.createElement("div");
   div.className = `msg ${role}`;

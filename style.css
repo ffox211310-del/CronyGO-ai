@@ -1158,5 +1158,5 @@ header h1,
 .msg-edit-note { font-size: 11px; opacity: 0.75; margin-bottom: 6px; }
 .msg-edit-area { width: 100%; box-sizing: border-box; background: var(--bg-input); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px; font: inherit; resize: vertical; }
 .msg-edit-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
-.msg-edit-save { background: var(--accent); color: #000; border: none; border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
-.msg-edit-cancel { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+.msg-edit-save { background: #000; color: #4FD1C5; border: none; border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+.msg-edit-cancel { background: rgba(0,0,0,0.35); color: #fff; border: none; border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; }

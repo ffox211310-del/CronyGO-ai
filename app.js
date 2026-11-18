@@ -972,7 +972,7 @@ function renderChatFromHistory(history){
   editingIndex = null;
   history.forEach((m, i) => {
     const d = addMessage(m.role, m.content, m.think, m.img, m.stats);
-    if (m.role === "user" && !m.img) attachEditButton(d, i + 1);
+    if (m.role === "user" && !m.img) attachEditGesture(d, i + 1);
   });
   if (history[history.length - 1]?.role === "assistant") {
     const rows = chatEl.querySelectorAll(".msg-actions");
@@ -1375,7 +1375,7 @@ clearPendingFile();
 }
   
   if (!isRegen) messages.push({ role: "user", content, ...(img?.thumb ? { img: img.thumb } : {}) });
-  if (!isRegen && !img) attachEditButton(userDiv, messages.length - 1);
+  if (!isRegen && !img) attachEditGesture(userDiv, messages.length - 1);
   
     if (!isRegen) { saveCurrentRoomHistory(); inputEl.value = ""; }
   voicePreview.textContent = '';

@@ -896,6 +896,10 @@ function renderChatFromHistory(history){
   
   
   history.forEach(m=>{ addMessage(m.role, m.content, m.think, m.img, m.stats);});
+  if (history[history.length - 1]?.role === "assistant") {
+    const rows = chatEl.querySelectorAll(".msg-actions");
+    if (rows.length) placeRegenButton(rows[rows.length - 1]);
+  }
   hasChatted = true;
   hideFirstLoadingUI();
 }

@@ -530,6 +530,61 @@ function createGenStatsEl(s){
   return el;
 }
 
+// 回答の下のアクション行（コピー＋生成ログ）。再生成ボタンは最後の回答にだけ後から付く
+function createMsgActionsEl(content, stats){
+  const row = document.createElement("div");
+  row.className = "msg-actions";
+  const copyBtn = document.createElement("button");
+  copyBtn.className = "msg-act-btn msg-copy-btn";
+  copyBtn.title = "コピー";
+  copyBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  copyBtn.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(content); }
+    catch {
+      const ta = document.createElement("textarea");
+      ta.value = content;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch {}
+      ta.remove();
+    }
+    copyBtn.classList.add("copied");
+    setTimeout(() => copyBtn.classList.remove("copied"), 1200);
+  });
+  row.appendChild(copyBtn);
+  if (stats) row.appendChild(createGenStatsEl(stats));
+  return row;
+}
+function createRegenBtn(row){
+  const btn = document.createElement("button");
+  btn.className = "msg-act-btn msg-regen-btn";
+  btn.title = "再生成";
+  btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  btn.addEventListener("click", () => regenerateLast(row));
+  return btn;
+}
+function placeRegenButton(row){
+  document.querySelectorAll(".msg-regen-btn").forEach(b => b.remove());
+  if (row) row.prepend(createRegenBtn(row));
+}
+// 最後の回答を消して、同じ会話でもう一度生成する（送信済み編集の土台）
+function regenerateLast(row){
+  if (isGenerating) return;
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== "assistant") return;
+  if (!engineManager.isReady()) { addMessage("system", "モデルをダウンロードしてください"); return; }
+  messages.pop();
+  if (row) {
+    const bubble = row.previousElementSibling;
+    const think = bubble?.previousElementSibling;
+    if (think?.classList.contains("think-block")) think.remove();
+    if (bubble?.classList.contains("msg")) bubble.remove();
+    row.remove();
+  }
+  saveCurrentRoomHistory();
+  sendMessageWithText(null, true);
+}
+
 function addMessage(role, content, think, imgData, stats) {
   const div = document.createElement("div");
   div.className = `msg ${role}`;
@@ -560,7 +615,7 @@ if (role === 'assistant' && think) {
 chatEl.appendChild(createThinkBlock(think, true));
 }
 chatEl.appendChild(div);
-if (role === 'assistant' && stats) chatEl.appendChild(createGenStatsEl(stats));
+if (role === 'assistant' && (content || stats)) chatEl.appendChild(createMsgActionsEl(content, stats));
 chatEl.scrollTop = chatEl.scrollHeight;
 return div;
 }
@@ -1198,13 +1253,14 @@ imageInput.addEventListener("change", () => handleImageSelect(imageInput));
 const cameraInput = document.getElementById("camera-input");
 cameraInput.addEventListener("change", () => handleImageSelect(cameraInput));
 
-
-async function sendMessageWithText(forcedText) {
-let text = (forcedText || inputEl.value).trim();
+async function sendMessageWithText(forcedText, isRegen = false) {
   
-const img = pendingImage;
-const file = pendingFile;
-  if ((!text &&!img && !file) || isGenerating) return;
+let text = isRegen ? "" : (forcedText || inputEl.value).trim();
+  
+const img = isRegen ? null : pendingImage;
+const file = isRegen ? null : pendingFile;
+  if (isGenerating) return;
+  if (!isRegen && !text && !img && !file) return;
 if (!text && img) text = "この画像について説明してください";
 if (!text && file) text = "このファイルについて説明してください";
 const content = file ? text + "\n\n【ファイル「" + file.name + "」の内容】\n" + file.text + "\n【ファイルここまで】" : text;
@@ -1219,7 +1275,7 @@ const content = file ? text + "\n\n【ファイル「" + file.name + "」の内�
     return;
   }
 
-  const userDiv = addMessage("user", content);
+  const userDiv = isRegen ? [...chatEl.querySelectorAll(".msg.user")].pop() : addMessage("user", content);
   
   if (img) {
 const im = document.createElement("img");
@@ -1236,13 +1292,13 @@ attachThumb.removeAttribute("src");
 clearPendingFile();
 }
   
-  messages.push({ role: "user", content, ...(img?.thumb ? { img: img.thumb } : {}) });
+  if (!isRegen) messages.push({ role: "user", content, ...(img?.thumb ? { img: img.thumb } : {}) });
   
-  saveCurrentRoomHistory();
-  inputEl.value = "";
+    if (!isRegen) { saveCurrentRoomHistory(); inputEl.value = ""; }
   voicePreview.textContent = '';
 
   const assistantDiv = addMessage("assistant", "");
+  document.querySelectorAll(".msg-regen-btn").forEach(b => b.remove());
   
   let firstTokenReceived = false;
 
@@ -1479,7 +1535,7 @@ assistantDiv.style.display = "";
 assistantDiv.innerHTML = renderMarkdown((full? full + "\n\n": "") + "[生成を停止しました]");
 messages.push({ role: "assistant", content: full,...(thinkFull? { think: thinkFull}: {}),...(genStats? { stats: genStats}: {})});
 saveCurrentRoomHistory();
-if (genStats) assistantDiv.after(createGenStatsEl(genStats));
+{ const row = createMsgActionsEl(full, genStats); assistantDiv.after(row); placeRegenButton(row); }
 } else {
     assistantDiv.innerHTML = renderMarkdown("[生成を停止しました]");
     }
@@ -1491,8 +1547,7 @@ if (genStats) assistantDiv.after(createGenStatsEl(genStats));
     : full;
   messages.push({ role: "assistant", content: contentForHistory,...(thinkFull? { think: thinkFull}: {}),...(genStats? { stats: genStats}: {})});
   saveCurrentRoomHistory();
-  if (genStats) assistantDiv.after(createGenStatsEl(genStats));
-
+  { const row = createMsgActionsEl(contentForHistory, genStats); assistantDiv.after(row); placeRegenButton(row); }
   if (voice && isVoiceMode && !hitMaxChars) {
     const remaining = speakBuffer.trim();
     if (remaining) voice.enqueueSpeak(remaining);

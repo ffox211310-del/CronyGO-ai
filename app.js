@@ -587,15 +587,29 @@ function regenerateLast(row){
 
 // ===== 送信済みプロンプトの編集 =====
 let editingIndex = null;
-function attachEditButton(bubbleDiv, index){
-  const row = document.createElement("div");
-  row.className = "msg-edit-row";
-  const btn = document.createElement("button");
-  btn.className = "msg-edit-btn";
-  btn.textContent = "編集";
-  btn.addEventListener("click", () => startEditMessage(index, bubbleDiv));
-  row.appendChild(btn);
-  bubbleDiv.after(row);
+// 自分の発言を長押し（500ms）すると編集が開く。スクロールや移動では開かない
+function attachEditGesture(bubbleDiv, index){
+  let timer = null, sx = 0, sy = 0;
+  const cancel = () => {
+    if (timer) { clearTimeout(timer); timer = null; }
+    bubbleDiv.classList.remove("pressing");
+  };
+  bubbleDiv.addEventListener("pointerdown", (e) => {
+    sx = e.clientX; sy = e.clientY;
+    bubbleDiv.classList.add("pressing");
+    timer = setTimeout(() => {
+      timer = null;
+      bubbleDiv.classList.remove("pressing");
+      if (navigator.vibrate) navigator.vibrate(10);
+      startEditMessage(index, bubbleDiv);
+    }, 500);
+  });
+  bubbleDiv.addEventListener("pointermove", (e) => {
+    if (timer && (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10)) cancel();
+  });
+  bubbleDiv.addEventListener("pointerup", cancel);
+  bubbleDiv.addEventListener("pointercancel", cancel);
+  bubbleDiv.addEventListener("contextmenu", (e) => e.preventDefault());
 }
 // 自分の発言を編集する。保存すると、その発言より後ろを切り捨てて再生成する
 function startEditMessage(index, bubbleDiv){

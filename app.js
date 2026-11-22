@@ -2150,11 +2150,8 @@ function setupEventIcon() {
     const lvEl = document.getElementById('loading-view');
     if (!lvEl) return;
 
-    // デフォルトアイコン (CronyGOicon.jpg)
-    const defaultIcon = document.getElementById('loading-icon-dark');
-    // ライト用は邪魔なので強制非表示 (縦に2個出るのを防止)
-    const lightIcon = document.getElementById('loading-icon-light');
-    if (lightIcon) lightIcon.style.display = 'none';
+    // デフォルトアイコン（Teal.png＋進捗リングのラッパーごと出し分けする）
+const defaultIcon = document.getElementById('loading-icon-wrap');
 
     // イベント用アイコン要素
     let eventIcon = lvEl.querySelector('.app-icon-target');

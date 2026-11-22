@@ -1104,12 +1104,17 @@ function resetSystemPrompt() {
 }
 
 // ===== エンジン周りは engine-manager に委譲 =====
+function setLoadRing(pct) {
+  const fg = document.getElementById('loading-ring-fg');
+  if (fg) fg.style.strokeDashoffset = String(339.3 * (1 - Math.max(0, Math.min(100, pct)) / 100));
+}
 async function loadModel(key, isReload = false) {
   const isFirstPhase = !hasChatted && !isReload;
 
   localVisionLoaded = false;
-  statusEl.textContent = isReload? "再読込中...": "読込中...";
+  statusEl.textContent = isReload? "再読込中..." : "読込中...";
   statusEl.className = "loading";
+  setLoadRing(0);
   progressBar.style.opacity = "1";
   progressBar.style.width = "0%";
   progressBar.style.background = "#4FD1C5";
@@ -1152,6 +1157,7 @@ if (key.startsWith("__local__:")) {
       updateLoadingText(txt);
       statusEl.textContent = txt;
       progressBar.style.width = `${pct}%`;
+      setLoadRing(pct);
     },
     { context_size, n_threads }
   );
@@ -1161,6 +1167,7 @@ if (key.startsWith("__local__:")) {
     statusEl.textContent = isReload? `再起動完了 ${key}` : `Ready ${key} [${engineManager.getCurrentId()}]`;
     statusEl.className = "ready";
     progressBar.style.width = "100%";
+    setLoadRing(100);
     setTimeout(() => progressBar.style.opacity = "0", 800);
     inputEl.disabled = false;
     sendEl.disabled = false;

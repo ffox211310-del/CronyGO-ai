@@ -1160,3 +1160,35 @@ header h1,
 .msg-edit-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
 .msg-edit-save { background: #171717; color: #4FD1C5; border: none; border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
 .msg-edit-cancel { background: #171717; color: #fff; border: none; border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+
+/* ===== ホーム画面改良：ヘッダー廃止・フローティングボタン・空状態 ===== */
+#menu-btn{
+position: fixed; top: 10px; left: 10px; z-index: 15;
+width: 42px; height: 42px; border-radius: 50%;
+border: 1px solid var(--border); background: var(--bg-header);
+display: flex; align-items: center; justify-content: center;
+font-size: 20px; line-height: 1; padding: 0;
+box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+#mp-trigger{
+position: fixed; top: 10px; right: 10px; z-index: 15;
+max-width: 150px;
+box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+#chat{ padding-top: 64px;}
+#status{
+flex: 1 1 auto; max-width: none; text-align: center; padding: 0 8px;
+}
+.empty-state{
+margin: auto; max-width: 340px; padding: 24px 16px; text-align: center;
+}
+.empty-icon{
+width: 110px; height: 110px; border-radius: 24px;
+box-shadow: 0 4px 16px rgba(0,0,0,.4);
+}
+.empty-icon-light{ display: none;}
+body.light.empty-icon-dark{ display: none;}
+body.light.empty-icon-light{ display: inline-block;}
+.empty-text{
+margin: 16px 0 0; font-size: 14px; line-height: 1.7; color: var(--text-sub);
+}

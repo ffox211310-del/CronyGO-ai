@@ -1230,3 +1230,5 @@ border-radius: 50%; object-fit: cover;
 #mp-trigger{ top: 18px; right: auto; left: 50%; transform: translateX(-50%);}
 
 #mp-trigger{ top: 19px; right: 16px; left: auto; transform: none;}
+
+#mp-trigger{ top: 17px; padding: 9px 14px 9px 16px; font-size: 14px; max-width: 190px; gap: 8px;}

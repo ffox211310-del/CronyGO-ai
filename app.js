@@ -659,6 +659,7 @@ function startEditMessage(index, bubbleDiv){
 }
 
 function addMessage(role, content, think, imgData, stats) {
+  chatEl.querySelector('.empty-state')?.remove();
   const div = document.createElement("div");
   div.className = `msg ${role}`;
   if (role === 'assistant') {
@@ -2045,13 +2046,20 @@ if (missing.length || !selectEl) { alert('mp: 見つからない → ' + missing
   document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 
   listEl.addEventListener('click', e => {
-    const b = e.target.closest('.mp-item');
-    if (!b) return;
-    selectEl.value = b.dataset.key;
-    selectEl.dispatchEvent(new Event('change'));  // 既存のchange処理をそのまま動かす
-    updateLabel();
-    close();
-  });
+const b = e.target.closest('.mp-item');
+if (!b) return;
+const key = b.dataset.key;
+if (key === selectEl.value) {
+// 選択中のモデルをもう一度タップ → 読み込み（起動中なら閉じるだけ）
+close();
+if (!(key === currentKey && engineManager.isReady())) loadModel(key);
+return;
+}
+selectEl.value = key;
+selectEl.dispatchEvent(new Event('change')); // 既存のchange処理をそのまま動かす
+updateLabel();
+render(); // ハイライトを移す（シートは閉じない）
+});
 
   // カスタムモデルの追加/削除、Serow自動追加でoptionが変わったら追従
   new MutationObserver(() => {

@@ -1172,7 +1172,11 @@ if (key.startsWith("__local__:")) {
     sendEl.disabled = false;
     inputEl.placeholder = `${key}で入力...`;
     hideFirstLoadingUI();
-    dbg(`model ${key} loaded via ${engineManager.getCurrentId()}`);
+    chatEl.querySelector('.empty-state')?.remove();
+    if (isVisionModel() &&!/Firefox/i.test(navigator.userAgent)) {
+    addMessage("system", "画像認識は Firefox での実行を推奨します。Chromeなど一部ブラウザでは処理が止まることがあります。");
+  }
+dbg(`model ${key} loaded via ${engineManager.getCurrentId()}`);
   } catch (e) {
     dbg(`model load ERROR ${e.message}`);
     console.error(e);

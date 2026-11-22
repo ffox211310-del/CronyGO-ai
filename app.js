@@ -1843,7 +1843,7 @@ async function startLocalModel(file, saveToBrowser, mmprojFile = null) {
       localGgufStatus.style.color = '#4FD1C5';
     }
     hideFirstLoadingUI();
-    addMessage("assistant", `ローカルモデル「${fileName}」の読み込みが完了しました！`);
+chatEl.querySelector('.empty-state')?.remove();
     if (isVisionModel() && !/Firefox/i.test(navigator.userAgent)) {
       addMessage("system", "画像認識は Firefox での実行を推奨します。Chromeなど一部ブラウザでは処理が止まることがあります。");
     }

@@ -946,7 +946,7 @@ function renderRoomList(){
   }
   roomListEl.innerHTML = html;
 }
-const WELCOME_TEXT = "こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。";
+const WELCOME_TEXT = "こんにちは！さっそくモデルをダウンロードしてチャットを始めましょう！";
 function clearChatUI(){
   
   chatEl.querySelectorAll('.msg,.think-block,.msg-stats,.msg-actions').forEach(el=>el.remove());

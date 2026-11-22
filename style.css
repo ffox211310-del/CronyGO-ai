@@ -1192,3 +1192,26 @@ body.light.empty-icon-light{ display: inline-block;}
 .empty-text{
 margin: 16px 0 0; font-size: 14px; line-height: 1.7; color: var(--text-sub);
 }
+
+/* ===== ローディングアイコン（Teal＋外縁リング） ===== */
+#loading-icon-wrap{
+position: relative; width: 200px; height: 200px; flex-shrink: 0;
+}
+#loading-icon-wrap.loading-icon{
+position: absolute; inset: 0; margin: auto;
+width: 168px; height: 168px; border-radius: 50%; object-fit: cover;
+-webkit-mask-image: none; mask-image: none; box-shadow: none;
+}
+#loading-ring{
+position: absolute; inset: 0; width: 200px; height: 200px;
+transform: rotate(-90deg);
+}
+#loading-view.show #loading-ring{ animation: ringspin 2.4s linear infinite;}
+@keyframes ringspin{ from{ transform: rotate(-90deg);} to{ transform: rotate(270deg);}}
+#loading-ring circle{ fill: none; stroke-width: 5;}
+#loading-ring.ring-bg{ stroke: var(--border);}
+#loading-ring-fg{
+stroke: var(--accent); stroke-linecap: round;
+stroke-dasharray: 339.3; stroke-dashoffset: 339.3;
+transition: stroke-dashoffset.2s;
+}

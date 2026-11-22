@@ -2128,9 +2128,9 @@ function setCurrentIconId(id) { localStorage.setItem(LS_CURRENT_ICON, id); }
 function getActiveEvent() { return EVENT_ICONS.find(e => e.active === true); }
 
 function getIconSrc(iconId) {
-    if (iconId === 'default') return "./assets/CronyGOicon.jpg";
-    const ev = EVENT_ICONS.find(e => e.id === iconId);
-    return ev ? ev.img : "./assets/CronyGOicon.jpg";
+if (iconId === 'default') return "./assets/Teal.png";
+const ev = EVENT_ICONS.find(e => e.id === iconId);
+return ev? ev.img: "./assets/Teal.png";
 }
 
 function showToast(msg) {

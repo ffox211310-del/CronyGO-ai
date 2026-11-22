@@ -1247,3 +1247,7 @@ header, #progress-wrap, #chat, #voice-preview,.hint, #composer{ margin-left: 0; 
 #menu-btn{ display: flex; left: max(14px, calc(50% - 370px));}
 #mp-trigger{ right: max(16px, calc(50% - 368px));}
 }
+
+@media (min-width: 768px){
+#settings-panel, #mp-sheet{ left: 0; right: 0; width: auto; max-width: 768px; margin: 0 auto;}
+}

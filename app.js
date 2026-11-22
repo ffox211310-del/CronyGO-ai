@@ -1129,8 +1129,9 @@ async function loadModel(key, isReload = false) {
     chatEl.classList.add("is-first-loading");
     updateLoadingText(`${key} 積み直し中...`);
   } else {
-    updateLoadingText("準備中...");
-  }
+updateLoadingText("準備中...");
+}
+if (!isFirstPhase) addMessage("system", isReload? `${key} 再読込開始`: `${key} を読み込み開始。`);
   
   try {
     

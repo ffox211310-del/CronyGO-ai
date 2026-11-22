@@ -1228,3 +1228,5 @@ border-radius: 50%; object-fit: cover;
 .empty-icon{ width: 160px; height: 160px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 16px rgba(0,0,0,.25);}
 
 #mp-trigger{ top: 18px; right: auto; left: 50%; transform: translateX(-50%);}
+
+#mp-trigger{ top: 19px; right: 16px; left: auto; transform: none;}

@@ -1723,12 +1723,11 @@ selectEl.addEventListener("change", () => {
   const key = selectEl.value;
   try { localStorage.setItem('cronygo_model', key); } catch {}
   if (currentKey === key && engineManager.isReady()) {
-    dlBtn.textContent = "起動済み"; statusEl.textContent = `Ready ${key}`; statusEl.className = "ready";
+  statusEl.textContent = `Ready ${key}`; statusEl.className = "ready";
   } else {
-    dlBtn.textContent = "ダウンロード"; dlBtn.classList.remove("ready"); statusEl.textContent = "未DL"; statusEl.className = ""; inputEl.placeholder = `${key} をダウンロードしてください`;
-  }
+  statusEl.textContent = "未DL"; statusEl.className = ""; inputEl.placeholder = `${key} をダウンロードしてください`;
+ }
 });
-dlBtn.addEventListener("click", () => { const key = selectEl.value; if (currentKey === key && engineManager.isReady()) return; loadModel(key); });
 statusEl.textContent = "未DL";
 //ここから変えたーーーー
 const localGgufBtn = document.getElementById('local-gguf-btn');
@@ -1830,8 +1829,6 @@ async function startLocalModel(file, saveToBrowser, mmprojFile = null) {
     // ★ テキストボックス復活
     inputEl.disabled = false;
     sendEl.disabled = false;
-    dlBtn.textContent = "起動済み";
-    dlBtn.classList.add("ready");
     progressBar.style.opacity = "0";
 
     if (localGgufStatus) {

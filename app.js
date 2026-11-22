@@ -949,7 +949,7 @@ function renderRoomList(){
 const WELCOME_TEXT = "こんにちは！さっそくモデルをダウンロードしてチャットを始めましょう！";
 function clearChatUI(){
   
-  chatEl.querySelectorAll('.msg,.think-block,.msg-stats,.msg-actions').forEach(el=>el.remove());
+  chatEl.querySelectorAll('.msg,.think-block,.msg-stats,.msg-actions,.empty-state').forEach(el=>el.remove());
   
   if(!chatEl.contains(loadingView)){
     chatEl.appendChild(loadingView);

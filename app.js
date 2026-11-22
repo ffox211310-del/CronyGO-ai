@@ -959,8 +959,8 @@ function renderChatFromHistory(history){
   clearChatUI();
   if(history.length === 0){
     const div = document.createElement("div");
-    div.className = "msg assistant";
-    div.textContent = WELCOME_TEXT;
+    div.className = "empty-state";
+    div.innerHTML = `<img class="empty-icon empty-icon-dark" src="./assets/CronyGOicon.jpg" alt="CronyGO"><img class="empty-icon empty-icon-light" src="./assets/CronyGOicon_Light.jpg" alt="CronyGO"><p class="empty-text">${WELCOME_TEXT}</p>`;
     chatEl.insertBefore(div, loadingView);
     hasChatted = false;
     hideFirstLoadingUI();

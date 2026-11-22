@@ -1180,7 +1180,7 @@ if (key.startsWith("__local__:")) {
     statusEl.className = "";
     progressBar.style.background = "#ff4444";
     hideFirstLoadingUI();
-    addMessage("assistant", "エラー: " + e.message);
+    
   }
 }
 

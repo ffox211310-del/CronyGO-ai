@@ -1106,9 +1106,8 @@ function resetSystemPrompt() {
 async function loadModel(key, isReload = false) {
   const isFirstPhase = !hasChatted && !isReload;
 
-  dlBtn.disabled = true;
   localVisionLoaded = false;
-  dlBtn.textContent = isReload? "再読込中..." : "読込中...";
+  statusEl.textContent = isReload? "再読込中...": "読込中...";
   statusEl.className = "loading";
   progressBar.style.opacity = "1";
   progressBar.style.width = "0%";
@@ -1150,6 +1149,7 @@ if (key.startsWith("__local__:")) {
         : `${pct}% ${text}`;
 
       updateLoadingText(txt);
+      statusEl.textContent = txt;
       progressBar.style.width = `${pct}%`;
     },
     { context_size, n_threads }
@@ -1161,9 +1161,6 @@ if (key.startsWith("__local__:")) {
     statusEl.className = "ready";
     progressBar.style.width = "100%";
     setTimeout(() => progressBar.style.opacity = "0", 800);
-    dlBtn.textContent = "起動済み";
-    dlBtn.classList.add("ready");
-    dlBtn.disabled = false;
     inputEl.disabled = false;
     sendEl.disabled = false;
     inputEl.placeholder = `${key}で入力...`;
@@ -1179,8 +1176,6 @@ if (key.startsWith("__local__:")) {
     statusEl.textContent = "エラー";
     statusEl.className = "";
     progressBar.style.background = "#ff4444";
-    dlBtn.textContent = "再試行";
-    dlBtn.disabled = false;
     hideFirstLoadingUI();
     addMessage("assistant", "エラー: " + e.message);
   }

@@ -1236,3 +1236,14 @@ border-radius: 50%; object-fit: cover;
 #new-room-btn{ flex-shrink: 0;}
 #room-list{ flex: 1; min-height: 0; overflow-y: auto;}
 .personal-mode-btn{ flex-shrink: 0;}
+
+/* ===== 横長でもスマホと同じレイアウトにする ===== */
+@media (min-width: 768px){
+#room-drawer{ transform: translateX(-100%)!important; width: 280px;}
+#room-drawer.open{ transform: translateX(0)!important;}
+#room-overlay.open{ display: block!important;}
+header, #progress-wrap, #chat, #voice-preview,.hint, #composer{ margin-left: 0; width: auto; max-width: none;}
+#composer{ left: 0;}
+#menu-btn{ display: flex; left: max(14px, calc(50% - 370px));}
+#mp-trigger{ right: max(16px, calc(50% - 368px));}
+}

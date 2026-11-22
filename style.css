@@ -289,8 +289,7 @@ body.light #loading-icon-light { display: block; }
 body.light #loading-notice {
   color: #d97706;
 }
-#chat.is-first-loading.msg, #chat.is-first-loading.empty-state { display: none;}
-
+#chat.is-first-loading>.msg, #chat.is-first-loading>.empty-state { display: none;}
 #composer {
 padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
 background: var(--bg);
@@ -1197,7 +1196,7 @@ margin: 16px 0 0; font-size: 14px; line-height: 1.7; color: var(--text-sub);
 #loading-icon-wrap{
 position: relative; width: 200px; height: 200px; flex-shrink: 0;
 }
-#loading-icon-wrap.loading-icon{
+#loading-icon-wrap>.loading-icon{
 position: absolute; inset: 0; margin: auto;
 width: 168px; height: 168px; border-radius: 50%; object-fit: cover;
 -webkit-mask-image: none; mask-image: none; box-shadow: none;
@@ -1209,11 +1208,11 @@ transform: rotate(-90deg);
 #loading-view.show #loading-ring{ animation: ringspin 2.4s linear infinite;}
 @keyframes ringspin{ from{ transform: rotate(-90deg);} to{ transform: rotate(270deg);}}
 #loading-ring circle{ fill: none; stroke-width: 5;}
-#loading-ring.ring-bg{ stroke: var(--border);}
+#loading-ring>.ring-bg{ stroke: var(--border);}
 #loading-ring-fg{
 stroke: var(--accent); stroke-linecap: round;
 stroke-dasharray: 339.3; stroke-dashoffset: 339.3;
-transition: stroke-dashoffset.2s;
+transition: stroke-dashoffset 200ms;
 }
 
 /* ===== ホーム画面 微調整 ===== */

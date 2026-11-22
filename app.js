@@ -308,7 +308,6 @@ function renderCustomModelList(){
     </div>
   `).join('');
 }
-const dlBtn = document.getElementById("download-btn");
 const loadingView = document.getElementById("loading-view");
 const loadingText = document.getElementById("loading-text");
 const newRoomBtn = document.getElementById('new-room-btn');

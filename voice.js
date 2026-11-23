@@ -13,6 +13,7 @@ export class VoiceManager {
     this.wasListeningBeforeSpeak = false;
     this.recognition = null;
     this.finalBuffer = '';
+    this._finalCount = 0;
     this.lastFinalChunk = '';
     this._autoSendTimer = null;
     this._speakQueue = [];
@@ -78,19 +79,20 @@ export class VoiceManager {
     if (!this.isSupported) { this.onStatus('このブラウザは音声認識非対応 (Chrome/Edge推奨)', 'idle'); this._dbg('[Voice] not supported'); return null; }
     const rec = new this.SpeechRecognition();
     rec.lang = this.lang; rec.continuous = true; rec.interimResults = true;
-    rec.onstart = () => { this._dbg('[Voice] onstart hearing'); if (!this.isSpeaking) this.onStatus('聞いています... (永遠モード)', 'hearing'); };
+    rec.onstart = () => { this._finalCount = 0; this._dbg('[Voice] onstart hearing'); if (!this.isSpeaking) this.onStatus('聞いています... (永遠モード)', 'hearing');};
     rec.onresult = (event) => {
       if (this.isSpeaking) {
         if (!this.bargeIn) return;
         if (!this._checkBargeIn(event)) return;
       }
-      let fullFinal = ''; let interim = '';
+      let newFinal = ''; let interim = '';
       for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
         const transcript = result[0].transcript.trim();
-        if (result.isFinal) fullFinal += transcript; else interim += transcript;
+        if (result.isFinal) { if (i >= this._finalCount) { newFinal += transcript; this._finalCount = i + 1;}}
+        else interim += transcript;
       }
-      fullFinal = this.removeConsecutiveDuplicates(fullFinal);
+      const fullFinal = this.removeConsecutiveDuplicates(this.finalBuffer + newFinal);
       if (fullFinal && fullFinal !== this.finalBuffer) {
         this.finalBuffer = fullFinal; this.onFinal(this.finalBuffer);
         if (this.onAutoSend) { clearTimeout(this._autoSendTimer); this._autoSendTimer = setTimeout(() => { if (this.finalBuffer) this.onAutoSend(this.finalBuffer); }, this.autoSendDelay); }

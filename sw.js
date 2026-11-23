@@ -1,10 +1,11 @@
-const CACHE_NAME = "cronygo-v112";
+const CACHE_NAME = "cronygo-v113";
 
 const urlsToCache = [
 "./",
 "./index.html",
 "./style.css",
 "./app.js",
+"./i18n.js",
 "./lib/marked.esm.js",
 "./lib/purify.esm.js",
 "./manifest.json",

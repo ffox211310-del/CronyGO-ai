@@ -4,6 +4,7 @@ import { engineManager} from "./engine-manager.js";
 import { EVENT_ICONS} from "./events.js";
 import { marked} from "./lib/marked.esm.js";
 import DOMPurify from "./lib/purify.esm.js";
+import { initI18n} from "./i18n.js";
 
 const DEFAULT_SYSTEM_PROMPT = "あなたは様々な質問に答えるアシスタントです。簡素かつ丁寧に答えなさい。";
 const LS_PROMPT_KEY = "cronygo_system_prompt";
@@ -2093,6 +2094,8 @@ render(); // ハイライトを移す（シートは閉じない）
 // ==============================
 // チュートリアル 初回表示
 // ==============================
+
+initI18n();
 
 const TUTORIAL_SEEN_KEY = "cronygo_tutorial_seen";
 

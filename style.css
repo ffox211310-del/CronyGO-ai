@@ -879,7 +879,8 @@ body.light #tutorial-overlay {
 
 /* ===== コンテキスト設定 / スレッド数 ===== */
 #context-size,
-#thread-count {
+#thread-count,
+.lang-select {
   width: 100%;
   background: var(--bg-input);
   color: var(--text);

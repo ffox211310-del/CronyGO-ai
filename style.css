@@ -1251,3 +1251,11 @@ header, #progress-wrap, #chat, #voice-preview,.hint, #composer{ margin-left: 0; 
 @media (min-width: 768px){
 #settings-panel, #mp-sheet{ left: 0; right: 0; width: auto; max-width: 768px; margin: 0 auto;}
 }
+
+/* ===== 横長：チャットも中央カラムに合わせる ===== */
+@media (min-width:768px){
+#chat{
+padding-left:max(14px,calc(50% - 370px));
+padding-right:max(14px,calc(50% - 370px));
+}
+}

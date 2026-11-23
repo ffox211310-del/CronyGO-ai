@@ -1747,10 +1747,10 @@ selectEl.addEventListener("change", () => {
   if (currentKey === key && engineManager.isReady()) {
   statusEl.textContent = `Ready ${key}`; statusEl.className = "ready";
   } else {
-  statusEl.textContent = "未DL"; statusEl.className = ""; inputEl.placeholder = `${key} をダウンロードしてください`;
+  statusEl.textContent = "待機中"; statusEl.className = ""; inputEl.placeholder = `${key} をダウンロードしてください`;
  }
 });
-statusEl.textContent = "未DL";
+statusEl.textContent = "待機中";
 //ここから変えたーーーー
 const localGgufBtn = document.getElementById('local-gguf-btn');
 const localGgufFile = document.getElementById('local-gguf-file');

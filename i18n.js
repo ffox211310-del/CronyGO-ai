@@ -19,7 +19,7 @@ const I18N = {
     attachBtnAria: "追加メニュー",
     attachBtnTitle: "追加",
     settingsAria: "設定",
-    statusNotDownloaded: "未DL",
+    statusNotDownloaded: "待機中",
     micAria: "マイク",
     micTitle: "マイク",
     stopAria: "生成を停止",

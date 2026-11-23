@@ -147,7 +147,7 @@ export class VoiceManager {
     }
     const { text, opts } = this._speakQueue.shift();
     this._dbg(`[TTS] play "${text.slice(0,40)}" voices=${window.speechSynthesis.getVoices().length}`);
-    const uttr = new SpeechSynthesisUtterance(text); uttr.lang = opts.lang || this.lang; uttr.rate = opts.rate || 1.1; uttr.pitch = opts.pitch || 1;
+    const uttr = new SpeechSynthesisUtterance(text + '\n'); uttr.lang = opts.lang || this.lang; uttr.rate = opts.rate || 1.1; uttr.pitch = opts.pitch || 1;
   
     const voices = this.getVoices();
     let target = null;

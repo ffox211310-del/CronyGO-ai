@@ -1672,6 +1672,7 @@ async function sendMessage() { return sendMessageWithText(); }
 voice = new VoiceManager({
   lang: 'ja-JP',
   autoSendDelay: 1200,
+  bargeIn: localStorage.getItem('cronygo_barge_in') === '1',
   onFinal: (text) => { inputEl.value = text; voicePreview.textContent = text; },
   onInterim: (full, interim, finalPart) => { inputEl.value = full; voicePreview.textContent = interim ? `聞き取り: ${interim}` : finalPart; },
   onAutoSend: (text) => {
@@ -1684,6 +1685,15 @@ voice = new VoiceManager({
   },
   onStatus: (msg, state) => { dbg(`[Status] ${msg} ${state}`); }
 });
+
+const bargeInToggle = document.getElementById('barge-in-toggle');
+if (bargeInToggle) {
+  bargeInToggle.checked = localStorage.getItem('cronygo_barge_in') === '1';
+  bargeInToggle.addEventListener('change', (e) => {
+    localStorage.setItem('cronygo_barge_in', e.target.checked? '1': '0');
+    if (voice) voice.setBargeIn(e.target.checked);
+  });
+}
 
 micBtn.addEventListener('click', () => {
   if (voice.isListening) {

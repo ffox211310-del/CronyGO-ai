@@ -826,7 +826,7 @@ function exportChat(format){
   lines.push("");
   lines.push(`- エクスポート日: ${new Date().toLocaleString()}`);
   if(room) lines.push(`- 部屋の作成日: ${new Date(room.createdAt || parseInt(room.id)).toLocaleDateString()}`);
-  if(room?.model) lines.push(`- モデル: ${room.model}`);
+  if(room?.model) lines.push(`- 部屋作成時のモデル: ${room.model}`);
   lines.push(`- 発言数: ${history.length}`);
   lines.push("- システムプロンプトは含まれていません。画像はエクスポートされません。");
   lines.push("");
@@ -850,6 +850,7 @@ function exportChat(format){
     } else if(m.role === "assistant"){
       lines.push("## CronyGO");
       lines.push("");
+      if(m.model){ lines.push(`モデル: ${m.model}`); lines.push("");}
       if(m.think){
         lines.push("<details><summary>思考過程</summary>");
         lines.push("");

@@ -1135,7 +1135,7 @@ header h1,
   background: var(--bg); color: var(--text); font-size: 14px;
   border: 1px solid var(--border-light); cursor: pointer; text-align: left;
 }
-#plus-menu button span { font-size: 11px; color: var(--text-sub); }
+#plus-menu-file-limit { font-size: 11px; color: var(--text-sub); }
 #plus-menu button:disabled { opacity: .45; cursor: default; }
 #plus-menu button:not(:disabled):active { transform: scale(0.98); }
 #attach-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-light); display: block;}

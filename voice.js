@@ -7,6 +7,7 @@ export class VoiceManager {
     this.onAutoSend = options.onAutoSend || null;
     this.autoRestartDelay = options.autoRestartDelay || 300;
     this.autoSendDelay = options.autoSendDelay || 1200;
+    this.bargeIn = options.bargeIn || false;
     this.isListening = false;
     this.isSpeaking = false;
     this.wasListeningBeforeSpeak = false;
@@ -79,7 +80,10 @@ export class VoiceManager {
     rec.lang = this.lang; rec.continuous = true; rec.interimResults = true;
     rec.onstart = () => { this._dbg('[Voice] onstart hearing'); if (!this.isSpeaking) this.onStatus('聞いています... (永遠モード)', 'hearing'); };
     rec.onresult = (event) => {
-      if (this.isSpeaking) return;
+      if (this.isSpeaking) {
+        if (!this.bargeIn) return;
+        if (!this._checkBargeIn(event)) return;
+      }
       let fullFinal = ''; let interim = '';
       for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
@@ -96,14 +100,14 @@ export class VoiceManager {
     };
     rec.onend = () => {
       this._dbg(`[Voice] onend isSpeaking=${this.isSpeaking} isListening=${this.isListening}`);
-      if (this.isSpeaking) return;
-      if (this.isListening) { this.onStatus('再接続中...', 'on'); setTimeout(() => { if (this.isListening && !this.isSpeaking) { try { rec.start(); } catch (e) { this._dbg('[Voice] restart fail '+e.message); } } }, this.autoRestartDelay); }
+      if (this.isSpeaking &&!this.bargeIn) return;
+      if (this.isListening) { this.onStatus('再接続中...', 'on'); setTimeout(() => { if (this.isListening && (!this.isSpeaking || this.bargeIn)) { try { rec.start();} catch (e) { this._dbg('[Voice] restart fail '+e.message); } } }, this.autoRestartDelay); }
       else { this.onStatus('停止中', 'idle'); }
     };
     rec.onerror = (e) => {
       this._dbg(`[Voice] onerror ${e.error}`); console.error('[Voice]', e);
       if (e.error === 'not-allowed') { this.isListening = false; this.onStatus('マイク許可が必要です', 'idle'); }
-      else if (!this.isSpeaking && this.isListening) { this.onStatus(`再接続中... (${e.error})`, 'on'); setTimeout(() => { if (this.isListening && !this.isSpeaking) { try { rec.start(); } catch {} } }, 800); }
+      else if ((!this.isSpeaking || this.bargeIn) && this.isListening) { this.onStatus(`再接続中... (${e.error})`, 'on'); setTimeout(() => { if (this.isListening && (!this.isSpeaking || this.bargeIn)) { try { rec.start();} catch {}}}, 800); }
     };
     this.recognition = rec; return rec;
   }
@@ -132,9 +136,14 @@ export class VoiceManager {
     this._speakQueue.push({ text: t, opts });
     if (!this._isSpeakingQueue) {
       this.wasListeningBeforeSpeak = this.isListening;
-      if (this.isListening && this.recognition) { this.isSpeaking = true; this._isSpeakingQueue = true; this.isListening = false; try { this.recognition.stop(); } catch {} }
-      else { this.isSpeaking = true; this._isSpeakingQueue = true; }
-      this.onStatus('AIが話しています... マイク一時OFF', 'speaking'); this._playNext();
+      this.isSpeaking = true; this._isSpeakingQueue = true;
+      if (this.bargeIn) {
+        this.onStatus('AIが話しています...（割り込み可）', 'speaking');
+      } else {
+        if (this.isListening && this.recognition) { this.isListening = false; try { this.recognition.stop();} catch {}}
+        this.onStatus('AIが話しています... マイク一時OFF', 'speaking');
+      }
+      this._playNext();
     }
   }
   _playNext() {
@@ -167,6 +176,27 @@ export class VoiceManager {
     try{ localStorage.setItem(this.LS_VOICE, uri); }catch{}
   }
   cancelSpeak() { this.clearQueue(true); }
+  setBargeIn(v) { this.bargeIn =!!v; this._dbg('[Voice] bargeIn=' + this.bargeIn);}
+  _interruptSpeak() {
+    this._dbg('[Voice] BARGE-IN');
+    this._speakQueue = [];
+    this._currentUtterance = null;
+    try { window.speechSynthesis.cancel();} catch {}
+    this._isSpeakingQueue = false;
+    this.isSpeaking = false;
+    this.onStatus('割り込みました。聞いています...', 'hearing');
+  }
+  _checkBargeIn(event) {
+    let heard = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) heard += event.results[i][0].transcript;
+    const norm = (s) => (s || '').replace(/[\s、。！？・「」『』（）()]/g, '');
+    const h = norm(heard);
+    if (h.length < 3) return false;
+    const spoken = norm((this._currentUtterance? this._currentUtterance.text: '') + this._speakQueue.map(q => q.text).join(''));
+    if (spoken && spoken.includes(h)) { this._dbg('[Voice] echo ignored: ' + h); return false;}
+    this._interruptSpeak();
+    return true;
+  }
   clearQueue(restartMic = true) {
     this._dbg(`[TTS] clearQueue restart=${restartMic}`); this._speakQueue = []; this._currentUtterance = null;
     try { window.speechSynthesis.cancel(); } catch {}

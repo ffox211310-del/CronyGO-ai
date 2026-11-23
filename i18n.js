@@ -1,7 +1,8 @@
 // CronyGO i18n - UI strings dictionary + language switching
 // Usage: t("key") in JS, data-i18n="key" etc. in HTML.
 // Missing keys fall back to Japanese, then to the key itself.
-
+// 今後多言語大変だなー
+//やることメモ残しておきます。11月23日現在　専用選択UI、CPUスレッド数自由記載、
 const I18N = {
   ja: {
     newChat: "+ 新しいチャット",

@@ -1600,6 +1600,8 @@ assistantDiv.style.display = "";
     }
   }
 }
+  
+const genModel = (currentKey || '').replace('__local__:', '') || null;
 
   // 生成ログの集計（2トークン未満は速度が出せないので付けない）
 const genStats = (() => {
@@ -1618,7 +1620,7 @@ if (isKilled) {
   if (full || thinkFull) {
 assistantDiv.style.display = "";
 assistantDiv.innerHTML = renderMarkdown((full? full + "\n\n": "") + "[生成を停止しました]");
-messages.push({ role: "assistant", content: full,...(thinkFull? { think: thinkFull}: {}),...(genStats? { stats: genStats}: {})});
+messages.push({ role: "assistant", content: full,...(thinkFull? { think: thinkFull}: {}),...(genStats? { stats: genStats}: {}),...(genModel? { model: genModel}: {})});
 saveCurrentRoomHistory();
 { const row = createMsgActionsEl(full, genStats); assistantDiv.after(row); placeRegenButton(row); }
 } else {
@@ -1630,7 +1632,7 @@ saveCurrentRoomHistory();
   const contentForHistory = hitMaxChars
     ? full.replace(/\n\n\[1500文字制限で停止\]$/, "")
     : full;
-  messages.push({ role: "assistant", content: contentForHistory,...(thinkFull? { think: thinkFull}: {}),...(genStats? { stats: genStats}: {})});
+  messages.push({ role: "assistant", content: contentForHistory,...(thinkFull? { think: thinkFull}: {}),...(genStats? { stats: genStats}: {}),...(genModel? { model: genModel}: {})});
   saveCurrentRoomHistory();
   { const row = createMsgActionsEl(contentForHistory, genStats); assistantDiv.after(row); placeRegenButton(row); }
   if (voice && isVoiceMode && !hitMaxChars) {

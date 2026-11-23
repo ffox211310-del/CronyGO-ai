@@ -41,7 +41,7 @@
   </div>
 
   <button id="new-room-btn" class="secondary-btn" style="margin:12px; width:calc(100% - 24px);">
-    + 新しいチャット
+    <span data-i18n="newChat">+ 新しいチャット</span>
   </button>
 
   <div id="room-list"></div>
@@ -54,7 +54,7 @@
   </a>-->
 </div>
   
-<button id="menu-btn" aria-label="メニュー">☰</button>
+<button id="menu-btn" aria-label="メニュー" data-i18n-aria="menuAria">☰</button>
   <select id="model-select" hidden>
 <option value="Q0.5B">Qwen0.5B</option>
 <option value="Q1.5B">Qwen1.5B</option>
@@ -63,7 +63,7 @@
 <option value="G2B-jpn">GemmaJP2B</option>
 <option value="G2B-jpnHv">GemmaJP2BHv</option>
  </select>
- <button id="mp-trigger" type="button" aria-haspopup="dialog" aria-label="モデルを選択">
+ <button id="mp-trigger" type="button" aria-haspopup="dialog" aria-label="モデルを選択" data-i18n-aria="modelSelectAria">
   <span id="mp-trigger-label">-</span>
   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
 </button>
@@ -72,16 +72,15 @@
   <div id="progress-wrap"><div id="progress-bar"></div></div>
 
   <div id="chat">
-    <div class="msg assistant">こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。</div>
-
+    <div class="msg assistant" data-i18n="welcomeBubble">こんにちは！初回はモデルをダウンロードします。2回目からはオフラインで動きます。WebGPU対応ブラウザが必要です。</div>
   <div id="loading-view">
-    <div id="loading-notice">ダウンロード中はフォアグラウンドで表示してください</div>
+    <div id="loading-notice" data-i18n="loadingNotice">ダウンロード中はフォアグラウンドで表示してください</div>
     
 <div id="loading-icon-wrap">
 <svg id="loading-ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-bg" cx="60" cy="60" r="54"></circle><circle id="loading-ring-fg" cx="60" cy="60" r="54"></circle></svg>
 <img id="loading-icon-dark" class="loading-icon" src="./assets/Teal.png" alt="CronyGO" />
 </div>
-    <div id="loading-text">準備中...</div>
+    <div id="loading-text" data-i18n="loadingText">準備中...</div>
    </div>
   </div>
 
@@ -94,17 +93,17 @@
 <div class="composer-sheet">
 <div id="attach-preview" hidden>
 <img id="attach-thumb" alt="添付画像のプレビュー">
-<button id="attach-clear" type="button" aria-label="添付を取り消す">×</button>
+<button id="attach-clear" type="button" aria-label="添付を取り消す" data-i18n-aria="attachClearAria">×</button>
 </div>
 <div id="file-preview" hidden>
 <span id="file-name"></span>
-<button id="file-clear" type="button" aria-label="ファイルを取り消す">×</button>
+<button id="file-clear" type="button" aria-label="ファイルを取り消す" data-i18n-aria="fileClearAria">×</button>
 </div>
 
 <div id="plus-menu" hidden>
-<button id="plus-menu-file" type="button">ファイルをアップロード <span id="plus-menu-file-limit">1000文字まで</span></button>
-<button id="plus-menu-image" type="button">画像を追加</button>
-<button id="plus-menu-camera" type="button">カメラで撮る</button>
+<button id="plus-menu-file" type="button"><span data-i18n="plusFile">ファイルをアップロード</span> <span id="plus-menu-file-limit">1000文字まで</span></button>
+<button id="plus-menu-image" type="button" data-i18n="plusImage">画像を追加</button>
+<button id="plus-menu-camera" type="button" data-i18n="plusCamera">カメラで撮る</button>
 </div>
 <input type="file" id="image-input" accept="image/*" hidden>
 <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
@@ -112,23 +111,23 @@
 <textarea id="input" rows="1" placeholder="モデルをダウンロードしてください" autocomplete="off" disabled></textarea>
 <div class="composer-tools">
 <div class="tools-left">
-<button id="attach-btn" aria-label="追加メニュー" title="追加">
+<button id="attach-btn" aria-label="追加メニュー" title="追加" data-i18n-aria="attachBtnAria" data-i18n-title="attachBtnTitle">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
 </button>
-<button id="settings-btn" aria-label="設定">
+<button id="settings-btn" aria-label="設定" data-i18n-aria="settingsAria">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <circle cx="12" cy="12" r="3"></circle>
 <path d="M19.4,15a1.65,1.65,0,0,0,.33,1.82l.06.06a2,2,0,0,1,0,2.83,2,2,0,0,1-2.83,0l-.06-.06a1.65,1.65,0,0,0-1.82-.33,1.65,1.65,0,0,0-1,1.51V21a2,2,0,0,1-2,2,2,2,0,0,1-2-2v-.09A1.65,1.65,0,0,0,9,19.4a1.65,1.65,0,0,0-1.82.33l-.06.06a2,2,0,0,1-2.83,0,2,2,0,0,1,0-2.83l.06-.06A1.65,1.65,0,0,0,4.68,15a1.65,1.65,0,0,0-1.51-1H3a2,2,0,0,1-2-2,2,2,0,0,1,2-2h.09A1.65,1.65,0,0,0,4.6,9a1.65,1.65,0,0,0-.33-1.82l-.06-.06a2,2,0,0,1,0-2.83,2,2,0,0,1,2.83,0l.06.06A1.65,1.65,0,0,0,9,4.68a1.65,1.65,0,0,0,1-1.51V3a2,2,0,0,1,2-2,2,2,0,0,1,2,2v.09a1.65,1.65,0,0,0,1,1.51,1.65,1.65,0,0,0,1.82-.33l.06-.06a2,2,0,0,1,2.83,0,2,2,0,0,1,0,2.83l-.06.06A1.65,1.65,0,0,0,19.4,9a1.65,1.65,0,0,0,1.51,1H21a2,2,0,0,1,2,2,2,2,0,0,1-2,2h-.09a1.65,1.65,0,0,0-1.51,1z"></path>
 </svg>
 </button>
 </div>
-<div id="status">未DL</div>
+<div id="status" data-i18n="statusNotDownloaded">待機中</div>
 <div class="tools-right">
-<button id="mic-btn" aria-label="マイク" title="マイク"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5,12a7,7,0,0,0,14,0"/><path d="M12,19v3"/><path d="M8,22h8"/></svg></button>
-<button id="kill-btn" aria-label="生成を停止" title="生成を停止" hidden>
+<button id="mic-btn" aria-label="マイク" title="マイク" data-i18n-aria="micAria" data-i18n-title="micTitle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5,12a7,7,0,0,0,14,0"/><path d="M12,19v3"/><path d="M8,22h8"/></svg></button>
+<button id="kill-btn" aria-label="生成を停止" title="生成を停止" data-i18n-aria="stopAria" data-i18n-title="stopTitle" hidden>
 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
 </button>
-<button id="send" disabled aria-label="送信">
+<button id="send" disabled aria-label="送信" data-i18n-aria="sendAria">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="m22 2-7 20-4-9-9-4Z"></path>
 <path d="M22 2 11 13"></path>
@@ -140,20 +139,20 @@
 </div>
 
 <div id="mp-overlay"></div>
-<div id="mp-sheet" role="dialog" aria-label="モデル選択">
+<div id="mp-sheet" role="dialog" aria-label="モデル選択" data-i18n-aria="modelSelectAria">
   <div class="mp-head">
-    <span class="mp-title">モデルを選ぶ</span>
-    <button id="mp-close" type="button" aria-label="閉じる">×</button>
+    <span class="mp-title" data-i18n="mpTitle">モデルを選ぶ</span>
+    <button id="mp-close" type="button" aria-label="閉じる" data-i18n-aria="closeAria">×</button>
   </div>
   <div id="mp-list"></div>
-  <div class="mp-foot">選択後、再度押していただくとダウンロードが始まります。</div>
+  <div class="mp-foot" data-i18n="mpFoot">選択後、再度押していただくとダウンロードが始まります。</div>
 </div>
  
   <div id="settings-overlay"></div>
 <div id="settings-panel">
   <div class="settings-header">
-    <h2>設定</h2>
-    <button id="settings-close" aria-label="閉じる">×</button>
+    <h2 data-i18n="settingsTitle">設定</h2>
+    <button id="settings-close" aria-label="閉じる" data-i18n-aria="closeAria">×</button>
   </div>
 
   <div class="settings-body">
@@ -161,56 +160,56 @@
 <div class="settings-group" id="group-system">
     
     <button class="settings-group-btn" data-target="system">
-      <span>生成設定</span><span class="arrow">›</span>
+      <span data-i18n="groupGeneration">生成設定</span><span class="arrow">›</span>
     </button>
     
 <div class="settings-group-content">
   <!-- 既存のシステムプロンプト -->
   <div class="settings-section">
-    <label class="settings-label">システムプロンプト</label>
+    <label class="settings-label" data-i18n="sysPromptLabel">システムプロンプト</label>
     <textarea id="system-prompt-input"></textarea>
     <div class="settings-row">
-      <button id="save-prompt-btn" class="primary-btn">保存</button>
-      <button id="reset-prompt-btn" class="secondary-btn">リセット</button>
+      <button id="save-prompt-btn" class="primary-btn" data-i18n="saveBtn">保存</button>
+      <button id="reset-prompt-btn" class="secondary-btn" data-i18n="resetBtn">リセット</button>
     </div>
     <div id="prompt-status" class="settings-desc"></div>
   </div>
 
   <!-- 追加: 生成パラメータ -->
   <div class="settings-section">
-    <label class="settings-label">生成パラメータ</label>
+    <label class="settings-label" data-i18n="genParamsLabel">生成パラメータ</label>
     
     <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
       <span style="font-size:12px;">Temperature</span>
       <span id="temp-value" style="font-size:12px; opacity:0.7;">0.7</span>
     </div>
     <input type="range" id="temp-slider" min="0" max="2" step="0.1" value="0.7" style="width:100%">
-    <div class="settings-desc">低い=正確、高い=創造的</div>
+    <div class="settings-desc" data-i18n="tempDesc">低い=正確、高い=創造的</div>
 
     <div style="margin-top:12px; display:flex; justify-content:space-between; margin-bottom:6px;">
       <span style="font-size:12px;">Max Tokens</span>
     </div>
     <input type="number" id="max-tokens-input" min="128" max="4096" step="128" value="1024" style="width:100%; background:var(--input-bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px;">
-    <div class="settings-desc">1回の返答の長さ</div>
+    <div class="settings-desc" data-i18n="maxTokensDesc">1回の返答の長さ</div>
    
     <div style="margin-top:12px; display:flex; justify-content:space-between; margin-bottom:6px;">
-      <span style="font-size:12px;">ファイル文字数上限</span>
+      <span style="font-size:12px;" data-i18n="fileLimitLabel">ファイル文字数上限</span>
     </div>
     <input type="number" id="file-limit-input" min="0" step="100" value="1000" style="width:100%; background:var(--input-bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px;">
-    <div class="settings-desc">ファイル添付で読み取る文字数（0=無制限・自己責任）</div>
+    <div class="settings-desc" data-i18n="fileLimitDesc">ファイル添付で読み取る文字数（0=無制限・自己責任）</div>
   </div>
  <!-- 追加: Think（思考） -->
 <div class="settings-section">
 <div style="display:flex; justify-content:space-between; align-items:center;">
-<label class="settings-label" for="think-toggle" style="margin:0;">Think（思考過程）</label>
+<label class="settings-label" for="think-toggle" style="margin:0;" data-i18n="thinkLabel">Think（思考過程）</label>
 <input type="checkbox" id="think-toggle" checked style="width:20px; height:20px; accent-color:var(--accent); cursor:pointer;">
 </div>
-<div class="settings-desc">ONの場合、対応モデル（GGUF）の思考過程を回答とは別枠で表示します</div>
-<div class="settings-desc" style="margin-top:4px;">※ このスイッチは、ThinkのON/OFFができるモデルのみに対応しています。対応していないモデルでは、OFFにしても思考が続くことがあります。</div>
+<div class="settings-desc" data-i18n="thinkDesc">ONの場合、対応モデル（GGUF）の思考過程を回答とは別枠で表示します</div>
+<div class="settings-desc" style="margin-top:4px;" data-i18n="thinkNote">※ このスイッチは、ThinkのON/OFFができるモデルのみに対応しています。対応していないモデルでは、OFFにしても思考が続くことがあります。</div>
 </div>
 
  <div class="settings-section">
-  <div class="settings-label">コンテキスト</div>
+  <div class="settings-label" data-i18n="contextLabel">コンテキスト</div>
 
   <select id="context-size">
     <option value="1024">1024</option>
@@ -219,17 +218,17 @@
     <option value="8192">8192</option>
   </select>
 
-  <div class="settings-desc">会話に保持できる情報量</div>
-  <div class="settings-desc" style="color:#ffb84d; margin-top:4px;">
-    ⚠ 変更後は再ダウンロードしてください
-  </div>
+ <div class="settings-desc" data-i18n="contextDesc">会話に保持できる情報量</div>
+  <div class="settings-desc" style="color:#ffb84d; margin-top:4px;" data-i18n="contextWarn">
+⚠ 変更後は再ダウンロードしてください
+</div>
 </div>
 
 <div class="settings-section">
-  <div class="settings-label">CPUスレッド数</div>
+  <div class="settings-label" data-i18n="threadsLabel">CPUスレッド数</div>
 
   <select id="thread-count">
-    <option value="auto" selected>自動（端末に合わせる）</option>
+    <option value="auto" selected data-i18n="threadsAuto">自動（端末に合わせる）</option>
     <option value="1">1</option>
     <option value="2">2</option>
     <option value="3">3</option>
@@ -240,18 +239,19 @@
     <option value="8">8</option>
   </select>
 
-  <div class="settings-desc">GGUFモデルの推論に使うスレッド数</div>
+ <div class="settings-desc" data-i18n="threadsDesc">GGUFモデルの推論に使うスレッド数</div>
+  
   <div class="settings-desc" id="thread-info"></div>
-  <div class="settings-desc" style="color:#ffb84d; margin-top:4px;">
-    ⚠ 変更後はモデルを再読込してください
-  </div>
+  <div class="settings-desc" style="color:#ffb84d; margin-top:4px;" data-i18n="threadsWarn">
+⚠ 変更後はモデルを再読込してください
+</div>
 </div>
 
 <div class="settings-section">
-  <div class="settings-label">リピートペナルティ</div>
+  <div class="settings-label" data-i18n="repeatLabel">リピートペナルティ</div>
 
   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-    <span style="font-size:12px;">繰り返し抑制</span>
+    <span style="font-size:12px;" data-i18n="repeatName">繰り返し抑制</span>
     <span id="repeat-penalty-value" style="font-size:12px; opacity:0.7;">1.1</span>
   </div>
 
@@ -264,9 +264,9 @@
     value="1.1"
   >
 
-  <div class="settings-desc">
-    高いほど同じ単語や表現の繰り返しを抑えます
-  </div>
+  <div class="settings-desc" data-i18n="repeatDesc">
+高いほど同じ単語や表現の繰り返しを抑えます
+</div>
 </div>
  
   
@@ -276,18 +276,18 @@
 
 <div class="settings-group">
   <button class="settings-group-btn">
-    ローカルモデル (GGUF)
+    <span data-i18n="groupLocal">ローカルモデル (GGUF)</span>
     <span class="arrow">›</span>
   </button>
   <div class="settings-group-content">
-    <div class="settings-desc" style="margin-bottom:8px;">
+    <div class="settings-desc" style="margin-bottom:8px;" data-i18n-html="localDesc">
       サーバーにアップロードせず、端末内のGGUFファイルを直接読み込みます。<br>
       <span style="color:var(--accent);">※大容量モデルはメモリ不足でタブが落ちる場合があります</span>
     </div>
    
     <input type="file" id="local-gguf-file" accept=".gguf" multiple style="display:none;">
    
-    <button id="local-gguf-btn" class="primary-btn" style="width:100%;">
+    <button id="local-gguf-btn" class="primary-btn" style="width:100%;" data-i18n="localLoadBtn">
       GGUFファイルを選択して読み込む
     </button>
     <div id="local-gguf-status" class="settings-desc" style="margin-top:8px; min-height:1.5em;"></div>
@@ -297,7 +297,7 @@
    
   <div class="settings-group" id="group-custom">
     <button class="settings-group-btn" data-target="custom">
-      <span>カスタム</span><span class="arrow">›</span>
+      <span data-i18n="groupCustom">カスタム</span><span class="arrow">›</span>
     </button>
     <div class="settings-group-content">
       <!--<div class="settings-section">
@@ -307,25 +307,35 @@
           <button class="theme-opt" data-theme="light">ライト</button>
         </div>
       </div>-->
+
+     <div class="settings-section">
+      <label class="settings-label" data-i18n="langLabel">言語</label>
+      <select id="lang-select" class="lang-select" style="width:100%;">
+       <option value="ja">日本語</option>
+       <option value="en">English</option>
+      </select>
+      <div class="settings-desc">UIの表示言語 / UI language</div>
+     </div>
+     
       <div class="settings-section">
-        <label class="settings-label">読み上げ音声</label>
+        <label class="settings-label" data-i18n="ttsVoiceLabel">読み上げ音声</label>
         <select id="tts-voice-select"></select>
         <div class="settings-row" style="margin-top:8px;">
-          <button id="tts-test-btn" class="secondary-btn">試聴</button>
-          <button id="tts-reload-voices-btn" class="secondary-btn">再読込</button>
+          <button id="tts-test-btn" class="secondary-btn" data-i18n="ttsTestBtn">試聴</button>
+          <button id="tts-reload-voices-btn" class="secondary-btn" data-i18n="ttsReloadBtn">再読込</button>
         </div>
        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
-        <label class="settings-label" for="barge-in-toggle" style="margin:0;">読み上げへの割り込み</label>
+        <label class="settings-label" for="barge-in-toggle" style="margin:0;" data-i18n="bargeInLabel">読み上げへの割り込み</label>
         <input type="checkbox" id="barge-in-toggle" style="width:20px; height:20px; accent-color:var(--accent); cursor:pointer;">
        </div>
-       <div class="settings-desc">ONの場合、AIの読み上げ中でも声で割り込めます。周りがうるさい環境では誤作動することがあります</div>
+       <label class="settings-label" for="barge-in-toggle" style="margin:0;" data-i18n="bargeInLabel">読み上げへの割り込み</label>
       </div>
       <div class="settings-section">
-        <label class="settings-label">チャット背景</label>
+        <label class="settings-label" data-i18n="bgLabel">チャット背景</label>
         <input type="file" id="bg-upload" accept="image/*" style="display:none">
         <div class="settings-row">
-          <button id="bg-upload-btn" class="secondary-btn">写真を選ぶ</button>
-          <button id="bg-clear-btn" class="secondary-btn">消す</button>
+          <button id="bg-upload-btn" class="secondary-btn" data-i18n="bgPickBtn">写真を選ぶ</button>
+          <button id="bg-clear-btn" class="secondary-btn" data-i18n="bgClearBtn">消す</button>
         </div>
   
       </div>
@@ -334,41 +344,41 @@
 
   <div class="settings-group" id="group-dev">
     <button class="settings-group-btn" data-target="dev">
-      <span>データ</span><span class="arrow">›</span>
+      <span data-i18n="groupData">データ</span><span class="arrow">›</span>
     </button>
     <div class="settings-group-content">
       <div class="settings-section">
-        <label class="settings-label">モデルキャッシュ</label>
+        <label class="settings-label" data-i18n="cacheLabel">モデルキャッシュ</label>
         <div style="font-size:12px; opacity:0.7; margin-bottom:8px;">
-          使用量: <span id="cache-usage">計算中...</span><br>
+          <span data-i18n="cacheUsageLabel">使用量</span>: <span id="cache-usage">計算中...</span><br>
         </div>
         <div class="settings-row">
-          <button id="cache-clear-btn" class="secondary-btn" style="color:#ff6b6b;">キャッシュを削除</button>
-          <button id="cache-refresh-btn" class="secondary-btn">更新</button>
+          <button id="cache-clear-btn" class="secondary-btn" style="color:#ff6b6b;" data-i18n="cacheClearBtn">キャッシュを削除</button>
+          <button id="cache-refresh-btn" class="secondary-btn" data-i18n="cacheRefreshBtn">更新</button>
         </div>
-        <div class="settings-desc">消すと再DLが必要になります</div>
+        <div class="settings-desc" data-i18n="cacheDesc">消すと再DLが必要になります</div>
       </div>
 
       <div class="settings-section">
-        <label class="settings-label">会話エクスポート</label>
+       <label class="settings-label" data-i18n="exportLabel">会話エクスポート</label>
         <div class="settings-row">
           <button id="export-json-btn" class="secondary-btn">Json</button>
           <button id="export-md-btn" class="secondary-btn">Markdown</button>
         </div>
-        <div class="settings-desc">今開いている会話をファイルに書き出します（画像は含まれません）</div>
+        <div class="settings-desc" data-i18n="exportDesc">今開いている会話をファイルに書き出します（画像は含まれません）</div>
         <div id="export-link-area" style="margin-top:8px; font-size:13px;"></div>
       </div>
 
       <div class="settings-section">
         <div class="settings-row" style="justify-content:space-between; align-items:center;">
-          <span style="font-size:13px;">開発者コンソール</span>
+          <span style="font-size:13px;" data-i18n="devConsoleLabel">開発者コンソール</span>
           <label style="position:relative; width:44px; height:24px;">
             <input type="checkbox" id="dev-console-toggle" style="opacity:0; width:0; height:0;">
             <span id="dev-toggle-bg" style="position:absolute; inset:0; background:#333; border-radius:24px;"></span>
             <span id="dev-toggle-dot" style="position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.2s;"></span>
           </label>
         </div>
-        <span style="font-size:11px; opacity:0.6;">状態: <span id="dev-console-label">OFF</span></span>
+        <span style="font-size:11px; opacity:0.6;"><span data-i18n="devStateLabel">状態</span>: <span id="dev-console-label">OFF</span></span>
       </div>
 
       
@@ -381,7 +391,7 @@
 <!-- CronyGOについて -->
 <div class="settings-group" id="group-about">
   <button class="settings-group-btn" data-target="about">
-    <span>CronyGOについて</span><span class="arrow">›</span>
+    <span data-i18n="groupAbout">CronyGOについて</span><span class="arrow">›</span>
   </button>
   <div class="settings-group-content">
 
@@ -497,42 +507,48 @@
 
 <div id="tutorial-panel" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
   <div class="tutorial-content">
-  <h1 id="tutorial-title"><span class="brand-font">CronyGO</span>へようこそ!!</h1>
-
+  <h1 id="tutorial-title" data-i18n-html="tutTitle"><span class="brand-font">CronyGO</span>へようこそ!!</h1>
+   <div style="display:flex; align-items:center; gap:10px; margin:16px 0 4px;">
+    <label for="lang-select-tutorial" style="font-size:14px; font-weight:600;">Language</label>
+    <select id="lang-select-tutorial" class="lang-select" style="flex:1; background:var(--input-bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px;">
+     <option value="ja">日本語</option>
+     <option value="en">English</option>
+    </select>
+   </div>
     <div class="tutorial-text">
-      <p>
+      <p data-i18n="tutP1">
         本サイトでは、Web上でさまざまなAIをローカルで動かすことができます。
       </p>
 
-      <p>
+      <p data-i18n="tutP2">
         まずはモデル名をタップしてモデルを選択してみましょう。もう一度押すことでダウンロードが始まります。
       </p>
 
-      <p>
+      <p data-i18n="tutP3">
         Smollm,LFMなどが特に軽量なモデルです。
       </p>
 
-      <p>
+      <p data-i18n="tutP4">
         <strong>MLC</strong>と書いてあるモデルは、古いOSや端末では動かない場合があります。(WebGPUを使用するため)
       </p>
 
-      <p>
+      <p data-i18n="tutP5">
         反対に、<strong>GGUF</strong>と書かれているモデルは比較的古い端末でも動く可能性があります。
         まずは<strong>LFM2.5 350M</strong>をダウンロードすることをおすすめします。
       </p>
 
-      <p>
+      <p data-i18n="tutP6">
         余裕があったら多言語対応の<strong>Qwen</strong>シリーズなどもオススメです。
       </p>
 
-     <p>
+     <p data-i18n="tutP7">
       また、自分の端末から直接モデルファイルをアップロードすることもできます。
      </p>
      
     </div>
 
-    <button id="tutorial-start-btn" class="primary-btn">
-      はじめる
+    <button id="tutorial-start-btn" class="primary-btn" data-i18n="tutStartBtn">
+     はじめる
     </button>
   </div>
 </div>

@@ -40,8 +40,18 @@ let debugClearBtn = null;
 let debugTestBtn = null;
 
 function loadStoredPrompt() {
-  try { return localStorage.getItem(LS_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT; }
+  try {
+    const v = localStorage.getItem(LS_PROMPT_KEY);
+    return v === null ? DEFAULT_SYSTEM_PROMPT : v;
+  }
   catch { return DEFAULT_SYSTEM_PROMPT; }
+}
+function systemMessage() {
+  const p = loadStoredPrompt();
+  return p ? [{ role: "system", content: p }] : [];
+}
+function sysOffset() {
+  return (messages[0] && messages[0].role === "system") ? 1 : 0;
 }
 
 const DEFAULT_TEMP = 0.7;
@@ -259,7 +269,7 @@ function setDevConsoleEnabled(enabled) {
   }
 }
 
-let messages = [{ role: "system", content: loadStoredPrompt() }];
+let messages = systemMessage();
 
 const chatEl = document.getElementById("chat");
 const micBtn = document.getElementById("mic-btn");
@@ -726,10 +736,15 @@ function applyTheme(theme, save = true) {
   if (save) { try { localStorage.setItem(LS_THEME_KEY, theme); } catch {} }
 }
 function saveSystemPrompt() {
-  const newPrompt = systemPromptInput.value.trim() || DEFAULT_SYSTEM_PROMPT;
+  const newPrompt = systemPromptInput.value.trim();
   try { localStorage.setItem(LS_PROMPT_KEY, newPrompt); } catch {}
-  messages[0].content = newPrompt;
-  promptStatus.textContent = "保存しました。次の会話から反映されます。";
+  if (newPrompt) {
+    if (messages[0] && messages[0].role === "system") messages[0].content = newPrompt;
+    else messages.unshift({ role: "system", content: newPrompt });
+  } else if (messages[0] && messages[0].role === "system") {
+    messages.shift();
+  }
+  promptStatus.textContent = newPrompt ? "保存しました。次の会話から反映されます。" : "システムプロンプト無しで保存しました。";
   promptStatus.style.color = "#4FD1C5";
   setTimeout(() => { promptStatus.textContent = ""; }, 2500);
 }
@@ -756,7 +771,7 @@ function saveRoomMessages(id, msgs){
   }
 }
 
-function getHistory(){ return messages.slice(1); }
+function getHistory(){ return messages.filter(m => m.role !== "system"); }
 function saveCurrentRoomHistory(){
   if(!currentRoomId) return;
   saveRoomMessages(currentRoomId, getHistory());
@@ -974,7 +989,7 @@ function renderChatFromHistory(history){
   editingIndex = null;
   history.forEach((m, i) => {
     const d = addMessage(m.role, m.content, m.think, m.img, m.stats);
-    if (m.role === "user" && !m.img) attachEditGesture(d, i + 1);
+    if (m.role === "user" && !m.img) attachEditGesture(d, i + sysOffset());
   });
   if (history[history.length - 1]?.role === "assistant") {
     const rows = chatEl.querySelectorAll(".msg-actions");
@@ -989,7 +1004,7 @@ function switchRoom(id){
   currentRoomId = id;
   localStorage.setItem(LS_CURRENT, id);
   const history = loadRoomMessages(id);
-  messages = [{ role: "system", content: loadStoredPrompt() },...history];
+  messages = [...systemMessage(),...history];
   renderChatFromHistory(history);
   renderRoomList();
   closeDrawer();
@@ -1002,7 +1017,7 @@ function createRoom(){
   saveRooms();
   currentRoomId = id;
   localStorage.setItem(LS_CURRENT, id);
-  messages = [{ role: "system", content: loadStoredPrompt() }];
+  messages = [...systemMessage()];
   hasChatted = false;
   renderChatFromHistory([]);
   renderRoomList();
@@ -1034,7 +1049,7 @@ function renameRoom(id){
 function deleteRoom(id){
   if(rooms.length <= 1){
     saveRoomMessages(id, []);
-    messages = [{ role: "system", content: loadStoredPrompt() }];
+    messages = [...systemMessage()];
     const room = rooms.find(r=>r.id===id);
     if(room) room.title = "新しいチャット";
     saveRooms();
@@ -1049,7 +1064,7 @@ function deleteRoom(id){
     currentRoomId = rooms[0].id;
     localStorage.setItem(LS_CURRENT, currentRoomId);
     const history = loadRoomMessages(currentRoomId);
-    messages = [{ role: "system", content: loadStoredPrompt() },...history];
+    messages = [...systemMessage(),...history];
     renderChatFromHistory(history);
   }
   renderRoomList();
@@ -1062,7 +1077,7 @@ function initRooms(){
   }
   currentRoomId = localStorage.getItem(LS_CURRENT) || rooms[0].id;
   const history = loadRoomMessages(currentRoomId);
-  messages = [{ role: "system", content: loadStoredPrompt() },...history];
+  messages = [...systemMessage(),...history];
   renderChatFromHistory(history);
   renderRoomList();
 }

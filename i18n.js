@@ -61,7 +61,7 @@ const I18N = {
     ttsTestBtn: "試聴",
     ttsReloadBtn: "再読込",
     bargeInLabel: "読み上げへの割り込み",
-    bargeInDesc: "ONの場合、AIの読み上げ中でも声で割り込めます。周りがうるさい環境では誤作動することがあります",
+    bargeInDesc: "読み上げ中の音声割り込み",
     bgLabel: "チャット背景",
     bgPickBtn: "写真を選ぶ",
     bgClearBtn: "消す",

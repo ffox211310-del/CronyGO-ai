@@ -1264,3 +1264,11 @@ padding-right:max(14px,calc(50% - 370px));
 /* ライトモード補正（2026-11-24） */
 
 body.light #room-drawer{ border-right-color: var(--border);}
+
+
+/* アイコンのテーマ出し分け（空状態・生成中） */
+body.light .empty-icon-dark{ display: none;}
+body.light .empty-icon-light{ display: inline-block;}
+.pending-icon-light{ display: none;}
+body.light .pending-icon-dark{ display: none;}
+body.light .pending-icon-light{ display: inline-block;}

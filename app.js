@@ -1114,7 +1114,7 @@ function initCustomModelUI(){
 }
 
 function resetSystemPrompt() {
-  systemPromptInput.value = DEFAULT_SYSTEM_PROMPT;
+  systemPromptInput.value = t('defaultSystemPrompt');
   saveSystemPrompt();
   promptStatus.textContent = t('dynResetToDefault');
 }

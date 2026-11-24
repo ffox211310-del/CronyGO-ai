@@ -1260,3 +1260,7 @@ padding-left:max(14px,calc(50% - 370px));
 padding-right:max(14px,calc(50% - 370px));
 }
 }
+
+/* ライトモード補正（2026-11-24） */
+body.light #loading-icon-dark{ display: block;}
+body.light #room-drawer{ border-right-color: var(--border);}

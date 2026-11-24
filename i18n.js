@@ -143,7 +143,7 @@ const I18N = {
     ttsTestBtn: "Preview",
     ttsReloadBtn: "Reload",
     bargeInLabel: "Barge-in during speech",
-    bargeInDesc: "When ON, you can interrupt the AI while it is speaking, using your voice. May misfire in noisy environments",
+    bargeInDesc: "Barge-in during speech",
     bgLabel: "Chat Background",
     bgPickBtn: "Choose a photo",
     bgClearBtn: "Remove",

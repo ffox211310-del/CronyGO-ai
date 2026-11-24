@@ -32,6 +32,7 @@ const I18N = {
     settingsTitle: "設定",
     groupGeneration: "生成設定",
     sysPromptLabel: "システムプロンプト",
+    sysPromptNoneDesc: "空欄で保存すると、システムプロンプト無しになります",
     saveBtn: "保存",
     resetBtn: "リセット",
     genParamsLabel: "生成パラメータ",

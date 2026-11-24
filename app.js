@@ -709,7 +709,8 @@ function showAssistantPending(el) {
   el.classList.add("pending");
   el.innerHTML = `
     <div class="pending-answer" role="status" aria-live="polite">
-      <img class="pending-icon" src="./assets/Teal.png" alt="" onerror="this.style.display='none'">
+      <img class="pending-icon pending-icon-dark" src="./assets/Teal.png" alt="" onerror="this.style.display='none'">
+      <img class="pending-icon pending-icon-light" src="./assets/CronyGOicon_Light.png" alt="" onerror="this.style.display='none'">
       <span class="pending-text">${t('dynGenerating')}</span>
     </div>
   `;

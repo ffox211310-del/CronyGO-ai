@@ -977,7 +977,7 @@ function renderChatFromHistory(history){
   if(history.length === 0){
     const div = document.createElement("div");
     div.className = "empty-state";
-    div.innerHTML = `<img class="empty-icon" src="./assets/Teal.png" alt="CronyGO"><p class="empty-text">${t('dynWelcome')}</p>`;
+    div.innerHTML = `<img class="empty-icon empty-icon-dark" src="./assets/Teal.png" alt="CronyGO"><img class="empty-icon empty-icon-light" src="./assets/CronyGOicon_Light.png" alt="CronyGO"><p class="empty-text">${t('dynWelcome')}</p>`;
     chatEl.insertBefore(div, loadingView);
     hasChatted = false;
     hideFirstLoadingUI();

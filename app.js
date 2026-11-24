@@ -42,9 +42,9 @@ let debugTestBtn = null;
 function loadStoredPrompt() {
   try {
     const v = localStorage.getItem(LS_PROMPT_KEY);
-    return v === null ? DEFAULT_SYSTEM_PROMPT : v;
+    return v === null ? t('defaultSystemPrompt') : v;
   }
-  catch { return DEFAULT_SYSTEM_PROMPT; }
+  catch { return t('defaultSystemPrompt'); }
 }
 function systemMessage() {
   const p = loadStoredPrompt();

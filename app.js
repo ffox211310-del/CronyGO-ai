@@ -1615,6 +1615,14 @@ assistantDiv.style.display = "";
       }
       speakBuffer = speakBuffer.slice(consumed);
     }
+    if (speakBuffer.length >= 40) {
+      const cut = speakBuffer.lastIndexOf('、');
+      if (cut >= 16) {
+        const s = speakBuffer.slice(0, cut + 1).trim();
+        if (s) voice.enqueueSpeak(s);
+        speakBuffer = speakBuffer.slice(cut + 1);
+      }
+    }
   }
 }
   

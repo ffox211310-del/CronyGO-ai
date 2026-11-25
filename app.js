@@ -1703,7 +1703,7 @@ voice = new VoiceManager({
     sendMessageWithText(t);
     voice.clearBuffer();
   },
-  onStatus: (msg, state) => { dbg(`[Status] ${msg} ${state}`); }
+  onStatus: (msg, state) => { dbg(`[Status] ${msg} ${state}`); syncVoiceOverlay(msg, state); }
 });
 
 const bargeInToggle = document.getElementById('barge-in-toggle');
@@ -1715,10 +1715,36 @@ if (bargeInToggle) {
   });
 }
 
+const voiceOverlay = document.getElementById('voice-overlay');
+const voiceOverlayStatus = document.getElementById('voice-overlay-status');
+let voiceOverlayTimer = null;
+function showVoiceOverlay() {
+  if (voiceOverlayTimer) { clearTimeout(voiceOverlayTimer); voiceOverlayTimer = null; }
+  if (voiceOverlay) voiceOverlay.classList.remove('fade-out');
+  document.body.classList.add('voice-on');
+}
+function hideVoiceOverlay() {
+  if (!document.body.classList.contains('voice-on')) return;
+  if (voiceOverlay) voiceOverlay.classList.add('fade-out');
+  if (voiceOverlayTimer) clearTimeout(voiceOverlayTimer);
+  voiceOverlayTimer = setTimeout(() => {
+    document.body.classList.remove('voice-on');
+    if (voiceOverlay) voiceOverlay.classList.remove('fade-out');
+    voiceOverlayTimer = null;
+  }, 250);
+}
+function syncVoiceOverlay(msg, state) {
+  if (state === 'idle') { hideVoiceOverlay(); return; }
+  if (!voiceOverlay) return;
+  voiceOverlay.classList.toggle('speaking', state === 'speaking');
+  if (voiceOverlayStatus && document.body.classList.contains('voice-on')) voiceOverlayStatus.textContent = msg;
+}
+
 micBtn.addEventListener('click', () => {
   if (voice.isListening) {
     voice.stop();
     micBtn.classList.remove('on', 'muted');
+    hideVoiceOverlay();
     inputEl.readOnly = false;
     inputEl.placeholder = `${currentKey || t('dynModelWord')}${t('dynTypeHereSuffix')}`;
   } else {
@@ -1728,7 +1754,7 @@ micBtn.addEventListener('click', () => {
     inputEl.placeholder = t('dynListening');
     voice.start().then(ok => {
       dbg(`voice.start ${ok}`);
-      if(ok) micBtn.classList.add('on');
+      if(ok) { micBtn.classList.add('on'); showVoiceOverlay(); }
       else { inputEl.readOnly = false; inputEl.placeholder = `${currentKey || t('dynModelWord')}${t('dynTypeHereSuffix')}`; }
     });
   }

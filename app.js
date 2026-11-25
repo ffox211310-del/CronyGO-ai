@@ -1493,7 +1493,7 @@ let thinkFull = "";
 let thinkBlockEl = null;
 let thinkBodyEl = null;
 let thinkCollapsed = false;
-const sentenceSplitRegex = /[^。！？\n.!?]+[。！？\n.!?]+/g;
+const sentenceSplitRegex = /[^。！？\n.!?、]+[。！？\n.!?、]+/g;
 try {
   // ===== UX改善: GPU(WebLLM)負荷前の描画完了待ち =====
   // スマホでのキーボード格納やスクロール、待機UIの描画をブラウザに確実に完了させる
@@ -1615,14 +1615,7 @@ assistantDiv.style.display = "";
       }
       speakBuffer = speakBuffer.slice(consumed);
     }
-    if (speakBuffer.length >= 40) {
-      const cut = speakBuffer.lastIndexOf('、');
-      if (cut >= 16) {
-        const s = speakBuffer.slice(0, cut + 1).trim();
-        if (s) voice.enqueueSpeak(s);
-        speakBuffer = speakBuffer.slice(cut + 1);
-      }
-    }
+    
   }
 }
   

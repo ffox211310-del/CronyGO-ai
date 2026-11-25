@@ -58,6 +58,7 @@ export class VoiceManager {
   cleanForTTS(text) {
     if (!text) return '';
     let t = text;
+    t = t.replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{200D}\u{20E3}]/gu, '');
     t = t.replace(/^\s*\*\*\s*$/gm, '');
     t = t.replace(/\*\*\s*\n\s*([\s\S]+?)\s*\n\s*\*\*/g, '$1');
     return t

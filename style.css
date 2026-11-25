@@ -501,9 +501,7 @@ body.light #settings-overlay { background: rgba(0,0,0,.25); }
 #composer { background: transparent;}
 .hint { background: transparent;}
 body { background-size: cover; background-position: center; background-repeat: no-repeat;}
-body.light #chat.has-custom-bg::before {
-  background: rgba(229,229,229,var(--chat-bg-overlay, 0.4));
-}
+
 /* ←ここスペース入れるのが重要 */
 #chat.has-custom-bg .msg,
 #chat.has-custom-bg #loading-view {

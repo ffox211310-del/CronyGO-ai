@@ -1291,10 +1291,13 @@ body.voice-on #input, body.voice-on .tools-left, body.voice-on #status, body.voi
 .voice-blob>span:nth-child(3){ --d: 7s; background: radial-gradient(circle at 50% 44%, rgba(190,255,248,.75), rgba(190,255,248,0) 55%); }
 @keyframes voiceMorph{ from{ border-radius: 58% 42% 55% 45%/50% 58% 42% 50%; transform: rotate(0deg) scale(1); } to{ border-radius: 45% 55% 40% 60%/60% 42% 58% 40%; transform: rotate(40deg) scale(1.12); } }
 @keyframes voiceBreathe{ from{ transform: scale(1); } to{ transform: scale(1.06); } }
-#voice-overlay.speaking .voice-blob{ animation-duration: 2.2s; }
-#voice-overlay.speaking .voice-blob>span:nth-child(1){ --d: 3s; }
-#voice-overlay.speaking .voice-blob>span:nth-child(2){ --d: 4.2s; }
-#voice-overlay.speaking .voice-blob>span:nth-child(3){ --d: 2.6s; }
+#voice-overlay.speaking>.voice-blob{ animation: voicePulse 900ms ease-in-out infinite alternate; }
+#voice-overlay.speaking>.voice-blob>span{ animation-name: voiceMorphHot; filter: blur(22px) brightness(1.18); }
+#voice-overlay.speaking>.voice-blob>span:nth-child(1){ --d: 1.8s; }
+#voice-overlay.speaking>.voice-blob>span:nth-child(2){ --d: 2.4s; }
+#voice-overlay.speaking>.voice-blob>span:nth-child(3){ --d: 1.5s; }
+@keyframes voicePulse{ from{ transform: scale(1); } to{ transform: scale(1.16); } }
+@keyframes voiceMorphHot{ from{ border-radius: 58% 42% 55% 45%/50% 58% 42% 50%; transform: rotate(0deg) scale(1); } to{ border-radius: 42% 58% 38% 62%/62% 40% 60% 38%; transform: rotate(75deg) scale(1.32); } }
 #voice-overlay-status{ color: #fff; font-size: 17px; font-weight: 600; text-align: center; padding: 0 24px; min-height: 24px; }
 
 /* 音声モード: マイクを中央に、コンポーザーの器は消す */

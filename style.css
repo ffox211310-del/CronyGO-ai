@@ -1278,7 +1278,7 @@ body.light .pending-icon-light{ display: inline-block;}
 #voice-overlay{ display: none; flex: 1; background: #000; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
 body.voice-on #chat{ display: none; }
 body.voice-on #voice-overlay{ display: flex; animation: voiceFadeIn 250ms ease both; }
-#voice-overlay.fade-out{ animation: voiceFadeOut 250ms ease both; }
+body.voice-on #voice-overlay.fade-out{ animation: voiceFadeOut 250ms ease both; }
 @keyframes voiceFadeIn{ from{ opacity: 0; } to{ opacity: 1; } }
 @keyframes voiceFadeOut{ from{ opacity: 1; } to{ opacity: 0; } }
 body.voice-on #menu-btn, body.voice-on #mp-trigger{ opacity: 0; pointer-events: none; }
@@ -1296,3 +1296,8 @@ body.voice-on #input, body.voice-on .tools-left, body.voice-on #status, body.voi
 #voice-overlay.speaking .voice-blob>span:nth-child(2){ --d: 4.2s; }
 #voice-overlay.speaking .voice-blob>span:nth-child(3){ --d: 2.6s; }
 #voice-overlay-status{ color: #fff; font-size: 17px; font-weight: 600; text-align: center; padding: 0 24px; min-height: 24px; }
+
+/* 音声モード: マイクを中央に、コンポーザーの器は消す */
+body.voice-on #composer{ background: #000; }
+body.voice-on .composer-sheet{ background: transparent; border-color: transparent; }
+body.voice-on .composer-tools{ justify-content: center; }

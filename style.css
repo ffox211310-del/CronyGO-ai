@@ -1272,3 +1272,27 @@ body.light .empty-icon-light{ display: inline-block;}
 .pending-icon-light{ display: none;}
 body.light .pending-icon-dark{ display: none;}
 body.light .pending-icon-light{ display: inline-block;}
+
+
+/* 音声対話オーバーレイ（デザインのみ） */
+#voice-overlay{ display: none; flex: 1; background: #000; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+body.voice-on #chat{ display: none; }
+body.voice-on #voice-overlay{ display: flex; animation: voiceFadeIn 250ms ease both; }
+#voice-overlay.fade-out{ animation: voiceFadeOut 250ms ease both; }
+@keyframes voiceFadeIn{ from{ opacity: 0; } to{ opacity: 1; } }
+@keyframes voiceFadeOut{ from{ opacity: 1; } to{ opacity: 0; } }
+body.voice-on #menu-btn, body.voice-on #mp-trigger{ opacity: 0; pointer-events: none; }
+#menu-btn, #mp-trigger{ transition: opacity 200ms; }
+body.voice-on #input, body.voice-on .tools-left, body.voice-on #status, body.voice-on #send, body.voice-on #kill-btn, body.voice-on #attach-preview, body.voice-on #file-preview, body.voice-on .hint{ display: none; }
+.voice-blob{ position: relative; width: 230px; height: 230px; animation: voiceBreathe 6s ease-in-out infinite alternate; }
+.voice-blob>span{ position: absolute; inset: 0; filter: blur(22px); mix-blend-mode: screen; animation: voiceMorph var(--d, 9s) ease-in-out infinite alternate; }
+.voice-blob>span:nth-child(1){ --d: 9s; background: radial-gradient(circle at 38% 34%, rgba(79,209,197,.95), rgba(79,209,197,0) 62%); }
+.voice-blob>span:nth-child(2){ --d: 13s; animation-direction: alternate-reverse; background: radial-gradient(circle at 64% 60%, rgba(38,166,154,.9), rgba(38,166,154,0) 65%); }
+.voice-blob>span:nth-child(3){ --d: 7s; background: radial-gradient(circle at 50% 44%, rgba(190,255,248,.75), rgba(190,255,248,0) 55%); }
+@keyframes voiceMorph{ from{ border-radius: 58% 42% 55% 45%/50% 58% 42% 50%; transform: rotate(0deg) scale(1); } to{ border-radius: 45% 55% 40% 60%/60% 42% 58% 40%; transform: rotate(40deg) scale(1.12); } }
+@keyframes voiceBreathe{ from{ transform: scale(1); } to{ transform: scale(1.06); } }
+#voice-overlay.speaking .voice-blob{ animation-duration: 2.2s; }
+#voice-overlay.speaking .voice-blob>span:nth-child(1){ --d: 3s; }
+#voice-overlay.speaking .voice-blob>span:nth-child(2){ --d: 4.2s; }
+#voice-overlay.speaking .voice-blob>span:nth-child(3){ --d: 2.6s; }
+#voice-overlay-status{ color: #fff; font-size: 17px; font-weight: 600; text-align: center; padding: 0 24px; min-height: 24px; }

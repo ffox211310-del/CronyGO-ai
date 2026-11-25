@@ -1605,16 +1605,14 @@ assistantDiv.style.display = "";
 
   if (isVoiceMode && voice && delta) {
     speakBuffer += delta;
-    const matches = speakBuffer.match(sentenceSplitRegex);
-    if (matches) {
-      let consumed = 0;
-      for (const sent of matches) {
-        const s = sent.trim();
-        if (s) voice.enqueueSpeak(s);
-        consumed += sent.length;
-      }
-      speakBuffer = speakBuffer.slice(consumed);
+    let m, lastEnd = 0;
+    sentenceSplitRegex.lastIndex = 0;
+    while ((m = sentenceSplitRegex.exec(speakBuffer)) !== null) {
+      const s = m[0].trim();
+      if (s) voice.enqueueSpeak(s);
+      lastEnd = sentenceSplitRegex.lastIndex;
     }
+    if (lastEnd) speakBuffer = speakBuffer.slice(lastEnd);
     
   }
 }

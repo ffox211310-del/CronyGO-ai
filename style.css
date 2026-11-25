@@ -1301,3 +1301,8 @@ body.voice-on #input, body.voice-on .tools-left, body.voice-on #status, body.voi
 body.voice-on #composer{ background: #000; }
 body.voice-on .composer-sheet{ background: transparent; border-color: transparent; }
 body.voice-on .composer-tools{ justify-content: center; }
+
+/* 音声モード: マイクを大きく・上に */
+body.voice-on #composer{ padding-bottom: 64px; }
+body.voice-on #mic-btn{ width: 64px; height: 64px; }
+body.voice-on #mic-btn svg{ width: 28px; height: 28px; }

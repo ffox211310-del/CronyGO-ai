@@ -1307,3 +1307,11 @@ body.voice-on .composer-tools{ justify-content: center; }
 body.voice-on #composer{ padding-bottom: 64px; }
 body.voice-on #mic-btn{ width: 64px; height: 64px; }
 body.voice-on #mic-btn svg{ width: 28px; height: 28px; }
+
+/* 音声モード: マイクを画面中央に固定 */
+#voice-overlay{ overflow: hidden; }
+body.voice-on #mic-btn{ position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%); }
+
+/* 音声モード: マイクを画面中央に固定 */
+#voice-overlay{ overflow: hidden; }
+body.voice-on #mic-btn{ position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%); }

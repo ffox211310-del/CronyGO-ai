@@ -39,6 +39,11 @@ HTML・CSS・JSのみを使用しているので、Web上で完結します。�
 - WebLLM（WebGPUベース）と wllama（llama.cppのWASM実装）を状況に応じて使い分けできます。
 - MLC・GGUFに対応した各種モデルをロード可能。
 
+
+↓規制がかかっていても開けるバージョンのURL↓
+
+https://ffox211310-del.github.io/CronyGO-ai/
+
 ---
 
 ## 制作概要

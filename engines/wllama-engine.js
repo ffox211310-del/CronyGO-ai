@@ -1,12 +1,12 @@
 //いえーい
-import { Wllama } from "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.8.1/esm/index.js";
+import { Wllama } from "https://cdn.jsdelivr.net/npm/@wllama/wllama@4.0.0/esm/index.js";
 import { MODELS, MMPROJ} from "../models.js";
 
 export class WllamaEngine {
   id = "wllama";
   supportsHotStop = true;
   wllama = null;
-  WASM_URL = "https://cdn.jsdelivr.net/npm/@wllama/wllama@3.8.1/esm/wasm/wllama.wasm";
+  WASM_URL = "https://cdn.jsdelivr.net/npm/@wllama/wllama@4.0.0/esm/wasm/wllama.wasm";
   _abortFn = null;
   _abort = null;
   _stopRequested = false;

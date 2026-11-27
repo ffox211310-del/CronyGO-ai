@@ -1531,6 +1531,41 @@ const thinkingOn = localStorage.getItem('cronygo_thinking')!== '0';
 // Wllama時のみ実効max_tokensにThink予算(+2048)を上乗せする。
 // Think自体の上限はロード時の reasoning_budget_tokens: 2048 が担保する
 const effMaxTokens = engineManager.getCurrentId() === 'wllama' && thinkingOn ? max_tokens + 2048 : max_tokens;
+
+// コンテキスト自動トリム: 見積もりが予算を超えたら古い発言から送信対象を外す（部屋の履歴自体は消さない）
+{
+  const estTokens = (c) => {
+    if (typeof c === "string") return c.length + 10;
+    if (Array.isArray(c)) {
+      let n = 10;
+      for (const p of c) {
+        if (p.type === "text") n += (p.text || "").length;
+        else if (p.type === "image") n += 640;
+      }
+      return n;
+    }
+    return 10;
+  };
+  const budget = Math.max(256, loadStoredContextSize() - effMaxTokens - 128);
+  let total = sendMessages.reduce((s, m) => s + estTokens(m.content), 0);
+  let dropped = 0;
+  const dropOldest = () => {
+    const idx = sendMessages.findIndex(m => m.role !== "system");
+    if (idx < 0 || idx >= sendMessages.length - 1) return false;
+    total -= estTokens(sendMessages[idx].content);
+    sendMessages.splice(idx, 1);
+    dropped++;
+    return true;
+  };
+  while (total > budget && sendMessages.length > 2) { if (!dropOldest()) break; }
+  // 先頭（system除く）が assistant だけ残ったら落とす。会話は user から始める
+  while (sendMessages.length > 2) {
+    const idx = sendMessages.findIndex(m => m.role !== "system");
+    if (idx < 0 || sendMessages[idx].role === "user") break;
+    if (!dropOldest()) break;
+  }
+  if (dropped) dbg("context auto-trim: dropped " + dropped + " old messages (est " + total + " / budget " + budget + ")");
+}
 // 生成ログの計測（TTFT＝最初のチャンクまで、速度＝チャンク間の間隔から算出）
 const genT0 = performance.now();
 let genFirstAt = 0;

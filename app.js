@@ -2047,6 +2047,7 @@ const MP_INFO = {
   "Qwen3-0.6B":  { name: "Qwen3 0.6B",      desc: t('dynDesc_Qwen306B') },
   "DeepSeek-1.5B":  { name: "DeepSeek 1.5B",  desc: t('dynDesc_DeepSeek15B') },
   "llm-jp-3-1.8B": { name: "llm-jp 1.8B", desc: t('dynDesc_LlmJp18B') },
+  "LFM-3-1.7B":  { name: "LFM3 1.7B",  desc: t('dynDesc_LFM317B') },
   "LFM-1.2BJP":  { name: "LFM2.5 1.2BJP",  desc: t('dynDesc_LFM12BJP') },
   "LFM-350M":  { name: "LFM2.5 350M",  desc: t('dynDesc_LFM350M') },
   "LFM-VL-450M": { name: "LFM2.5 VL 450M", desc: t('dynDesc_LFMVL450M')},
